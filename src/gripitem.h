@@ -10,6 +10,8 @@ Q_OBJECT
 public:
   GripItem(int id, QGraphicsItem* parent = nullptr);
 
+  void reindex(int newId);
+
 signals:
   void moved(int id, const QPointF& pos);
 

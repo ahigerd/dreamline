@@ -7,6 +7,7 @@ GripItem::GripItem(int id, QGraphicsItem* parent)
   setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
   setFlag(QGraphicsItem::ItemIgnoresParentOpacity, true);
   setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
+  setZValue(1);
 }
 
 QVariant GripItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
@@ -15,4 +16,9 @@ QVariant GripItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QV
     emit moved(m_id, value.toPointF());
   }
   return value;
+}
+
+void GripItem::reindex(int newId)
+{
+  m_id = newId;
 }

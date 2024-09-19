@@ -7,6 +7,7 @@
 #include <QVector>
 #include "glbuffer.h"
 class GripItem;
+class EdgeItem;
 
 class PolygonItem : public QObject, public QGraphicsPolygonItem
 {
@@ -16,6 +17,7 @@ public:
 
 public slots:
   void moveVertex(int id, const QPointF& pos);
+  void insertVertex(EdgeItem* edge, const QPointF& pos);
 
 protected:
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
@@ -25,7 +27,7 @@ private:
   void updateColors();
 
   QVector<GripItem*> m_grips;
-  bool m_vboDirty, m_colorsDirty;
+  QVector<EdgeItem*> m_edges;
   GLBuffer<QPointF> m_vbo;
   GLBuffer<QColor> m_colorBuffer;
 };
