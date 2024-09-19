@@ -1,6 +1,6 @@
 TEMPLATE = app
 QT = core widgets
-QMAKE_CXXFLAGS += -std=c++17
+CONFIG += c++17
 CONFIG += debug
 
 INCLUDEPATH += src
@@ -10,10 +10,13 @@ OBJECTS_DIR = .build
 RCC_DIR = .build
 MOC_DIR = .build
 
-HEADERS += src/gripitem.h   src/polygonitem.h
-SOURCES += src/gripitem.cpp src/polygonitem.cpp
+HEADERS += src/glviewport.h   src/gripitem.h   src/polygonitem.h
+SOURCES += src/glviewport.cpp src/gripitem.cpp src/polygonitem.cpp
 
+HEADERS += src/glbuffer.h
 SOURCES += src/main.cpp
+
+RESOURCES += res/shaders.qrc
 
 win32 {
   run.commands = dreamline.exe

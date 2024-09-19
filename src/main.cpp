@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include "glviewport.h"
 #include "polygonitem.h"
 
 int main(int argc, char** argv)
@@ -8,6 +9,7 @@ int main(int argc, char** argv)
   QApplication app(argc, argv);
 
   QGraphicsView v;
+  v.setViewport(new GLViewport(&v));
   QGraphicsScene scene;
   v.setScene(&scene);
   PolygonItem* p = new PolygonItem;
