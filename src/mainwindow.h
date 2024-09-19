@@ -14,6 +14,7 @@ public:
   explicit MainWindow(QWidget *parent = nullptr);
   void openFile(const QString& path);
   void saveFile(const QString& path);
+  void exportFile(const QString& path);
   ~MainWindow();
 
 private slots:
@@ -21,10 +22,12 @@ private slots:
   void fileOpen();
   void fileSave();
   void fileSaveAs();
+  void fileExport();
 
 private:
   QGraphicsView *graphicsView;
   QString savePath;
+  QString exportPath;
 
   void makeFileMenu();
 };

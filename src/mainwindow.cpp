@@ -37,6 +37,8 @@ void MainWindow::makeFileMenu()
   fileMenu->addAction(tr("&Save"), this, SLOT(fileSave()), QStringLiteral("Ctrl+S"));
   fileMenu->addAction(tr("Save &As..."), this, SLOT(fileSaveAs()), QStringLiteral("Ctrl+Shift+S"));
   fileMenu->addSeparator();
+  fileMenu->addAction(tr("&Export..."), this, SLOT(fileExport()), QStringLiteral("Ctrl+E"));
+  fileMenu->addSeparator();
   fileMenu->addAction(tr("E&xit"), qApp, SLOT(quit()));
 }
 
@@ -84,5 +86,23 @@ void MainWindow::saveFile(const QString& path)
   bool ok = false; // TODO
   if (!ok) {
     QMessageBox::warning(this, tr("Error writing DreamLine file"), tr("%1 could not be saved.").arg(path));
+  }
+}
+
+void MainWindow::fileExport()
+{
+  QString path = QFileDialog::getSaveFileName(this, "Export DreamLine File", exportPath, "PNG Files (*.png)");
+  if (path.isEmpty()) {
+    return;
+  }
+  exportFile(path);
+}
+
+void MainWindow::exportFile(const QString& path)
+{
+  exportPath = path;
+  bool ok = false; // TODO
+  if (!ok) {
+    QMessageBox::warning(this, tr("Error exporting DreamLine file"), tr("%1 could not be saved.").arg(path));
   }
 }
