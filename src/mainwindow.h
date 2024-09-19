@@ -2,9 +2,9 @@
 #define DL_MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QGraphicsView>
 #include <QString>
-
+class QGraphicsView;
+class GLViewport;
 
 class MainWindow : public QMainWindow
 {
@@ -12,10 +12,11 @@ Q_OBJECT
 
 public:
   explicit MainWindow(QWidget *parent = nullptr);
+  ~MainWindow();
+
   void openFile(const QString& path);
   void saveFile(const QString& path);
   void exportFile(const QString& path);
-  ~MainWindow();
 
 private slots:
   void fileNew();
@@ -25,11 +26,12 @@ private slots:
   void fileExport();
 
 private:
-  QGraphicsView *graphicsView;
+  void makeFileMenu();
+
+  QGraphicsView* graphicsView;
+  GLViewport* viewport;
   QString savePath;
   QString exportPath;
-
-  void makeFileMenu();
 };
 
 #endif

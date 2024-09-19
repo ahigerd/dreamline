@@ -50,8 +50,9 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWid
 
   GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
   if (!gl) {
-    qFatal("no context");
     painter->endNativePainting();
+    qFatal("no context");
+    return;
   }
 
   BoundProgram program = gl->useShader("ramp");

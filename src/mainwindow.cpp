@@ -1,31 +1,28 @@
 #include "mainwindow.h"
 #include "polygonitem.h"
+#include "glviewport.h"
 #include <QApplication>
 #include <QGraphicsScene>
+#include <QGraphicsView>
 #include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QString>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), graphicsView(new QGraphicsView(this))
 {
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
-  // Create a scene
-  QGraphicsScene *scene = new QGraphicsScene(this);
 
-  PolygonItem* p = new PolygonItem;
-  scene->addItem(p);
-  // Set the scene on the QGraphicsView
-  graphicsView->setScene(scene);
+  viewport = new GLViewport(graphicsView);
+  graphicsView->setViewport(viewport);
 
-  // Set the QGraphicsView as the central widget
   setCentralWidget(graphicsView);
+
+  fileNew();
 }
 
 MainWindow::~MainWindow() {
-  // No need to manually delete graphicsView, Qt's parent-child system handles it.
 }
 
 void MainWindow::makeFileMenu()
@@ -45,6 +42,15 @@ void MainWindow::makeFileMenu()
 void MainWindow::fileNew()
 {
   savePath.clear();
+
+  QGraphicsScene* oldScene = graphicsView->scene();
+
+  QGraphicsScene* scene = new QGraphicsScene(this);
+  graphicsView->setScene(scene);
+  PolygonItem* p = new PolygonItem;
+  scene->addItem(p);
+
+  delete oldScene;
 }
 
 void MainWindow::fileOpen()
