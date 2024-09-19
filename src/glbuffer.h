@@ -3,26 +3,48 @@
 
 #include <QOpenGLBuffer>
 #include <QVector>
+#include <QPolygonF>
 #include <QColor>
 #include <QtDebug>
+
+namespace GLBufferContainer {
+  template <typename U>
+  struct Container : public QVector<U> {
+    using Type = QVector<U>;
+  };
+
+  template <>
+  struct Container<QPointF> : public QPolygonF {
+    using Type = QPolygonF;
+  };
+}
 
 template <typename T>
 class GLBuffer : public QOpenGLBuffer
 {
 public:
+  using VectorType = typename GLBufferContainer::Container<T>::Type;
+  using iterator = typename VectorType::iterator;
+  using const_iterator = typename VectorType::const_iterator;
+
   GLBuffer(const QVector<T>& data = QVector<T>(), QOpenGLBuffer::Type type = QOpenGLBuffer::VertexBuffer)
   : QOpenGLBuffer(type), m_data(data), m_dirty(true)
   {
     // initializers only
   }
 
-  typename QVector<T>::iterator begin() { return m_data.begin(); }
-  typename QVector<T>::iterator end() { return m_data.end(); }
-  typename QVector<T>::const_iterator begin() const { return m_data.begin(); }
-  typename QVector<T>::const_iterator end() const { return m_data.end(); }
+  iterator begin() { return m_data.begin(); }
+  iterator end() { return m_data.end(); }
+  const_iterator begin() const { return m_data.begin(); }
+  const_iterator end() const { return m_data.end(); }
 
   inline int count() const { return m_data.length(); }
-  inline int bufferSize() const { return m_data.length() * sizeof(T); }
+  inline int bufferSize() const { return m_data.length() * elementSize(); }
+  int elementSize() const;
+
+  const VectorType& vector() const { return m_data; };
+
+  void resize(int count) { m_data.resize(count); }
 
   T& operator[](int pos)
   {
@@ -66,9 +88,27 @@ protected:
   void build();
 
 private:
-  QVector<T> m_data;
+  VectorType m_data;
   bool m_dirty;
 };
+
+template <typename T>
+inline int GLBuffer<T>::elementSize() const
+{
+  return sizeof(T);
+}
+
+template <>
+inline int GLBuffer<QPointF>::elementSize() const
+{
+  return 3 * sizeof(GLfloat);
+}
+
+template <>
+inline int GLBuffer<QColor>::elementSize() const
+{
+  return 4 * sizeof(GLfloat);
+}
 
 template <typename T>
 inline void GLBuffer<T>::build()
@@ -80,21 +120,21 @@ template <>
 inline void GLBuffer<QPointF>::build()
 {
   int numVertices = m_data.length();
-  QVector<float> vertices(3 * numVertices);
+  QVector<GLfloat> vertices(3 * numVertices);
   for (int i = 0, j = 0; i < numVertices; i++) {
     const QPointF& point = m_data[i];
     vertices[j++] = point.x();
     vertices[j++] = point.y();
     vertices[j++] = 0;
   }
-  allocate(vertices.constData(), vertices.length() * sizeof(float));
+  allocate(vertices.constData(), bufferSize());
 }
 
 template <>
 inline void GLBuffer<QColor>::build()
 {
   int numColors = m_data.length();
-  QVector<float> colors(4 * numColors);
+  QVector<GLfloat> colors(4 * numColors);
   for (int i = 0, j = 0; i < numColors; i++) {
     const QColor& c = m_data[i];
     colors[j++] = c.redF();
@@ -102,7 +142,7 @@ inline void GLBuffer<QColor>::build()
     colors[j++] = c.blueF();
     colors[j++] = c.alphaF();
   }
-  allocate(colors.constData(), colors.length() * sizeof(float));
+  allocate(colors.constData(), bufferSize());
 }
 
 #endif

@@ -10,27 +10,20 @@ PolygonItem::PolygonItem(QGraphicsItem* parent)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
 
-  QPolygonF p;
-  p.append(QPointF(-100, -100));
-  p.append(QPointF(100, -50));
-  p.append(QPointF(0, 100));
-  m_vbo = p;
-  setPolygon(p);
+  m_vbo.resize(3);
+  m_vbo[0] = QPointF(-100, -100);
+  m_vbo[1] = QPointF(100, -50);
+  m_vbo[2] = QPointF(0, 100);
 
   m_colorBuffer = {
-    1, 0, 0,
-    0, 1, 0,
-    0, 0, 1,
-    /*
     QColor(Qt::red),
     QColor(Qt::green),
     QColor(Qt::blue),
-    */
   };
 
-  for (int i = 0; i < p.length(); i++) {
+  for (int i = 0; i < m_vbo.count(); i++) {
     GripItem* grip = new GripItem(i, this);
-    grip->setPos(p[i]);
+    grip->setPos(m_vbo[i]);
     m_grips.append(grip);
     QObject::connect(grip, SIGNAL(moved(int, QPointF)), this, SLOT(moveVertex(int, QPointF)));
   }
@@ -38,10 +31,8 @@ PolygonItem::PolygonItem(QGraphicsItem* parent)
 
 void PolygonItem::moveVertex(int id, const QPointF& pos)
 {
-  QPolygonF p = polygon();
-  p[id] = pos;
-  m_vbo = p;
-  setPolygon(p);
+  m_vbo[id] = pos;
+  setPolygon(m_vbo.vector());
 }
 
 void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
@@ -63,10 +54,10 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWid
 
   program->enableAttributeArray(1);
   m_colorBuffer.bind();
-  program->setAttributeBuffer(1, GL_FLOAT, 0, 3, 3 * sizeof(float));
+  program->setAttributeBuffer(1, GL_FLOAT, 0, 4, 4 * sizeof(float));
 
   QTransform transform = gl->transform();
-  program->setUniformValue("translate", transform.dx(), transform.dy());
+  program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
   program->setUniformValue("scale", transform.m11(), transform.m22());
 
   gl->glEnableVertexAttribArray(0);

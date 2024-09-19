@@ -27,7 +27,7 @@ private:
   QVector<GripItem*> m_grips;
   bool m_vboDirty, m_colorsDirty;
   GLBuffer<QPointF> m_vbo;
-  GLBuffer<float> m_colorBuffer;
+  GLBuffer<QColor> m_colorBuffer;
 };
 
 #endif
