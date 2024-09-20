@@ -78,9 +78,10 @@ void PolygonItem::insertVertex(EdgeItem* edge, const QPointF& pos)
 
   EdgeItem* newEdge = new EdgeItem(grip, m_grips[nextIndex]);
   newEdge->setLine(QLineF(pos, oldLine.p2()));
+  QObject::connect(newEdge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
   m_edges.insert(index, newEdge);
 
-  float t = QLineF(pos, oldLine.p1()).length() / oldLine.length();
+  float t = QLineF(pos, oldLine.p2()).length() / oldLine.length();
   QColor leftColor = m_colorBuffer[oldIndex];
   QColor rightColor = m_colorBuffer[index];
   QColor newColor(

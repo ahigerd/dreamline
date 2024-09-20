@@ -1,28 +1,42 @@
 #include "edgeitem.h"
 #include "gripitem.h"
 #include <QGraphicsSceneHoverEvent>
+#include <QGraphicsPathItem>
 #include <QPen>
-#include <QtDebug>
 
 EdgeItem::EdgeItem(GripItem* left, GripItem* right)
 : QObject(nullptr), QGraphicsLineItem(QLineF(left->pos(), right->pos()), left->parentItem())
 {
   setAcceptHoverEvents(true);
   hoverLeaveEvent(nullptr);
-  setZValue(-1);
+  setZValue(0.1);
 }
 
-void EdgeItem::hoverEnterEvent(QGraphicsSceneHoverEvent* event)
+QPainterPath EdgeItem::shape() const
 {
-  QPointF mouse = event->pos();
-  QPointF left = mapFromItem(parentItem(), line().p1());
-  QPointF right = mapFromItem(parentItem(), line().p2());
-  if (QLineF(mouse, left).length() <= 4 || QLineF(mouse, right).length() <= 4) {
-    hoverLeaveEvent(event);
-    return;
-  }
-  m_hovered = true;
-  QPen pen(Qt::black, 5);
+  QPainterPath path;
+
+  QLineF normVector = line().normalVector();
+  normVector.setLength(2);
+  QPointF norm = normVector.p2() - normVector.p1();
+
+  QLineF capVector = line();
+  capVector.setLength(3.5);
+  QPointF cap = capVector.p2() - capVector.p1();
+
+  QPointF p1 = mapFromItem(parentItem(), line().p1() + cap);
+  QPointF p2 = mapFromItem(parentItem(), line().p2() - cap);
+  path.moveTo(p1 - norm);
+  path.lineTo(p1 + norm);
+  path.lineTo(p2 + norm);
+  path.lineTo(p2 - norm);
+  path.closeSubpath();
+  return path;
+}
+
+void EdgeItem::hoverEnterEvent(QGraphicsSceneHoverEvent*)
+{
+  QPen pen(Qt::black, 3);
   pen.setCosmetic(true);
   setPen(pen);
 }
@@ -34,16 +48,18 @@ void EdgeItem::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
 
 void EdgeItem::hoverLeaveEvent(QGraphicsSceneHoverEvent*)
 {
-  m_hovered = false;
   QPen pen(Qt::transparent, 5);
   pen.setCosmetic(true);
   setPen(pen);
 }
 
+void EdgeItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
+{
+  event->accept();
+}
+
 void EdgeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
 {
-  if (!m_hovered) {
-    return;
-  }
   emit insertVertex(this, event->scenePos());
+  event->accept();
 }
