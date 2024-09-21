@@ -53,6 +53,8 @@ compile_commands.json
 
 *_qmlcache.qrc
 
+.cache/*
+
 .build
 dreamline
 *.exe

@@ -1,18 +1,28 @@
 #include "mainwindow.h"
 #include "polygonitem.h"
 #include "glviewport.h"
+#include "qundostack.h"
 #include <QApplication>
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QUndoCommand>
+#include <QUndoView>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), graphicsView(new QGraphicsView(this))
 {
+  undoStack = new QUndoStack(this);
+
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
+  makeEditMenu();
+
+
+  /* createUndoView(); */
+
 
   viewport = new GLViewport(graphicsView);
   graphicsView->setViewport(viewport);
@@ -37,6 +47,37 @@ void MainWindow::makeFileMenu()
   fileMenu->addAction(tr("&Export..."), this, SLOT(fileExport()), QStringLiteral("Ctrl+E"));
   fileMenu->addSeparator();
   fileMenu->addAction(tr("E&xit"), qApp, SLOT(quit()));
+}
+
+void MainWindow::makeEditMenu()
+{
+  QMenu* editMenu = new QMenu(tr("&Edit"), this);
+  menuBar()->addMenu(editMenu);
+
+  undoAction = undoStack->createUndoAction(this, tr("&Undo"));
+  undoAction->setShortcuts(QKeySequence::Undo);
+  redoAction = undoStack->createRedoAction(this, tr("&Redo"));
+  redoAction->setShortcuts(QKeySequence::Redo);
+  deleteAction = new QAction(tr("&Delete Item"), this);
+  deleteAction->setShortcut(tr("Del"));
+  connect(deleteAction, &QAction::triggered, this, &MainWindow::deleteItem);
+
+  editMenu->addAction(undoAction);
+  editMenu->addAction(redoAction);
+  editMenu->addSeparator();
+  editMenu->addAction(deleteAction);
+}
+
+void MainWindow::createUndoView()
+{
+  undoView = new QUndoView(undoStack);
+  undoView->setWindowTitle(tr("Command List"));
+  undoView->show();
+  undoView->setAttribute(Qt::WA_QuitOnClose, false);
+}
+
+void MainWindow::deleteItem()
+{
 }
 
 void MainWindow::fileNew()
