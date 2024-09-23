@@ -12,6 +12,7 @@ PolygonItem::PolygonItem(QGraphicsItem* parent)
 : QObject(nullptr), QGraphicsPolygonItem(parent)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
+  setCacheMode(QGraphicsItem::DeviceCoordinateCache);
 
   m_vbo.resize(3);
   m_vbo[0] = QPointF(-100, -100);
@@ -187,7 +188,7 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, 
         double w = (t1 + t2) / len;
         t += w;
 
-        QColor c = m_colorBuffer[i];
+        QColor c = m_colorBuffer[(i + poly.length() - 2) % poly.length()];
         t += w;
         r += c.red() * w;
         g += c.green() * w;
