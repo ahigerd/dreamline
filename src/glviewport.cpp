@@ -82,29 +82,39 @@ QTransform GLViewport::transform() const
   return QTransform();
 }
 
-BoundProgram GLViewport::useShader(const QString& name)
+BoundProgram GLViewport::useShader(const QString& name, int n)
 {
-  QOpenGLShaderProgram* program = m_shaders.value(name);
+  QString templatedName = name;
+  if (n) {
+    templatedName = QStringLiteral("%1_%2").arg(name).arg(n);
+  }
+  QOpenGLShaderProgram* program = m_shaders.value(templatedName);
   if (!program) {
     program = new QOpenGLShaderProgram(this);
     m_shaders[name] = program;
-    addShader(program, name, QOpenGLShader::Fragment);
-    addShader(program, name, QOpenGLShader::Vertex);
+    addShader(program, name, n, QOpenGLShader::Fragment);
+    addShader(program, name, n, QOpenGLShader::Vertex);
     bool ok = program->link();
     if (!ok) {
-      qWarning(qPrintable(QStringLiteral("Error linking '%1'").arg(name)));
+      qFatal(qPrintable(QStringLiteral("Shader linking failed in %1:\n%2").arg(templatedName).arg(program->log())));
     }
   }
   return BoundProgram(program, &m_vao);
 }
 
-void GLViewport::addShader(QOpenGLShaderProgram* program, const QString& name, QOpenGLShader::ShaderType type)
+void GLViewport::addShader(QOpenGLShaderProgram* program, const QString& name, int n, QOpenGLShader::ShaderType type)
 {
   QString filename = QStringLiteral(":/shaders/%1.%2.glsl").arg(name).arg(shaderTypeNames.value(type));
-  if (QFile::exists(filename)) {
-    bool ok = program->addShaderFromSourceFile(type, filename);
-    if (!ok) {
-      qFatal(qPrintable(QStringLiteral("Shader compilation failed in %1:\n%2").arg(filename).arg(program->log())));
+  QFile file(filename);
+  bool ok = false;
+  if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    QString source = QString::fromUtf8(file.readAll());
+    if (n) {
+      source = source.replace("<N>", QString::number(n));
     }
+    ok = program->addShaderFromSourceCode(type, source);
+  }
+  if (!ok) {
+    qFatal(qPrintable(QStringLiteral("Shader compilation failed in %1:\n%2").arg(filename).arg(program->log())));
   }
 }

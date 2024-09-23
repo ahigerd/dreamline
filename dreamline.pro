@@ -1,7 +1,10 @@
 TEMPLATE = app
 QT = core widgets
 CONFIG += c++17
-CONFIG += debug
+CONFIG += release optimze_full
+CONFIG -= optimize_size
+QMAKE_CXXFLAGS_RELEASE -= -O2
+QMAKE_CXXFLAGS += -ffast-math -msse2 -O3
 
 INCLUDEPATH += src
 

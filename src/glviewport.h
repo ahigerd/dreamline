@@ -34,14 +34,14 @@ public:
   GLViewport(QWidget* parent = nullptr);
   ~GLViewport();
 
-  BoundProgram useShader(const QString& name);
+  BoundProgram useShader(const QString& name, int n = 0);
   QTransform transform() const;
 
 protected:
   void initializeGL();
 
 private:
-  void addShader(QOpenGLShaderProgram* program, const QString& name, QOpenGLShader::ShaderType type);
+  void addShader(QOpenGLShaderProgram* program, const QString& name, int n, QOpenGLShader::ShaderType type);
 
   QMap<QString, QOpenGLShaderProgram*> m_shaders;
   QOpenGLVertexArrayObject m_vao;

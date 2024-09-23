@@ -2,5 +2,7 @@
 <qresource>
   <file>shaders/ramp.fragment.glsl</file>
   <file>shaders/ramp.vertex.glsl</file>
+  <file>shaders/polyramp.fragment.glsl</file>
+  <file>shaders/polyramp.vertex.glsl</file>
 </qresource>
 </RCC>

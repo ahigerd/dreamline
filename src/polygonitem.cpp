@@ -110,25 +110,44 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWid
     return;
   }
 
-  BoundProgram program = gl->useShader("ramp");
+  bool isPoly = m_vbo.count() > 3;
+
+  BoundProgram program = isPoly ? gl->useShader("polyramp", m_vbo.count()) : gl->useShader("ramp");
 
   program->enableAttributeArray(0);
   m_vbo.bind();
-  program->setAttributeBuffer(0, GL_FLOAT, 0, 3, 3 * sizeof(float));
+  program->setAttributeBuffer(0, GL_FLOAT, 0, 2, 2 * sizeof(float));
+  gl->glEnableVertexAttribArray(0);
 
-  program->enableAttributeArray(1);
-  m_colorBuffer.bind();
-  program->setAttributeBuffer(1, GL_FLOAT, 0, 4, 4 * sizeof(float));
+  QVector<QVector2D> verts(m_vbo.count());
+  for (int i = 0; i < m_vbo.count(); i++) {
+    verts[i] = QVector2D(m_vbo[i].x(), m_vbo[i].y());
+  }
+  program->setUniformValueArray("verts", verts.constData(), verts.size());
+
+  if (isPoly) {
+    // TODO: Is it possible to bind a buffer to a uniform?
+    // Or are VBOs and UBOs fundamentally different objects?
+    QVector<QVector4D> colors(m_colorBuffer.count());
+    for (int i = 0; i < m_colorBuffer.count(); i++) {
+      colors[i] = QVector4D(m_colorBuffer[i].redF(), m_colorBuffer[i].greenF(), m_colorBuffer[i].blueF(), m_colorBuffer[i].alphaF());
+    }
+    program->setUniformValueArray("colors", colors.constData(), colors.size());
+  } else {
+    program->enableAttributeArray(1);
+    m_colorBuffer.bind();
+    program->setAttributeBuffer(1, GL_FLOAT, 0, 4, 4 * sizeof(float));
+    gl->glEnableVertexAttribArray(1);
+  }
 
   QTransform transform = gl->transform();
   program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
   program->setUniformValue("scale", transform.m11(), transform.m22());
 
-  gl->glEnableVertexAttribArray(0);
-  gl->glEnableVertexAttribArray(1);
-
-  gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vbo.count());
-  m_colorBuffer.release();
+  gl->glDrawArrays(GL_POLYGON, 0, m_vbo.count());
+  if (isPoly) {
+    m_colorBuffer.release();
+  }
   m_vbo.release();
 
   painter->endNativePainting();

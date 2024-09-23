@@ -101,7 +101,7 @@ inline int GLBuffer<T>::elementSize() const
 template <>
 inline int GLBuffer<QPointF>::elementSize() const
 {
-  return 3 * sizeof(GLfloat);
+  return 2 * sizeof(GLfloat);
 }
 
 template <>
@@ -125,7 +125,6 @@ inline void GLBuffer<QPointF>::build()
     const QPointF& point = m_data[i];
     vertices[j++] = point.x();
     vertices[j++] = point.y();
-    vertices[j++] = 0;
   }
   allocate(vertices.constData(), bufferSize());
 }
