@@ -5,6 +5,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
 #include <QFile>
+#include <cmath>
+#include <QStyleOptionGraphicsItem>
 
 PolygonItem::PolygonItem(QGraphicsItem* parent)
 : QObject(nullptr), QGraphicsPolygonItem(parent)
@@ -99,6 +101,7 @@ void PolygonItem::insertVertex(EdgeItem* edge, const QPointF& pos)
   m_vbo = p;
 }
 
+#if 0
 void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
 {
   painter->beginNativePainting();
@@ -132,4 +135,73 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWid
   m_vbo.release();
 
   painter->endNativePainting();
+}
+#endif
+
+static double cr2(const QPointF& a, const QPointF& b)
+{
+  return a.x() * b.y() - a.y() * b.x();
+}
+
+static double ang(const QPointF& a, const QPointF& b)
+{
+  return std::atan2(cr2(a, b), QPointF::dotProduct(a, b));
+}
+
+void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* opt, QWidget*)
+{
+  QImage img(opt->rect.size(), QImage::Format_ARGB32);
+  img.fill(0);
+  int w = img.width();
+  int h = img.height();
+  int dx = opt->rect.x();
+  int dy = opt->rect.y();
+
+  QPolygonF poly = polygon();
+  QPointF prev, curr, next, norm;
+  QPointF last3 = poly[poly.length() - 3];
+  QPointF last2 = poly[poly.length() - 2];
+  QPointF last1 = poly[poly.length() - 1];
+
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
+      QPointF pt(x + dx, y + dy);
+      if (!poly.containsPoint(pt, Qt::OddEvenFill)) continue;
+      double r = 0;
+      double g = 0;
+      double b = 0;
+      double a = 0;
+      double t = 0;
+      prev = last3;
+      curr = last2;
+      next = last1;
+      for (int i = 0; i < poly.length(); i++) {
+        norm = curr - pt;
+        double len = std::sqrt(norm.x() * norm.x() + norm.y() * norm.y());
+        norm *= 1.0 / len;
+
+        double a1 = ang(prev - pt, norm);
+        double a2 = ang(norm, next - pt);
+        double t1 = std::tan(a1 * 0.5);
+        double t2 = std::tan(a2 * 0.5);
+        double w = (t1 + t2) / len;
+        t += w;
+
+        QColor c = m_colorBuffer[i];
+        t += w;
+        r += c.red() * w;
+        g += c.green() * w;
+        b += c.blue() * w;
+        a += c.alpha() * w;
+
+        prev = curr;
+        curr = next;
+        next = poly[i];
+      }
+      t *= 0.5;
+      img.setPixel(x, y, qRgba(r / t, g / t, b / t, a / t));
+    }
+  }
+
+  painter->drawImage(dx, dy, img);
 }
