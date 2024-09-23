@@ -7,6 +7,8 @@
 #include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QGestureEvent>
+#include <QPinchGesture>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent), graphicsView(new QGraphicsView(this))
@@ -16,6 +18,9 @@ MainWindow::MainWindow(QWidget *parent)
 
   viewport = new GLViewport(graphicsView);
   graphicsView->setViewport(viewport);
+  graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+  viewport->grabGesture(Qt::PinchGesture);
+  viewport->installEventFilter(this);
 
   setCentralWidget(graphicsView);
 
@@ -110,5 +115,32 @@ void MainWindow::exportFile(const QString& path)
   bool ok = false; // TODO
   if (!ok) {
     QMessageBox::warning(this, tr("Error exporting DreamLine file"), tr("%1 could not be saved.").arg(path));
+  }
+}
+
+bool MainWindow::eventFilter(QObject* obj, QEvent* event)
+{
+  if (obj == viewport) {
+    if (event->type() == QEvent::Gesture) {
+      QGestureEvent* gesture = static_cast<QGestureEvent*>(event);
+      QPinchGesture* pinch = static_cast<QPinchGesture*>(gesture->gesture(Qt::PinchGesture));
+      if (pinch) {
+        pinchGesture(pinch);
+      }
+    }
+  }
+  return false;
+}
+
+void MainWindow::pinchGesture(QPinchGesture* gesture)
+{
+  QPointF delta = gesture->centerPoint() - gesture->lastCenterPoint();
+  if (delta.x() || delta.y()) {
+    graphicsView->translate(delta.x(), delta.y());
+  }
+
+  double factor = gesture->scaleFactor();
+  if (factor != 1.0) {
+    graphicsView->scale(factor, factor);
   }
 }

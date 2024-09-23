@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QString>
+class QPinchGesture;
 class QGraphicsView;
 class GLViewport;
 
@@ -18,6 +19,8 @@ public:
   void saveFile(const QString& path);
   void exportFile(const QString& path);
 
+  bool eventFilter(QObject* obj, QEvent* event);
+
 private slots:
   void fileNew();
   void fileOpen();
@@ -27,6 +30,8 @@ private slots:
 
 private:
   void makeFileMenu();
+
+  void pinchGesture(QPinchGesture* gesture);
 
   QGraphicsView* graphicsView;
   GLViewport* viewport;
