@@ -1,4 +1,10 @@
+#include <QContextMenuEvent>
+#include <QGraphicsSceneHoverEvent>
+#include <QColorDialog>
+#include <QColor>
+#include <QMenu>
 #include "gripitem.h"
+#include "qgraphicsitem.h"
 
 GripItem::GripItem(int id, QGraphicsItem* parent)
 : QObject(nullptr), QGraphicsRectItem(-3, -3, 6, 6, parent), m_id(id)
@@ -21,4 +27,21 @@ QVariant GripItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QV
 void GripItem::reindex(int newId)
 {
   m_id = newId;
+}
+
+void GripItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+{
+  QMenu menu;
+  QAction* colorAction = menu.addAction(tr("&Color..."));
+  QAction* selected = menu.exec(event->screenPos());
+  if (selected == colorAction) {
+    selectColor(event);
+    return;
+  }
+}
+
+void GripItem::selectColor(QGraphicsSceneContextMenuEvent* event)
+{
+  QColor color = QColorDialog::getColor(Qt::white, event->widget(), "Select Color");
+  emit colorChanged(m_id, color);
 }

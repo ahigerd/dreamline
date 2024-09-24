@@ -1,8 +1,10 @@
 #ifndef DL_GRIPITEM_H
 #define DL_GRIPITEM_H
 
+#include <QApplication>
 #include <QGraphicsRectItem>
 #include <QObject>
+#include <QColor>
 
 class GripItem : public QObject, public QGraphicsRectItem
 {
@@ -12,14 +14,19 @@ public:
 
   void reindex(int newId);
 
+
 signals:
   void moved(int id, const QPointF& pos);
+  void colorChanged(int id, const QColor& pos);
 
 protected:
   QVariant itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value);
 
 private:
   int m_id;
+
+  void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
+  void selectColor(QGraphicsSceneContextMenuEvent* event);
 };
 
 #endif

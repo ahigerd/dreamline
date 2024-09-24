@@ -5,6 +5,7 @@
 #include <QOpenGLBuffer>
 #include <QObject>
 #include <QVector>
+#include <QColor>
 #include "glbuffer.h"
 class GripItem;
 class EdgeItem;
@@ -18,6 +19,7 @@ public:
 public slots:
   void moveVertex(int id, const QPointF& pos);
   void insertVertex(EdgeItem* edge, const QPointF& pos);
+  void changeColor(int id, const QColor& color);
 
 protected:
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);

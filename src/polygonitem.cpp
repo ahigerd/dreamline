@@ -30,6 +30,7 @@ PolygonItem::PolygonItem(QGraphicsItem* parent)
     grip->setPos(m_vbo[i]);
     m_grips.append(grip);
     QObject::connect(grip, SIGNAL(moved(int, QPointF)), this, SLOT(moveVertex(int, QPointF)));
+    QObject::connect(grip, SIGNAL(colorChanged(int, QColor)), this, SLOT(changeColor(int, QColor)));
   }
 
   for (int i = 0; i < numVertices; i++) {
@@ -52,6 +53,11 @@ void PolygonItem::moveVertex(int id, const QPointF& pos)
   left->setLine(QLineF(left->line().p1(), pos));
 }
 
+void PolygonItem::changeColor(int id, const QColor& color)
+{
+  m_colorBuffer[id] = color;
+}
+
 void PolygonItem::insertVertex(EdgeItem* edge, const QPointF& pos)
 {
   int oldIndex = m_edges.indexOf(edge);
@@ -67,6 +73,7 @@ void PolygonItem::insertVertex(EdgeItem* edge, const QPointF& pos)
   GripItem* grip = new GripItem(index, this);
   grip->setPos(pos);
   QObject::connect(grip, SIGNAL(moved(int, QPointF)), this, SLOT(moveVertex(int, QPointF)));
+  QObject::connect(grip, SIGNAL(colorChanged(int, QColor)), this, SLOT(changeColor(int, QColor)));
   m_grips.insert(index, grip);
   for (int i = index + 1; i <= numVertices; i++) {
     m_grips[i]->reindex(i);
