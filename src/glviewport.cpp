@@ -37,15 +37,15 @@ GLViewport* GLViewport::instance(QOpenGLContext* ctx)
 GLViewport::GLViewport(QWidget* parent)
 : QOpenGLWidget(parent)
 {
-  // initializers only
   setAttribute(Qt::WA_NativeWindow);
 
   QSurfaceFormat format;
   format.setRenderableType(QSurfaceFormat::OpenGL);
   format.setProfile(QSurfaceFormat::CoreProfile);
-  format.setVersion(3,3);
+  format.setVersion(4, 1);
 
   windowHandle()->setSurfaceType(QSurface::OpenGLSurface);
+  windowHandle()->setFormat(format);
   windowHandle()->create();
 }
 

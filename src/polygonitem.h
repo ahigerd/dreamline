@@ -25,9 +25,6 @@ protected:
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 private:
-  void updateVertices();
-  void updateColors();
-
   QVector<GripItem*> m_grips;
   QVector<EdgeItem*> m_edges;
   GLBuffer<QPointF> m_vbo;
