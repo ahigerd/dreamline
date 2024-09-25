@@ -10,7 +10,7 @@
 DreamProject::DreamProject(const QSizeF& pageSize, QObject* parent)
 : QGraphicsScene(parent)
 {
-  setBackgroundBrush(palette().brush(QPalette::Window));
+  setBackgroundBrush(QColor(139,134,128,255));
 
   setPageSize(pageSize);
 
