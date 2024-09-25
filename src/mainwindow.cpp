@@ -1,28 +1,18 @@
 #include "mainwindow.h"
-#include "polygonitem.h"
-#include "glviewport.h"
+#include "editorview.h"
 #include <QApplication>
-#include <QGraphicsScene>
-#include <QGraphicsView>
 #include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <QGestureEvent>
-#include <QPinchGesture>
 
 MainWindow::MainWindow(QWidget *parent)
-: QMainWindow(parent), graphicsView(new QGraphicsView(this))
+: QMainWindow(parent)
 {
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
 
-  viewport = new GLViewport(graphicsView);
-  graphicsView->setViewport(viewport);
-  graphicsView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-  viewport->grabGesture(Qt::PinchGesture);
-  viewport->installEventFilter(this);
-
-  setCentralWidget(graphicsView);
+  editor = new EditorView(this);
+  setCentralWidget(editor);
 
   fileNew();
 }
@@ -47,15 +37,7 @@ void MainWindow::makeFileMenu()
 void MainWindow::fileNew()
 {
   savePath.clear();
-
-  QGraphicsScene* oldScene = graphicsView->scene();
-
-  QGraphicsScene* scene = new QGraphicsScene(this);
-  graphicsView->setScene(scene);
-  PolygonItem* p = new PolygonItem;
-  scene->addItem(p);
-
-  delete oldScene;
+  editor->newProject();
 }
 
 void MainWindow::fileOpen()
@@ -71,6 +53,8 @@ void MainWindow::openFile(const QString& path)
 {
   // TODO
   savePath = path;
+
+  // TODO: editor->openProject(path);
 }
 
 void MainWindow::fileSave()
@@ -94,6 +78,7 @@ void MainWindow::fileSaveAs()
 void MainWindow::saveFile(const QString& path)
 {
   savePath = path;
+  // TODO: bool ok = editor->saveProject(path);
   bool ok = false; // TODO
   if (!ok) {
     QMessageBox::warning(this, tr("Error writing DreamLine file"), tr("%1 could not be saved.").arg(path));
@@ -115,32 +100,5 @@ void MainWindow::exportFile(const QString& path)
   bool ok = false; // TODO
   if (!ok) {
     QMessageBox::warning(this, tr("Error exporting DreamLine file"), tr("%1 could not be saved.").arg(path));
-  }
-}
-
-bool MainWindow::eventFilter(QObject* obj, QEvent* event)
-{
-  if (obj == viewport) {
-    if (event->type() == QEvent::Gesture) {
-      QGestureEvent* gesture = static_cast<QGestureEvent*>(event);
-      QPinchGesture* pinch = static_cast<QPinchGesture*>(gesture->gesture(Qt::PinchGesture));
-      if (pinch) {
-        pinchGesture(pinch);
-      }
-    }
-  }
-  return false;
-}
-
-void MainWindow::pinchGesture(QPinchGesture* gesture)
-{
-  QPointF delta = gesture->centerPoint() - gesture->lastCenterPoint();
-  if (delta.x() || delta.y()) {
-    graphicsView->translate(delta.x(), delta.y());
-  }
-
-  double factor = gesture->scaleFactor();
-  if (factor != 1.0) {
-    graphicsView->scale(factor, factor);
   }
 }

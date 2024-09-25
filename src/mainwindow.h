@@ -3,9 +3,7 @@
 
 #include <QMainWindow>
 #include <QString>
-class QPinchGesture;
-class QGraphicsView;
-class GLViewport;
+class EditorView;
 
 class MainWindow : public QMainWindow
 {
@@ -19,8 +17,6 @@ public:
   void saveFile(const QString& path);
   void exportFile(const QString& path);
 
-  bool eventFilter(QObject* obj, QEvent* event);
-
 private slots:
   void fileNew();
   void fileOpen();
@@ -31,10 +27,7 @@ private slots:
 private:
   void makeFileMenu();
 
-  void pinchGesture(QPinchGesture* gesture);
-
-  QGraphicsView* graphicsView;
-  GLViewport* viewport;
+  EditorView* editor;
   QString savePath;
   QString exportPath;
 };
