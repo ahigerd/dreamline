@@ -2,6 +2,7 @@
 #define DL_EDITORVIEW_H
 
 #include <QGraphicsView>
+class QGraphicsRectItem;
 class QPinchGesture;
 class GLViewport;
 
@@ -18,12 +19,16 @@ public:
 protected:
   bool viewportEvent(QEvent* event);
   void mousePressEvent(QMouseEvent* event);
+  void mouseMoveEvent(QMouseEvent* event);
   void mouseReleaseEvent(QMouseEvent* event);
 
 private:
   void pinchGesture(QPinchGesture* gesture);
 
   GLViewport* glViewport;
+  QGraphicsRectItem* pageItem;
+  bool isPanning;
+  QPoint panStart;
 };
 
 #endif
