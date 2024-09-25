@@ -42,9 +42,10 @@ GLViewport::GLViewport(QWidget* parent)
   QSurfaceFormat format;
   format.setRenderableType(QSurfaceFormat::OpenGL);
   format.setProfile(QSurfaceFormat::CoreProfile);
-  format.setVersion(3,3);
+  format.setVersion(4, 1);
 
   windowHandle()->setSurfaceType(QSurface::OpenGLSurface);
+  windowHandle()->setFormat(format);
   windowHandle()->create();
 }
 
