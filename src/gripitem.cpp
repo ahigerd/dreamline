@@ -41,6 +41,10 @@ void GripItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 
 void GripItem::selectColor(QGraphicsSceneContextMenuEvent* event)
 {
-  QColor color = QColorDialog::getColor(Qt::white, event->widget(), "Select Color");
-  emit colorChanged(m_id, color);
+  QColor color = QColorDialog::getColor(brush().color(), event->widget(), "Select Color");
+  if (color.isValid())
+  {
+    setBrush(color);
+    emit colorChanged(m_id, color);
+  }
 }
