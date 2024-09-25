@@ -1,6 +1,6 @@
 #include "editorview.h"
 #include "glviewport.h"
-#include "polygonitem.h"
+#include "dreamproject.h"
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
 #include <QScrollBar>
@@ -23,20 +23,8 @@ void EditorView::newProject()
 {
   QGraphicsScene* oldScene = scene();
 
-  QGraphicsScene* scene = new QGraphicsScene(this);
-  // 8.5x11 + 1" margins on all sides @ 100dpi
-  scene->setSceneRect(-650, -525, 1300, 1050);
-  scene->setBackgroundBrush(palette().brush(QPalette::Window));
-  setScene(scene);
-
-  pageItem = new QGraphicsRectItem(QRectF(-550, -425, 1100, 850));
-  pageItem->setBrush(palette().brush(QPalette::Base));
-  pageItem->setPen(QPen(palette().color(QPalette::WindowText), 0));
-  pageItem->setZValue(-1);
-  scene->addItem(pageItem);
-
-  PolygonItem* p = new PolygonItem;
-  scene->addItem(p);
+  project = new DreamProject(QSizeF(8.5, 11), this);
+  setScene(project);
 
   delete oldScene;
 }

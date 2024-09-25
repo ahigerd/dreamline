@@ -19,8 +19,8 @@ SOURCES += src/mainwindow.cpp src/gripitem.cpp src/polygonitem.cpp
 HEADERS += src/editorview.h   src/glviewport.h   src/edgeitem.h
 SOURCES += src/editorview.cpp src/glviewport.cpp src/edgeitem.cpp
 
-HEADERS += src/glbuffer.h   src/boundprogram.h
-SOURCES += src/glbuffer.cpp src/boundprogram.cpp
+HEADERS += src/glbuffer.h   src/boundprogram.h   src/dreamproject.h
+SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp
 
 SOURCES += src/main.cpp
 

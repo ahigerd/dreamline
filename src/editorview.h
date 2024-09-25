@@ -2,7 +2,7 @@
 #define DL_EDITORVIEW_H
 
 #include <QGraphicsView>
-class QGraphicsRectItem;
+class DreamProject;
 class QPinchGesture;
 class GLViewport;
 
@@ -26,7 +26,7 @@ private:
   void pinchGesture(QPinchGesture* gesture);
 
   GLViewport* glViewport;
-  QGraphicsRectItem* pageItem;
+  DreamProject* project;
   bool isPanning;
   QPoint panStart;
 };
