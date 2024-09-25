@@ -16,19 +16,6 @@ static const QMap<QOpenGLShader::ShaderType, QString> shaderTypeNames{
   { QOpenGLShader::Vertex, "vertex" },
 };
 
-BoundProgram::BoundProgram(QOpenGLShaderProgram* program, QOpenGLVertexArrayObject* vao)
-: program(program), vao(vao)
-{
-  program->bind();
-  vao->bind();
-}
-
-BoundProgram::~BoundProgram()
-{
-  vao->release();
-  program->release();
-}
-
 GLViewport* GLViewport::instance(QOpenGLContext* ctx)
 {
   return ctxMap.value(ctx);
@@ -99,7 +86,7 @@ BoundProgram GLViewport::useShader(const QString& name, int n)
       qFatal(qPrintable(QStringLiteral("Shader linking failed in %1:\n%2").arg(templatedName).arg(program->log())));
     }
   }
-  return BoundProgram(program, &m_vao);
+  return BoundProgram(this, program, &m_vao);
 }
 
 void GLViewport::addShader(QOpenGLShaderProgram* program, const QString& name, int n, QOpenGLShader::ShaderType type)

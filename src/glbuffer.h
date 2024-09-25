@@ -5,22 +5,95 @@
 #include <QVector>
 #include <QPolygonF>
 #include <QColor>
-#include <QtDebug>
+class BoundProgram;
 
 namespace GLBufferContainer {
-  template <typename U>
-  struct Container : public QVector<U> {
-    using Type = QVector<U>;
+  template <typename T> struct Element {};
+
+#define MAP_TYPE(CppType, GlType) template <> struct Element<CppType> { enum { Type = GlType, Bytes = sizeof(CppType), Length = 1 }; }
+#define MAP_TYPE_VEC(CppType, GlType, ElementType, Count) template <> struct Element<CppType> { enum { Type = GlType, Bytes = sizeof(ElementType) * Count, Length = Count }; }
+  MAP_TYPE(GLbyte, GL_BYTE);
+  MAP_TYPE(GLubyte, GL_UNSIGNED_BYTE);
+  MAP_TYPE(GLshort, GL_SHORT);
+  MAP_TYPE(GLushort, GL_UNSIGNED_SHORT);
+  MAP_TYPE(GLint, GL_INT);
+  MAP_TYPE(GLuint, GL_UNSIGNED_INT);
+  MAP_TYPE(GLfloat, GL_FLOAT);
+  MAP_TYPE(GLdouble, GL_DOUBLE);
+  MAP_TYPE_VEC(QPointF, GL_FLOAT, GLfloat, 2);
+  MAP_TYPE_VEC(QColor, GL_FLOAT, GLfloat, 4);
+#undef MAP_TYPE
+#undef MAP_TYPE_VEC
+
+  template <typename T>
+  struct Container : public QVector<T> {
+    using Type = QVector<T>;
+
+    static void allocate(QOpenGLBuffer* buffer, const Type& data, int size)
+    {
+      buffer->allocate(data.constData(), size);
+    }
   };
 
   template <>
   struct Container<QPointF> : public QPolygonF {
     using Type = QPolygonF;
+
+    static void allocate(QOpenGLBuffer* buffer, const Type& data, int size)
+    {
+      int numVertices = data.length();
+      QVector<GLfloat> vertices(2 * numVertices);
+      for (int i = 0, j = 0; i < numVertices; i++) {
+        const QPointF& point = data[i];
+        vertices[j++] = point.x();
+        vertices[j++] = point.y();
+      }
+      buffer->allocate(vertices.constData(), size);
+    }
+  };
+
+  template <>
+  struct Container<QColor> : public QVector<QColor> {
+    using Type = QVector<QColor>;
+
+    static void allocate(QOpenGLBuffer* buffer, const Type& data, int size)
+    {
+      int numColors = data.length();
+      QVector<GLfloat> colors(4 * numColors);
+      for (int i = 0, j = 0; i < numColors; i++) {
+        const QColor& c = data[i];
+        colors[j++] = c.redF();
+        colors[j++] = c.greenF();
+        colors[j++] = c.blueF();
+        colors[j++] = c.alphaF();
+      }
+      buffer->allocate(colors.constData(), size);
+    }
   };
 }
 
-template <typename T>
-class GLBuffer : public QOpenGLBuffer
+class GLBufferBase : public QOpenGLBuffer
+{
+public:
+  GLBufferBase(int glType, QOpenGLBuffer::Type type);
+
+  virtual int count() const = 0;
+  virtual int elementSize() const = 0;
+  virtual int elementLength() const = 0;
+  int bufferSize() const;
+
+  bool bind();
+
+protected:
+  friend class BoundProgram;
+  virtual void build() = 0;
+
+  bool m_dirty;
+  int m_glType;
+};
+
+template <typename T, int glType = GLBufferContainer::Element<T>::Type>
+class GLBuffer : public GLBufferBase
 {
 public:
   using VectorType = typename GLBufferContainer::Container<T>::Type;
@@ -28,7 +101,7 @@ public:
   using const_iterator = typename VectorType::const_iterator;
 
   GLBuffer(const QVector<T>& data = QVector<T>(), QOpenGLBuffer::Type type = QOpenGLBuffer::VertexBuffer)
-  : QOpenGLBuffer(type), m_data(data), m_dirty(true)
+  : GLBufferBase(glType, type), m_data(data)
   {
     // initializers only
   }
@@ -38,9 +111,9 @@ public:
   const_iterator begin() const { return m_data.begin(); }
   const_iterator end() const { return m_data.end(); }
 
-  inline int count() const { return m_data.length(); }
-  inline int bufferSize() const { return m_data.length() * elementSize(); }
-  int elementSize() const;
+  int count() const override { return m_data.length(); }
+  int elementSize() const override { return GLBufferContainer::Element<T>::Bytes; }
+  int elementLength() const override { return GLBufferContainer::Element<T>::Length; }
 
   const VectorType& vector() const { return m_data; };
 
@@ -71,77 +144,14 @@ public:
     return *this;
   }
 
-  bool bind()
-  {
-    if (!isCreated()) {
-      create();
-    }
-    bool ok = QOpenGLBuffer::bind();
-    if (ok && m_dirty) {
-      build();
-      m_dirty = false;
-    }
-    return ok;
-  }
-
 protected:
-  void build();
+  void build() override
+  {
+    GLBufferContainer::Container<T>::allocate(this, m_data, bufferSize());
+  }
 
 private:
   VectorType m_data;
-  bool m_dirty;
 };
-
-template <typename T>
-inline int GLBuffer<T>::elementSize() const
-{
-  return sizeof(T);
-}
-
-template <>
-inline int GLBuffer<QPointF>::elementSize() const
-{
-  return 2 * sizeof(GLfloat);
-}
-
-template <>
-inline int GLBuffer<QColor>::elementSize() const
-{
-  return 4 * sizeof(GLfloat);
-}
-
-template <typename T>
-inline void GLBuffer<T>::build()
-{
-  allocate(m_data.constData(), bufferSize());
-}
-
-template <>
-inline void GLBuffer<QPointF>::build()
-{
-  int numVertices = m_data.length();
-  QVector<GLfloat> vertices(3 * numVertices);
-  for (int i = 0, j = 0; i < numVertices; i++) {
-    const QPointF& point = m_data[i];
-    vertices[j++] = point.x();
-    vertices[j++] = point.y();
-  }
-  allocate(vertices.constData(), bufferSize());
-}
-
-template <>
-inline void GLBuffer<QColor>::build()
-{
-  int numColors = m_data.length();
-  QVector<GLfloat> colors(4 * numColors);
-  for (int i = 0, j = 0; i < numColors; i++) {
-    const QColor& c = m_data[i];
-    colors[j++] = c.redF();
-    colors[j++] = c.greenF();
-    colors[j++] = c.blueF();
-    colors[j++] = c.alphaF();
-  }
-  allocate(colors.constData(), bufferSize());
-}
 
 #endif
