@@ -9,6 +9,7 @@ GripItem::GripItem(int id, QGraphicsItem* parent)
 : QObject(nullptr), QGraphicsRectItem(-3, -3, 6, 6, parent), m_id(id)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
+  setFlag(QGraphicsItem::ItemIsSelectable, true);
   setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
   setFlag(QGraphicsItem::ItemIgnoresParentOpacity, true);
   setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);

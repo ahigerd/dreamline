@@ -53,3 +53,21 @@ void EditorView::pinchGesture(QPinchGesture* gesture)
     translate(delta.x(), delta.y());
   }
 }
+
+void EditorView::mousePressEvent(QMouseEvent* event)
+{
+  if (event->button() == Qt::LeftButton) {
+    setDragMode(RubberBandDrag);
+  } else if (event->button() == Qt::MiddleButton) {
+    setDragMode(ScrollHandDrag);
+  } else {
+    setDragMode(NoDrag);
+  }
+  QGraphicsView::mousePressEvent(event);
+}
+
+void EditorView::mouseReleaseEvent(QMouseEvent* event)
+{
+  QGraphicsView::mouseReleaseEvent(event);
+  setDragMode(NoDrag);
+}
