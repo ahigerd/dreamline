@@ -1,5 +1,6 @@
 #include "dreamproject.h"
 #include "polygonitem.h"
+#include "qnamespace.h"
 #include <QGraphicsRectItem>
 #include <QPalette>
 #include <QPainter>
@@ -36,7 +37,7 @@ void DreamProject::drawBackground(QPainter* p, const QRectF& rect)
 {
   p->fillRect(rect, backgroundBrush());
 
-  p->setBrush(palette().brush(QPalette::Base));
-  p->setPen(QPen(palette().color(QPalette::WindowText), 0));
+  p->setBrush(Qt::white);
+  p->setPen(QPen(Qt::black));
   p->drawRect(pageRect);
 }
