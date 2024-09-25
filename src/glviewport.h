@@ -9,21 +9,8 @@
 #include <QMap>
 #include <QString>
 #include <QTransform>
+#include "boundprogram.h"
 class QOpenGLContext;
-class QOpenGLShaderProgram;
-
-struct BoundProgram
-{
-  BoundProgram(QOpenGLShaderProgram* program, QOpenGLVertexArrayObject* vao);
-  BoundProgram(const BoundProgram& other) = delete;
-  BoundProgram(BoundProgram&& other) = delete;
-  ~BoundProgram();
-
-  inline QOpenGLShaderProgram* operator->() { return program; }
-
-  QOpenGLShaderProgram* program;
-  QOpenGLVertexArrayObject* vao;
-};
 
 class GLViewport : public QOpenGLWidget, public QOpenGLFunctions
 {

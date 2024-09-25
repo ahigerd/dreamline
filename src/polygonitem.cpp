@@ -123,10 +123,7 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWid
 
   BoundProgram program = isPoly ? gl->useShader("polyramp", m_vbo.count()) : gl->useShader("ramp");
 
-  program->enableAttributeArray(0);
-  m_vbo.bind();
-  program->setAttributeBuffer(0, GL_FLOAT, 0, 2, 2 * sizeof(float));
-  gl->glEnableVertexAttribArray(0);
+  program.bindAttributeBuffer(0, m_vbo);
 
   QVector<QVector2D> verts(m_vbo.count());
   for (int i = 0; i < m_vbo.count(); i++) {
@@ -143,10 +140,7 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWid
     }
     program->setUniformValueArray("colors", colors.constData(), colors.size());
   } else {
-    program->enableAttributeArray(1);
-    m_colorBuffer.bind();
-    program->setAttributeBuffer(1, GL_FLOAT, 0, 4, 4 * sizeof(float));
-    gl->glEnableVertexAttribArray(1);
+    program.bindAttributeBuffer(1, m_colorBuffer);
   }
 
   QTransform transform = gl->transform();

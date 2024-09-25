@@ -17,6 +17,8 @@ public:
 
 protected:
   bool viewportEvent(QEvent* event);
+  void mousePressEvent(QMouseEvent* event);
+  void mouseReleaseEvent(QMouseEvent* event);
 
 private:
   void pinchGesture(QPinchGesture* gesture);
