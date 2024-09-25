@@ -1,7 +1,6 @@
 #ifndef DL_GRIPITEM_H
 #define DL_GRIPITEM_H
 
-#include <QApplication>
 #include <QGraphicsRectItem>
 #include <QObject>
 #include <QColor>

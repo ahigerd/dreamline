@@ -1,10 +1,9 @@
+#include "gripitem.h"
 #include <QContextMenuEvent>
 #include <QGraphicsSceneHoverEvent>
 #include <QColorDialog>
 #include <QColor>
 #include <QMenu>
-#include "gripitem.h"
-#include "qgraphicsitem.h"
 
 GripItem::GripItem(int id, QGraphicsItem* parent)
 : QObject(nullptr), QGraphicsRectItem(-3, -3, 6, 6, parent), m_id(id)
