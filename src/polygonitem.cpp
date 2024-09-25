@@ -28,6 +28,7 @@ PolygonItem::PolygonItem(QGraphicsItem* parent)
   for (int i = 0; i < numVertices; i++) {
     GripItem* grip = new GripItem(i, this);
     grip->setPos(m_vbo[i]);
+    grip->setBrush(m_colorBuffer[i]);
     m_grips.append(grip);
     QObject::connect(grip, SIGNAL(moved(int, QPointF)), this, SLOT(moveVertex(int, QPointF)));
     QObject::connect(grip, SIGNAL(colorChanged(int, QColor)), this, SLOT(changeColor(int, QColor)));
@@ -97,6 +98,7 @@ void PolygonItem::insertVertex(EdgeItem* edge, const QPointF& pos)
     (leftColor.blue() * t) + (rightColor.blue() * (1.0f - t))
   );
   QVector<QColor> colors = m_colorBuffer.vector();
+  grip->setBrush(newColor);
   colors.insert(index, newColor);
   m_colorBuffer = colors;
 
