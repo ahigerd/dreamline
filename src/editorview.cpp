@@ -22,7 +22,6 @@
 EditorView::EditorView(QWidget* parent)
 : QGraphicsView(parent), isPanning(false), isResizingRing(false), ringSize(10)
 {
-  timer.start();
   glViewport = new GLViewport(this);
   glViewport->grabGesture(Qt::PinchGesture);
   setMouseTracking(true);
