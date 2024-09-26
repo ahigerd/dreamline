@@ -10,13 +10,16 @@
 #include <QWindow>
 
 EditorView::EditorView(QWidget* parent)
-: QGraphicsView(parent)
+: QGraphicsView(parent), isPanning(false), isResizingRing(false), ringSize(10)
 {
   glViewport = new GLViewport(this);
   glViewport->grabGesture(Qt::PinchGesture);
+  setMouseTracking(true);
+  glViewport->setMouseTracking(true);
 
   setViewport(glViewport);
   setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+  setDragMode(NoDrag);
 }
 
 void EditorView::newProject()
@@ -69,9 +72,11 @@ void EditorView::mousePressEvent(QMouseEvent* event)
   } else if (event->button() == Qt::MiddleButton) {
     setDragMode(ScrollHandDrag);
     isPanning = true;
-    panStart = event->pos();
+    dragStart = event->pos();
   } else {
     setDragMode(NoDrag);
+    isResizingRing = true;
+    dragStart = event->globalPos();
   }
   QGraphicsView::mousePressEvent(event);
 }
@@ -79,22 +84,59 @@ void EditorView::mousePressEvent(QMouseEvent* event)
 void EditorView::mouseMoveEvent(QMouseEvent* event)
 {
   if (isPanning) {
-    QPoint delta = panStart - event->pos();
+    QPoint delta = dragStart - event->pos();
     if (!delta.isNull()) {
       horizontalScrollBar()->setValue(horizontalScrollBar()->value() + delta.x());
       verticalScrollBar()->setValue(verticalScrollBar()->value() + delta.y());
-      panStart = event->pos();
+      dragStart = event->pos();
     }
+  } else if (isResizingRing) {
+    ringSize = QLineF(dragStart, event->globalPos()).length();
   } else {
     QGraphicsView::mouseMoveEvent(event);
   }
+  updateMouseRect();
 }
 
 void EditorView::mouseReleaseEvent(QMouseEvent* event)
 {
   if (event->button() == Qt::MiddleButton) {
     isPanning = false;
+  } else if (event->button() == Qt::RightButton) {
+    isResizingRing = false;
   }
   QGraphicsView::mouseReleaseEvent(event);
   setDragMode(NoDrag);
+  updateMouseRect();
+}
+
+void EditorView::updateMouseRect()
+{
+  QPointF center = mapToScene(mapFromGlobal(QCursor::pos()));
+  QRectF mouseRect(center.x() - ringSize - 1.5, center.y() - ringSize - 1.5, 2 * ringSize + 3, 2 * ringSize + 3);
+  updateScene({ mouseRect, lastMouseRect });
+  lastMouseRect = mouseRect;
+}
+
+void EditorView::drawForeground(QPainter* p, const QRectF& rect)
+{
+  QGraphicsView::drawForeground(p, rect);
+  if (isPanning) {
+    return;
+  }
+  p->resetTransform();
+  QPointF center = mapFromGlobal(QCursor::pos());
+  p->setRenderHint(QPainter::Antialiasing);
+  p->setPen(QPen(Qt::black, 3.5));
+  p->drawEllipse(center, ringSize, ringSize);
+  p->setPen(QPen(Qt::white, 1.5));
+  p->drawEllipse(center, ringSize, ringSize);
+  /*
+  if (isResizingRing) {
+    QPen pen(Qt::black, 0);
+    pen.setCosmetic(true);
+    p->setPen(pen);
+    p->drawLine(center, mapFromGlobal(dragStart));
+  }
+  */
 }

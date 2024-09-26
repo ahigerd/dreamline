@@ -21,14 +21,18 @@ protected:
   void mousePressEvent(QMouseEvent* event);
   void mouseMoveEvent(QMouseEvent* event);
   void mouseReleaseEvent(QMouseEvent* event);
+  void drawForeground(QPainter* p, const QRectF& rect);
 
 private:
   void pinchGesture(QPinchGesture* gesture);
+  void updateMouseRect();
 
   GLViewport* glViewport;
   DreamProject* project;
-  bool isPanning;
-  QPoint panStart;
+  bool isPanning, isResizingRing;
+  float ringSize;
+  QPoint dragStart;
+  QRectF lastMouseRect;
 };
 
 #endif

@@ -4,9 +4,10 @@
 #include <QColorDialog>
 #include <QColor>
 #include <QMenu>
+#include <QPen>
 
 GripItem::GripItem(int id, QGraphicsItem* parent)
-: QObject(nullptr), QGraphicsRectItem(-3, -3, 6, 6, parent), m_id(id)
+: QObject(nullptr), QGraphicsRectItem(-3.5, -3.5, 7, 7, parent), m_id(id)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
   setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -14,6 +15,9 @@ GripItem::GripItem(int id, QGraphicsItem* parent)
   setFlag(QGraphicsItem::ItemIgnoresParentOpacity, true);
   setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
   setZValue(1);
+  QPen pen(Qt::black, 1);
+  pen.setCosmetic(true);
+  setPen(pen);
 }
 
 QVariant GripItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)

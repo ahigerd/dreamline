@@ -1,6 +1,5 @@
 #include "dreamproject.h"
 #include "polygonitem.h"
-#include "qnamespace.h"
 #include <QGraphicsRectItem>
 #include <QPalette>
 #include <QPainter>
