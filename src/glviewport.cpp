@@ -9,6 +9,7 @@
 #include <QtDebug>
 #include <QGraphicsView>
 #include <QGraphicsItem>
+#include <QCursor>
 
 static QMap<QOpenGLContext*, GLViewport*> ctxMap;
 static const QMap<QOpenGLShader::ShaderType, QString> shaderTypeNames{
@@ -24,16 +25,12 @@ GLViewport* GLViewport::instance(QOpenGLContext* ctx)
 GLViewport::GLViewport(QWidget* parent)
 : QOpenGLWidget(parent)
 {
-  setAttribute(Qt::WA_NativeWindow);
-
   QSurfaceFormat format;
   format.setRenderableType(QSurfaceFormat::OpenGL);
   format.setProfile(QSurfaceFormat::CoreProfile);
   format.setVersion(4, 1);
-
-  windowHandle()->setSurfaceType(QSurface::OpenGLSurface);
-  windowHandle()->setFormat(format);
-  windowHandle()->create();
+  format.setSamples(16);
+  setFormat(format);
 }
 
 GLViewport::~GLViewport()

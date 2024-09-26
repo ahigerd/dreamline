@@ -2,8 +2,10 @@
 #define DL_EDITORVIEW_H
 
 #include <QGraphicsView>
+class DreamProject;
 class QPinchGesture;
 class GLViewport;
+class GripItem;
 
 class EditorView : public QGraphicsView
 {
@@ -15,15 +17,25 @@ public:
   // void openProject(const QString& path);
   // void saveProject(const QString& path);
 
+  QList<GripItem*> verticesInRing() const;
+
 protected:
   bool viewportEvent(QEvent* event);
   void mousePressEvent(QMouseEvent* event);
+  void mouseMoveEvent(QMouseEvent* event);
   void mouseReleaseEvent(QMouseEvent* event);
+  void drawForeground(QPainter* p, const QRectF& rect);
 
 private:
   void pinchGesture(QPinchGesture* gesture);
+  void updateMouseRect();
 
   GLViewport* glViewport;
+  DreamProject* project;
+  bool isPanning, isResizingRing;
+  float ringSize, originalRingSize;
+  QPoint dragStart;
+  QRectF lastMouseRect;
 };
 
 #endif

@@ -147,7 +147,7 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWid
   program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
   program->setUniformValue("scale", transform.m11(), transform.m22());
 
-  gl->glDrawArrays(GL_POLYGON, 0, m_vbo.count());
+  gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vbo.count());
   if (isPoly) {
     m_colorBuffer.release();
   }
