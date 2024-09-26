@@ -16,6 +16,7 @@ public:
 
   void changeColor(QColor& color);
 
+  void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*);
 
 signals:
   void moved(int id, const QPointF& pos);

@@ -2,7 +2,9 @@
 #define DL_EDITORVIEW_H
 
 #include "qevent.h"
+#include "qglobal.h"
 #include <QGraphicsView>
+#include <QElapsedTimer>
 class DreamProject;
 class QPinchGesture;
 class GLViewport;
@@ -32,9 +34,11 @@ private:
   void pinchGesture(QPinchGesture* gesture);
   void updateMouseRect();
 
-  void contextMenuEvent(QContextMenuEvent* event);
+  void contextMenu(QMouseEvent* event);
   void selectColor();
 
+  QElapsedTimer timer;
+  qint64 rightClickStart;
   GLViewport* glViewport;
   DreamProject* project;
   bool isPanning, isResizingRing;

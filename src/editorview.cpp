@@ -22,6 +22,7 @@
 EditorView::EditorView(QWidget* parent)
 : QGraphicsView(parent), isPanning(false), isResizingRing(false), ringSize(10)
 {
+  timer.start();
   glViewport = new GLViewport(this);
   glViewport->grabGesture(Qt::PinchGesture);
   setMouseTracking(true);
@@ -91,6 +92,7 @@ void EditorView::mousePressEvent(QMouseEvent* event)
     isPanning = true;
     dragStart = event->pos();
   } else {
+    rightClickStart = timer.elapsed();
     setDragMode(NoDrag);
     isResizingRing = true;
     dragStart = event->globalPos();
@@ -137,6 +139,9 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
     QCursor::setPos(dragStart);
 #endif
     unsetCursor();
+    if (timer.elapsed() - rightClickStart < 300) {
+      contextMenu(event);
+    }
   }
   QGraphicsView::mouseReleaseEvent(event);
   setDragMode(NoDrag);
@@ -181,7 +186,7 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
   */
 }
 
-void EditorView::contextMenuEvent(QContextMenuEvent* event)
+void EditorView::contextMenu(QMouseEvent* event)
 {
   QMenu menu;
   QAction* colorAction = menu.addAction(tr("Change Color..."));
