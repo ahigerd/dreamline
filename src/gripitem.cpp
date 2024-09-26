@@ -37,7 +37,7 @@ void GripItem::reindex(int newId)
 }
 
 
-void GripItem::changeColor(QColor& color)
+void GripItem::changeColor(const QColor& color)
 {
   setBrush(color);
   emit colorChanged(m_id, color);

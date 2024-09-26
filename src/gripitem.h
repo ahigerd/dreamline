@@ -14,7 +14,7 @@ public:
 
   void reindex(int newId);
 
-  void changeColor(QColor& color);
+  void changeColor(const QColor& color);
 
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*);
 
