@@ -74,7 +74,17 @@ void EditorView::mousePressEvent(QMouseEvent* event)
     return;
   }
   if (event->button() == Qt::LeftButton) {
-    setDragMode(RubberBandDrag);
+    auto items = scene()->selectedItems();
+    QList<GripItem*> grips;
+    for (QGraphicsItem* item : items) {
+      GripItem* grip = dynamic_cast<GripItem*>(item);
+      grip->setSelected(false);
+    }
+    QList<GripItem*> gripsInRing = verticesInRing();
+    for (GripItem* item : gripsInRing)
+    {
+      item->setSelected(true);
+    }
   } else if (event->button() == Qt::MiddleButton) {
     setDragMode(ScrollHandDrag);
     isPanning = true;
