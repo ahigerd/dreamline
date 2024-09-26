@@ -12,7 +12,7 @@ public:
   GripItem(int id, QGraphicsItem* parent = nullptr);
 
   void reindex(int newId);
-
+  void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*);
 
 signals:
   void moved(int id, const QPointF& pos);

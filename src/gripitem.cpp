@@ -1,13 +1,15 @@
 #include "gripitem.h"
 #include <QContextMenuEvent>
 #include <QGraphicsSceneHoverEvent>
+#include <QStyleOptionGraphicsItem>
 #include <QColorDialog>
 #include <QColor>
 #include <QMenu>
 #include <QPen>
+#include <QPainter>
 
 GripItem::GripItem(int id, QGraphicsItem* parent)
-: QObject(nullptr), QGraphicsRectItem(-3.5, -3.5, 7, 7, parent), m_id(id)
+: QObject(nullptr), QGraphicsRectItem(-4.5, -4.5, 9, 9, parent), m_id(id)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
   setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -52,4 +54,15 @@ void GripItem::selectColor(QGraphicsSceneContextMenuEvent* event)
     setBrush(color);
     emit colorChanged(m_id, color);
   }
+}
+
+void GripItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*)
+{
+  if (option->state & QStyle::State_Selected) {
+    painter->setPen(option->palette.color(QPalette::Highlight));
+    painter->drawRect(rect());
+  }
+  painter->setPen(pen());
+  painter->setBrush(brush());
+  painter->drawRect(rect().adjusted(1, 1, -1, -1));
 }
