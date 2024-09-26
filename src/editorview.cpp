@@ -1,6 +1,7 @@
 #include "editorview.h"
 #include "glviewport.h"
 #include "dreamproject.h"
+#include "gripitem.h"
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
 #include <QScrollBar>
@@ -102,6 +103,7 @@ void EditorView::mouseMoveEvent(QMouseEvent* event)
     int delta = event->globalPos().x() - dragStart.x();
     ringSize = originalRingSize + delta;
     if (ringSize < 3) {
+      originalRingSize = 3 - delta;
       ringSize = 3;
     }
 #else
@@ -119,6 +121,7 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
     isPanning = false;
   } else if (event->button() == Qt::RightButton) {
     isResizingRing = false;
+    updateMouseRect();
 #if ALT_RING_MODE
     QCursor::setPos(dragStart);
 #endif
@@ -126,7 +129,6 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
   }
   QGraphicsView::mouseReleaseEvent(event);
   setDragMode(NoDrag);
-  updateMouseRect();
 }
 
 void EditorView::updateMouseRect()
@@ -150,10 +152,14 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
   QPointF center = mapFromGlobal(QCursor::pos());
 #endif
   p->setRenderHint(QPainter::Antialiasing);
-  p->setPen(QPen(Qt::black, 3.5));
+  p->setPen(QPen(Qt::black, 4));
   p->drawEllipse(center, ringSize, ringSize);
-  p->setPen(QPen(Qt::white, 1.5));
+  p->setPen(QPen(Qt::white, 2));
   p->drawEllipse(center, ringSize, ringSize);
+  p->setPen(QPen(QColor(128, 128, 128), 1.5));
+  p->drawEllipse(center + QPointF(0.5, 0.5), ringSize, ringSize);
+  p->setPen(QPen(Qt::white, 1));
+  p->drawEllipse(center - QPointF(0.5, 0.5), ringSize, ringSize);
   /*
   if (isResizingRing) {
     QPen pen(Qt::black, 0);
@@ -166,5 +172,18 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
 
 QList<GripItem*> EditorView::verticesInRing() const
 {
-  return QList<GripItem*>();
+  QPainterPath p;
+  QPointF center = mapToScene(mapFromGlobal(QCursor::pos()));
+  double scale = 1.0 / transform().m11();
+  p.addEllipse(center, ringSize * scale, ringSize * scale);
+
+  auto items = scene()->items(p, Qt::IntersectsItemShape, Qt::DescendingOrder, transform());
+  QList<GripItem*> grips;
+  for (QGraphicsItem* item : items) {
+    GripItem* grip = dynamic_cast<GripItem*>(item);
+    if (grip) {
+      grips << grip;
+    }
+  }
+  return grips;
 }
