@@ -1,18 +1,23 @@
 #include "mainwindow.h"
 #include "editorview.h"
+#include "tool.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMenuBar>
+#include <QToolBar>
+#include <QStyle>
+#include <QActionGroup>
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
 {
-  setMenuBar(new QMenuBar(this));
-  makeFileMenu();
-
   editor = new EditorView(this);
   setCentralWidget(editor);
+
+  setMenuBar(new QMenuBar(this));
+  makeFileMenu();
+  makeToolMenu();
 
   fileNew();
 }
@@ -24,14 +29,47 @@ void MainWindow::makeFileMenu()
 {
   QMenu* fileMenu = new QMenu(tr("&File"), this);
   menuBar()->addMenu(fileMenu);
-  fileMenu->addAction(tr("&New"), this, SLOT(fileNew()), QStringLiteral("Ctrl+N"));
-  fileMenu->addAction(tr("&Open..."), this, SLOT(fileOpen()), QStringLiteral("Ctrl+O"));
-  fileMenu->addAction(tr("&Save"), this, SLOT(fileSave()), QStringLiteral("Ctrl+S"));
+  QAction* aNew = fileMenu->addAction(tr("&New"), this, SLOT(fileNew()), QStringLiteral("Ctrl+N"));
+  QAction* aOpen = fileMenu->addAction(tr("&Open..."), this, SLOT(fileOpen()), QStringLiteral("Ctrl+O"));
+  QAction* aSave = fileMenu->addAction(tr("&Save"), this, SLOT(fileSave()), QStringLiteral("Ctrl+S"));
   fileMenu->addAction(tr("Save &As..."), this, SLOT(fileSaveAs()), QStringLiteral("Ctrl+Shift+S"));
   fileMenu->addSeparator();
   fileMenu->addAction(tr("&Export..."), this, SLOT(fileExport()), QStringLiteral("Ctrl+E"));
   fileMenu->addSeparator();
   fileMenu->addAction(tr("E&xit"), qApp, SLOT(quit()));
+
+  QToolBar* fileBar = new QToolBar(tr("&File"), this);
+  addToolBar(Qt::TopToolBarArea, fileBar);
+  aNew->setIcon(style()->standardIcon(QStyle::SP_FileIcon));
+  fileBar->addAction(aNew);
+  aOpen->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+  fileBar->addAction(aOpen);
+  aSave->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+  fileBar->addAction(aSave);
+
+  fileBar->setIconSize(QSize(16, 16));
+}
+
+void MainWindow::makeToolMenu()
+{
+  QActionGroup* toolGroup = new QActionGroup(this);
+
+  QMenu* toolMenu = new QMenu(tr("&Tools"), this);
+  menuBar()->addMenu(toolMenu);
+
+  QToolBar* toolBar = new QToolBar(tr("&Tools"), this);
+  addToolBar(Qt::LeftToolBarArea, toolBar);
+
+  QAction* aMove = Tool::makeAction(toolGroup, Tool::MoveVertex);
+  toolMenu->addAction(aMove);
+  toolBar->addAction(aMove);
+  QAction* aColor = Tool::makeAction(toolGroup, Tool::Color);
+  toolMenu->addAction(aColor);
+  toolBar->addAction(aColor);
+
+  aMove->setChecked(true);
+
+  QObject::connect(toolGroup, SIGNAL(triggered(QAction*)), editor, SLOT(setTool(QAction*)));
 }
 
 void MainWindow::fileNew()

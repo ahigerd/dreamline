@@ -26,6 +26,7 @@ private slots:
 
 private:
   void makeFileMenu();
+  void makeToolMenu();
 
   EditorView* editor;
   QString savePath;

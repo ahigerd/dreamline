@@ -2,6 +2,8 @@
 #include "glviewport.h"
 #include "dreamproject.h"
 #include "gripitem.h"
+#include "tool.h"
+#include <QAction>
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
 #include <QScrollBar>
@@ -16,7 +18,7 @@
 #define ALT_RING_MODE 2
 
 EditorView::EditorView(QWidget* parent)
-: QGraphicsView(parent), isPanning(false), isResizingRing(false), ringSize(10)
+: QGraphicsView(parent), isPanning(false), isResizingRing(false), ringSize(10), currentTool(nullptr)
 {
   glViewport = new GLViewport(this);
   glViewport->grabGesture(Qt::PinchGesture);
@@ -206,4 +208,11 @@ QList<GripItem*> EditorView::verticesInRing() const
     }
   }
   return grips;
+}
+
+void EditorView::setTool(QAction* toolAction)
+{
+  Tool::Type type = Tool::Type(toolAction->data().toInt());
+  qDebug() << "Selected:" << type;
+  currentTool = Tool::get(type);
 }

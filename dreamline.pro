@@ -13,8 +13,8 @@ OBJECTS_DIR = .build
 RCC_DIR = .build
 MOC_DIR = .build
 
-HEADERS += src/mainwindow.h   src/gripitem.h   src/polygonitem.h
-SOURCES += src/mainwindow.cpp src/gripitem.cpp src/polygonitem.cpp
+HEADERS += src/mainwindow.h   src/gripitem.h   src/polygonitem.h   src/tool.h
+SOURCES += src/mainwindow.cpp src/gripitem.cpp src/polygonitem.cpp src/tool.cpp
 
 HEADERS += src/editorview.h   src/glviewport.h   src/edgeitem.h
 SOURCES += src/editorview.cpp src/glviewport.cpp src/edgeitem.cpp
