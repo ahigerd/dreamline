@@ -99,7 +99,11 @@ void EditorView::mouseMoveEvent(QMouseEvent* event)
     }
   } else if (isResizingRing) {
 #if ALT_RING_MODE == 2
-    ringSize = originalRingSize * std::pow(1.01, event->globalPos().x() - dragStart.x());
+    int delta = event->globalPos().x() - dragStart.x();
+    ringSize = originalRingSize + delta;
+    if (ringSize < 3) {
+      ringSize = 3;
+    }
 #else
     ringSize = QLineF(dragStart, event->globalPos()).length();
 #endif
