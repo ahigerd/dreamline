@@ -139,6 +139,7 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
     QCursor::setPos(dragStart);
 #endif
     unsetCursor();
+    update();
     if (timer.elapsed() - rightClickStart < 300) {
       contextMenu(event);
     }
