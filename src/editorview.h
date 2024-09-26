@@ -1,8 +1,7 @@
 #ifndef DL_EDITORVIEW_H
 #define DL_EDITORVIEW_H
 
-#include "qevent.h"
-#include "qglobal.h"
+#include <QMouseEvent>
 #include <QGraphicsView>
 #include <QElapsedTimer>
 class DreamProject;

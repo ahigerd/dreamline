@@ -2,7 +2,6 @@
 #include "glviewport.h"
 #include "dreamproject.h"
 #include "gripitem.h"
-#include "qnamespace.h"
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
 #include <QScrollBar>

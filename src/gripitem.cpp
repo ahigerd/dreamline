@@ -1,5 +1,4 @@
 #include "gripitem.h"
-#include "qcolor.h"
 #include <QContextMenuEvent>
 #include <QGraphicsSceneHoverEvent>
 #include <QStyleOptionGraphicsItem>
