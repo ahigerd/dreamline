@@ -34,7 +34,7 @@ private:
   void pinchGesture(QPinchGesture* gesture);
   void updateMouseRect();
 
-  void contextMenu(QMouseEvent* event);
+  void contextMenu(const QPoint& pos);
   void selectColor();
 
   QElapsedTimer timer;

@@ -92,7 +92,7 @@ void EditorView::mousePressEvent(QMouseEvent* event)
     isPanning = true;
     dragStart = event->pos();
   } else {
-    rightClickStart = timer.elapsed();
+    timer.start();
     setDragMode(NoDrag);
     isResizingRing = true;
     dragStart = event->globalPos();
@@ -139,9 +139,8 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
     QCursor::setPos(dragStart);
 #endif
     unsetCursor();
-    update();
-    if (timer.elapsed() - rightClickStart < 300) {
-      contextMenu(event);
+    if (timer.elapsed() < 250) {
+      contextMenu(event->globalPos());
     }
   }
   QGraphicsView::mouseReleaseEvent(event);
@@ -187,11 +186,11 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
   */
 }
 
-void EditorView::contextMenu(QMouseEvent* event)
+void EditorView::contextMenu(const QPoint& pos)
 {
   QMenu menu;
   QAction* colorAction = menu.addAction(tr("Change Color..."));
-  QAction* selected = menu.exec(event->globalPos());
+  QAction* selected = menu.exec(pos);
   if (selected == colorAction) {
     selectColor();
     return;
