@@ -38,7 +38,6 @@ private:
   void selectColor();
 
   QElapsedTimer timer;
-  qint64 rightClickStart;
   GLViewport* glViewport;
   DreamProject* project;
   bool isPanning, isResizingRing;
