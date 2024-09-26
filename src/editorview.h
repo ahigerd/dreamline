@@ -5,6 +5,7 @@
 class DreamProject;
 class QPinchGesture;
 class GLViewport;
+class GripItem;
 
 class EditorView : public QGraphicsView
 {
@@ -15,6 +16,8 @@ public:
   void newProject();
   // void openProject(const QString& path);
   // void saveProject(const QString& path);
+
+  QList<GripItem*> verticesInRing() const;
 
 protected:
   bool viewportEvent(QEvent* event);
@@ -30,7 +33,7 @@ private:
   GLViewport* glViewport;
   DreamProject* project;
   bool isPanning, isResizingRing;
-  float ringSize;
+  float ringSize, originalRingSize;
   QPoint dragStart;
   QRectF lastMouseRect;
 };

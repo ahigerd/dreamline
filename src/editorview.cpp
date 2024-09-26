@@ -8,6 +8,11 @@
 #include <QPinchGesture>
 #include <QPalette>
 #include <QWindow>
+#include <cmath>
+
+// #define ALT_RING_MODE 0
+// #define ALT_RING_MODE 1
+#define ALT_RING_MODE 2
 
 EditorView::EditorView(QWidget* parent)
 : QGraphicsView(parent), isPanning(false), isResizingRing(false), ringSize(10)
@@ -77,6 +82,8 @@ void EditorView::mousePressEvent(QMouseEvent* event)
     setDragMode(NoDrag);
     isResizingRing = true;
     dragStart = event->globalPos();
+    originalRingSize = ringSize;
+    setCursor(Qt::BlankCursor);
   }
   QGraphicsView::mousePressEvent(event);
 }
@@ -91,7 +98,11 @@ void EditorView::mouseMoveEvent(QMouseEvent* event)
       dragStart = event->pos();
     }
   } else if (isResizingRing) {
+#if ALT_RING_MODE == 2
+    ringSize = originalRingSize * std::pow(1.01, event->globalPos().x() - dragStart.x());
+#else
     ringSize = QLineF(dragStart, event->globalPos()).length();
+#endif
   } else {
     QGraphicsView::mouseMoveEvent(event);
   }
@@ -104,6 +115,10 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
     isPanning = false;
   } else if (event->button() == Qt::RightButton) {
     isResizingRing = false;
+#if ALT_RING_MODE
+    QCursor::setPos(dragStart);
+#endif
+    unsetCursor();
   }
   QGraphicsView::mouseReleaseEvent(event);
   setDragMode(NoDrag);
@@ -125,7 +140,11 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
     return;
   }
   p->resetTransform();
+#if ALT_RING_MODE
+  QPointF center = mapFromGlobal(isResizingRing ? dragStart : QCursor::pos());
+#else
   QPointF center = mapFromGlobal(QCursor::pos());
+#endif
   p->setRenderHint(QPainter::Antialiasing);
   p->setPen(QPen(Qt::black, 3.5));
   p->drawEllipse(center, ringSize, ringSize);
@@ -139,4 +158,9 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
     p->drawLine(center, mapFromGlobal(dragStart));
   }
   */
+}
+
+QList<GripItem*> EditorView::verticesInRing() const
+{
+  return QList<GripItem*>();
 }
