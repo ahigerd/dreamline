@@ -1,6 +1,7 @@
 #ifndef DL_EDITORVIEW_H
 #define DL_EDITORVIEW_H
 
+#include "qevent.h"
 #include <QGraphicsView>
 class DreamProject;
 class QPinchGesture;
@@ -30,6 +31,9 @@ protected:
 private:
   void pinchGesture(QPinchGesture* gesture);
   void updateMouseRect();
+
+  void contextMenuEvent(QContextMenuEvent* event);
+  void selectColor();
 
   GLViewport* glViewport;
   DreamProject* project;

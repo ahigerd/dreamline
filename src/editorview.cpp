@@ -2,6 +2,7 @@
 #include "glviewport.h"
 #include "dreamproject.h"
 #include "gripitem.h"
+#include "qnamespace.h"
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
 #include <QScrollBar>
@@ -9,6 +10,9 @@
 #include <QPinchGesture>
 #include <QPalette>
 #include <QWindow>
+#include <QColorDialog>
+#include <QColor>
+#include <QMenu>
 #include <cmath>
 
 // #define ALT_RING_MODE 0
@@ -175,6 +179,28 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
     p->drawLine(center, mapFromGlobal(dragStart));
   }
   */
+}
+
+void EditorView::contextMenuEvent(QContextMenuEvent* event)
+{
+  QMenu menu;
+  QAction* colorAction = menu.addAction(tr("Change Color..."));
+  QAction* selected = menu.exec(event->globalPos());
+  if (selected == colorAction) {
+    selectColor();
+    return;
+  }
+}
+
+void EditorView::selectColor()
+{
+  QColor color = QColorDialog::getColor(Qt::white, this, "Select Color");
+  if (color.isValid())
+  {
+    for (GripItem* grip : getSelectedVertices()) {
+      grip->changeColor(color);
+    }
+  }
 }
 
 QList<GripItem*> EditorView::getSelectedVertices() const

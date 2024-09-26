@@ -1,6 +1,7 @@
 #ifndef DL_GRIPITEM_H
 #define DL_GRIPITEM_H
 
+#include "qcolor.h"
 #include <QGraphicsRectItem>
 #include <QObject>
 #include <QColor>
@@ -13,6 +14,8 @@ public:
 
   void reindex(int newId);
 
+  void changeColor(QColor& color);
+
 
 signals:
   void moved(int id, const QPointF& pos);
@@ -24,8 +27,6 @@ protected:
 private:
   int m_id;
 
-  void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
-  void selectColor(QGraphicsSceneContextMenuEvent* event);
 };
 
 #endif
