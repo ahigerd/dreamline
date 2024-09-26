@@ -198,8 +198,7 @@ void EditorView::contextMenu(const QPoint& pos)
 void EditorView::selectColor()
 {
   QColor color = QColorDialog::getColor(Qt::white, this, "Select Color");
-  if (color.isValid())
-  {
+  if (color.isValid()) {
     for (GripItem* grip : getSelectedVertices()) {
       grip->changeColor(color);
     }
