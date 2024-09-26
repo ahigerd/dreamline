@@ -74,10 +74,7 @@ void EditorView::mousePressEvent(QMouseEvent* event)
     return;
   }
   if (event->button() == Qt::LeftButton) {
-    auto items = scene()->selectedItems();
-    QList<GripItem*> grips;
-    for (QGraphicsItem* item : items) {
-      GripItem* grip = dynamic_cast<GripItem*>(item);
+    for (GripItem* grip : getSelectedVertices()) {
       grip->setSelected(false);
     }
     QList<GripItem*> gripsInRing = verticesInRing();
@@ -178,6 +175,19 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
     p->drawLine(center, mapFromGlobal(dragStart));
   }
   */
+}
+
+QList<GripItem*> EditorView::getSelectedVertices() const
+{
+  auto items = scene()->selectedItems();
+  QList<GripItem*> grips;
+  for (QGraphicsItem* item : items) {
+    GripItem* grip = dynamic_cast<GripItem*>(item);
+    if (grip) {
+      grips << grip;
+    }
+  }
+  return grips;
 }
 
 QList<GripItem*> EditorView::verticesInRing() const

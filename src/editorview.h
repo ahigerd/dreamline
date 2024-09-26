@@ -17,6 +17,7 @@ public:
   // void openProject(const QString& path);
   // void saveProject(const QString& path);
 
+  QList<GripItem*> getSelectedVertices() const;
   QList<GripItem*> verticesInRing() const;
 
 protected:
