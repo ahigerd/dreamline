@@ -301,8 +301,14 @@ void EditorView::setTool(QAction* toolAction)
 
 void EditorView::setTool(Tool::Type type)
 {
+  if (currentTool) {
+    currentTool->deactivated(this);
+  }
   qDebug() << "Selected:" << type;
   currentTool = Tool::get(type);
+  if (currentTool) {
+    currentTool->activated(this);
+  }
   setCursorFromTool();
 }
 
