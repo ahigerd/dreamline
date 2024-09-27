@@ -1,13 +1,15 @@
-#ifndef DL_TOOLS_COLOR_H
-#define DL_TOOLS_COLOR_H
+#ifndef DL_TOOLS_SPLITEDGE_H
+#define DL_TOOLS_SPLITEDGE_H
 
 #include "tool.h"
 
-class ColorTool : public BaseTool<ColorTool>
+class SplitEdgeTool : public BaseTool<SplitEdgeTool>
 {
 Q_OBJECT
 public:
-  ColorTool();
+  SplitEdgeTool();
+
+  virtual Qt::CursorShape cursorShape() const;
 
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event);

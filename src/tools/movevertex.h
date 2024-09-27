@@ -3,7 +3,8 @@
 
 #include "tool.h"
 
-class MoveVertexTool : public BaseTool<MoveVertexTool> {
+class MoveVertexTool : public BaseTool<MoveVertexTool>
+{
 Q_OBJECT
 public:
   MoveVertexTool();

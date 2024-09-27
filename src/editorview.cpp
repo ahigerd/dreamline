@@ -23,8 +23,8 @@
 #define ALT_RING_MODE 2
 
 EditorView::EditorView(QWidget* parent)
-: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), ringSize(20),
-  currentTool(Tool::get(Tool::MoveVertex)), underCursor(nullptr)
+: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), useRing(true),
+  ringSize(20), currentTool(nullptr), underCursor(nullptr)
 {
   glViewport = new GLViewport(this);
   glViewport->grabGesture(Qt::PinchGesture);
@@ -35,6 +35,7 @@ EditorView::EditorView(QWidget* parent)
   setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
   setDragMode(NoDrag);
   setCursor(Qt::BlankCursor);
+  setTool(Tool::MoveVertex);
 }
 
 void EditorView::newProject()
@@ -50,6 +51,7 @@ void EditorView::newProject()
   underCursor->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
   underCursor->setZValue(HUGE_VAL);
   project->addItem(underCursor);
+  setCursorFromTool();
 
   delete oldScene;
 }
@@ -164,7 +166,7 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
 #if ALT_RING_MODE
     QCursor::setPos(dragStart);
 #endif
-    setCursor(Qt::BlankCursor);
+    setCursorFromTool();
     if (timer.elapsed() < 250) {
       contextMenu(event->globalPos());
     }
@@ -211,7 +213,7 @@ void EditorView::updateMouseRect()
 void EditorView::drawForeground(QPainter* p, const QRectF& rect)
 {
   QGraphicsView::drawForeground(p, rect);
-  if (isPanning || !containsMouse) {
+  if (isPanning || !containsMouse || !useRing) {
     return;
   }
   p->resetTransform();
@@ -294,7 +296,34 @@ QList<GripItem*> EditorView::verticesInRing() const
 
 void EditorView::setTool(QAction* toolAction)
 {
-  Tool::Type type = Tool::Type(toolAction->data().toInt());
+  setTool(Tool::Type(toolAction->data().toInt()));
+}
+
+void EditorView::setTool(Tool::Type type)
+{
   qDebug() << "Selected:" << type;
   currentTool = Tool::get(type);
+  setCursorFromTool();
+}
+
+void EditorView::setCursorFromTool()
+{
+  if (currentTool) {
+    Qt::CursorShape shape = currentTool->cursorShape();
+    if (shape != Qt::BitmapCursor) {
+      setCursor(shape);
+      useRing = false;
+      if (underCursor) {
+        underCursor->hide();
+        updateMouseRect();
+      }
+      return;
+    }
+  }
+  setCursor(Qt::BlankCursor);
+  useRing = true;
+  if (underCursor) {
+    underCursor->show();
+    updateMouseRect();
+  }
 }

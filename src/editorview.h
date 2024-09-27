@@ -4,11 +4,11 @@
 #include <QMouseEvent>
 #include <QGraphicsView>
 #include <QElapsedTimer>
+#include "tool.h"
 class DreamProject;
 class QPinchGesture;
 class GLViewport;
 class GripItem;
-class Tool;
 
 class EditorView : public QGraphicsView
 {
@@ -25,6 +25,7 @@ public:
 
 public slots:
   void setTool(QAction* toolAction);
+  void setTool(Tool::Type type);
 
 protected:
   bool viewportEvent(QEvent* event);
@@ -39,6 +40,7 @@ protected:
 private:
   void pinchGesture(QPinchGesture* gesture);
   void updateMouseRect();
+  void setCursorFromTool();
 
   void contextMenu(const QPoint& pos);
   void selectColor();
@@ -46,7 +48,7 @@ private:
   QElapsedTimer timer;
   GLViewport* glViewport;
   DreamProject* project;
-  bool isPanning, isResizingRing, containsMouse;
+  bool isPanning, isResizingRing, containsMouse, useRing;
   float ringSize, originalRingSize;
   QPoint dragStart, lastDrag;
   QRectF lastMouseRect;

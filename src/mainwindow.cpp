@@ -63,9 +63,14 @@ void MainWindow::makeToolMenu()
   QAction* aMove = Tool::makeAction(toolGroup, Tool::MoveVertex);
   toolMenu->addAction(aMove);
   toolBar->addAction(aMove);
+
   QAction* aColor = Tool::makeAction(toolGroup, Tool::Color);
   toolMenu->addAction(aColor);
   toolBar->addAction(aColor);
+
+  QAction* aSplit = Tool::makeAction(toolGroup, Tool::SplitEdge);
+  toolMenu->addAction(aSplit);
+  toolBar->addAction(aSplit);
 
   aMove->setChecked(true);
 

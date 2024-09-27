@@ -1,6 +1,7 @@
 #include "tool.h"
 #include "tools/movevertex.h"
 #include "tools/color.h"
+#include "tools/splitedge.h"
 #include <QAction>
 #include <QActionGroup>
 #include <QIcon>
@@ -31,6 +32,7 @@ void Tool::initializeToolData()
   toolData = QMap<Tool::Type, ToolData>{
     { MoveVertex, { tr("&Move Vertex"), "", QKeySequence("v"), &MoveVertexTool::create } },
     { Color,      { tr("&Color"),       "", QKeySequence("c"), &ColorTool::create } },
+    { SplitEdge,  { tr("Split &Edge"),  "", QKeySequence("e"), &SplitEdgeTool::create } },
   };
 }
 
@@ -65,4 +67,20 @@ Tool::Tool()
 : QObject(nullptr)
 {
   // initializers only
+}
+
+Qt::CursorShape Tool::cursorShape() const
+{
+  // This special value means to use the selection ring
+  return Qt::BitmapCursor;
+}
+
+void Tool::activated(EditorView*)
+{
+  // no-op
+}
+
+void Tool::deactivated(EditorView*)
+{
+  // no-op
 }

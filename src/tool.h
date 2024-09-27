@@ -13,6 +13,7 @@ public:
   enum Type {
     MoveVertex,
     Color,
+    SplitEdge,
   };
   Q_ENUM(Type)
 
@@ -20,6 +21,11 @@ public:
 
   static QAction* makeAction(QActionGroup* group, Tool::Type type);
   static Tool* get(Tool::Type type);
+
+  virtual Qt::CursorShape cursorShape() const;
+
+  virtual void activated(EditorView* editor);
+  virtual void deactivated(EditorView* editor);
 
   // return true to cancel the original event handler
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event) = 0;
