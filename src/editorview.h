@@ -43,6 +43,7 @@ private:
   float ringSize, originalRingSize;
   QPoint dragStart;
   QRectF lastMouseRect;
+  QColor lastColor = Qt::blue;
 };
 
 #endif
