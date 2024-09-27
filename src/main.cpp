@@ -7,12 +7,6 @@
 
 int main(int argc, char** argv)
 {
-#if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
-  // at least on some Wayland systems, a bug causes the application to crash:
-  // "QSocketNotifier: Can only be used with threads started with QThread"
-  qputenv("QT_QPA_PLATFORM", "xcb");
-#endif
-
   QApplication::setApplicationName("Dreamline");
   QApplication::setApplicationVersion(DREAMLINE_VERSION_STRING);
   QApplication::setOrganizationName("Alkahest");
