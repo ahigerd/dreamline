@@ -7,6 +7,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
 #include <QScrollBar>
+#include <QWheelEvent>
 #include <QGestureEvent>
 #include <QPinchGesture>
 #include <QPalette>
@@ -186,6 +187,16 @@ void EditorView::leaveEvent(QEvent*)
 {
   containsMouse = false;
   updateMouseRect();
+}
+
+void EditorView::wheelEvent(QWheelEvent* event)
+{
+  if (event->modifiers() & Qt::ControlModifier) {
+    double factor = 1.0 + (event->angleDelta().y() / 1200.0);
+    scale(factor, factor);
+    return;
+  }
+  QGraphicsView::wheelEvent(event);
 }
 
 void EditorView::updateMouseRect()

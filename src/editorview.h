@@ -33,6 +33,7 @@ protected:
   void mouseReleaseEvent(QMouseEvent* event);
   void enterEvent(QEvent*);
   void leaveEvent(QEvent*);
+  void wheelEvent(QWheelEvent* event);
   void drawForeground(QPainter* p, const QRectF& rect);
 
 private:
