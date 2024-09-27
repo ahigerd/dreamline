@@ -10,8 +10,8 @@ MoveVertexTool::MoveVertexTool()
 
 bool MoveVertexTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  for (GripItem* grip : editor->getSelectedItems<GripItem>()) {
-    grip->setSelected(false);
+  for (GripItem* item : editor->getSelectedItems<GripItem>()) {
+    item->setSelected(false);
   }
   QList<GripItem*> gripsInRing = editor->itemsInRing<GripItem>();
   for (GripItem* item : gripsInRing)

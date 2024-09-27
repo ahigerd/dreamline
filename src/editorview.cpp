@@ -35,7 +35,7 @@ EditorView::EditorView(QWidget* parent)
   setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
   setDragMode(NoDrag);
   setCursor(Qt::BlankCursor);
-  setTool(Tool::MoveVertex);
+  setTool(Tool::VertexTool);
 }
 
 void EditorView::newProject()

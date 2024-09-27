@@ -11,8 +11,9 @@ class Tool : public QObject {
 Q_OBJECT
 public:
   enum Type {
-    MoveVertex,
-    Color,
+    VertexTool,
+    EdgeTool,
+    ColorTool,
     SplitEdge,
   };
   Q_ENUM(Type)
