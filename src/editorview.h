@@ -8,6 +8,7 @@ class DreamProject;
 class QPinchGesture;
 class GLViewport;
 class GripItem;
+class Tool;
 
 class EditorView : public QGraphicsView
 {
@@ -21,6 +22,9 @@ public:
 
   QList<GripItem*> getSelectedVertices() const;
   QList<GripItem*> verticesInRing() const;
+
+public slots:
+  void setTool(QAction* toolAction);
 
 protected:
   bool viewportEvent(QEvent* event);
@@ -44,6 +48,7 @@ private:
   QPoint dragStart;
   QRectF lastMouseRect;
   QColor lastColor = Qt::blue;
+  Tool* currentTool;
 };
 
 #endif
