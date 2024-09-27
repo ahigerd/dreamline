@@ -44,11 +44,18 @@ void GripItem::changeColor(const QColor& color)
 
 void GripItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*)
 {
+  double xFrac = painter->deviceTransform().dx();
+  xFrac = xFrac - int(xFrac);
+
+  double yFrac = painter->deviceTransform().dy();
+  yFrac = yFrac - int(yFrac);
+
+  QRectF r = rect().adjusted(-xFrac, -yFrac, -xFrac, -yFrac);
   if (option->state & QStyle::State_Selected) {
     painter->setPen(option->palette.color(QPalette::Highlight));
-    painter->drawRect(rect());
+    painter->drawRect(r);
   }
   painter->setPen(pen());
   painter->setBrush(brush());
-  painter->drawRect(rect().adjusted(1, 1, -1, -1));
+  painter->drawRect(r.adjusted(1, 1, -1, -1));
 }
