@@ -22,7 +22,8 @@
 #define ALT_RING_MODE 2
 
 EditorView::EditorView(QWidget* parent)
-: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), ringSize(10), currentTool(nullptr), underCursor(nullptr)
+: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), ringSize(10),
+  currentTool(Tool::get(Tool::MoveVertex)), underCursor(nullptr)
 {
   glViewport = new GLViewport(this);
   glViewport->grabGesture(Qt::PinchGesture);
@@ -88,13 +89,11 @@ void EditorView::mousePressEvent(QMouseEvent* event)
     return;
   }
   if (event->button() == Qt::LeftButton) {
-    for (GripItem* grip : getSelectedVertices()) {
-      grip->setSelected(false);
-    }
-    QList<GripItem*> gripsInRing = verticesInRing();
-    for (GripItem* item : gripsInRing)
-    {
-      item->setSelected(true);
+    if (currentTool) {
+      bool handled = currentTool->mousePressEvent(this, event);
+      if (handled) {
+        return;
+      }
     }
   } else if (event->button() == Qt::MiddleButton) {
     setDragMode(ScrollHandDrag);
@@ -142,13 +141,20 @@ void EditorView::mouseMoveEvent(QMouseEvent* event)
     ringSize = QLineF(dragStart, event->globalPos()).length();
 #endif
   } else {
-    QGraphicsView::mouseMoveEvent(event);
+    bool handled = false;
+    if (currentTool) {
+      handled = currentTool->mouseMoveEvent(this, event);
+    }
+    if (!handled) {
+      QGraphicsView::mouseMoveEvent(event);
+    }
   }
   updateMouseRect();
 }
 
 void EditorView::mouseReleaseEvent(QMouseEvent* event)
 {
+  bool handled = false;
   if (event->button() == Qt::MiddleButton) {
     isPanning = false;
   } else if (event->button() == Qt::RightButton) {
@@ -161,8 +167,12 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
     if (timer.elapsed() < 250) {
       contextMenu(event->globalPos());
     }
+  } else if (currentTool) {
+    handled = currentTool->mouseReleaseEvent(this, event);
   }
-  QGraphicsView::mouseReleaseEvent(event);
+  if (!handled) {
+    QGraphicsView::mouseReleaseEvent(event);
+  }
   setDragMode(NoDrag);
 }
 

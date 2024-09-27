@@ -1,4 +1,6 @@
 #include "tool.h"
+#include "tools/movevertex.h"
+#include "tools/color.h"
 #include <QAction>
 #include <QActionGroup>
 #include <QIcon>
@@ -52,6 +54,8 @@ Tool* Tool::get(Tool::Type type)
 {
   Tool* tool = tools[type];
   if (!tool) {
+    initializeToolData();
+
     tools[type] = tool = toolData[type].ctor();
   }
   return tool;
@@ -61,14 +65,4 @@ Tool::Tool()
 : QObject(nullptr)
 {
   // initializers only
-}
-
-MoveVertexTool::MoveVertexTool()
-: BaseTool()
-{
-}
-
-ColorTool::ColorTool()
-: BaseTool()
-{
 }

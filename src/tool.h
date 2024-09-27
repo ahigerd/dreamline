@@ -4,6 +4,8 @@
 #include <QApplication>
 class QAction;
 class QActionGroup;
+class EditorView;
+class QMouseEvent;
 
 class Tool : public QObject {
 Q_OBJECT
@@ -18,6 +20,11 @@ public:
 
   static QAction* makeAction(QActionGroup* group, Tool::Type type);
   static Tool* get(Tool::Type type);
+
+  // return true to cancel the original event handler
+  virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event) = 0;
+  virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event) = 0;
+  virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event) = 0;
 
 protected:
   Tool();
@@ -34,18 +41,6 @@ public:
 
 protected:
   BaseTool() : Tool() {}
-};
-
-class MoveVertexTool : public BaseTool<MoveVertexTool> {
-Q_OBJECT
-public:
-  MoveVertexTool();
-};
-
-class ColorTool : public BaseTool<ColorTool> {
-Q_OBJECT
-public:
-  ColorTool();
 };
 
 #endif
