@@ -23,7 +23,7 @@
 #define ALT_RING_MODE 2
 
 EditorView::EditorView(QWidget* parent)
-: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), ringSize(10),
+: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), ringSize(20),
   currentTool(Tool::get(Tool::MoveVertex)), underCursor(nullptr)
 {
   glViewport = new GLViewport(this);
