@@ -51,6 +51,7 @@ private:
   QRectF lastMouseRect;
   QColor lastColor = Qt::blue;
   Tool* currentTool;
+  QGraphicsRectItem* underCursor;
 };
 
 #endif

@@ -14,6 +14,7 @@
 #include <QColorDialog>
 #include <QColor>
 #include <QMenu>
+#include <QGraphicsRectItem>
 #include <cmath>
 
 // #define ALT_RING_MODE 0
@@ -21,7 +22,7 @@
 #define ALT_RING_MODE 2
 
 EditorView::EditorView(QWidget* parent)
-: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), ringSize(10), currentTool(nullptr)
+: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), ringSize(10), currentTool(nullptr), underCursor(nullptr)
 {
   glViewport = new GLViewport(this);
   glViewport->grabGesture(Qt::PinchGesture);
@@ -40,6 +41,13 @@ void EditorView::newProject()
 
   project = new DreamProject(QSizeF(8.5, 11), this);
   setScene(project);
+
+  underCursor = new QGraphicsRectItem(-1, -1, 2, 2);
+  underCursor->setPen(QColor(Qt::transparent));
+  underCursor->setFlag(QGraphicsItem::ItemIsMovable, true);
+  underCursor->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
+  underCursor->setZValue(HUGE_VAL);
+  project->addItem(underCursor);
 
   delete oldScene;
 }
@@ -173,6 +181,7 @@ void EditorView::leaveEvent(QEvent*)
 void EditorView::updateMouseRect()
 {
   QPointF center = mapToScene(mapFromGlobal(QCursor::pos()));
+  underCursor->setPos(center);
   QRectF mouseRect(center.x() - ringSize - 1.5, center.y() - ringSize - 1.5, 2 * ringSize + 3, 2 * ringSize + 3);
   updateScene({ mouseRect, lastMouseRect });
   lastMouseRect = mouseRect;
