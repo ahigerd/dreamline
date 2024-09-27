@@ -257,41 +257,10 @@ void EditorView::selectColor()
   QColor color = QColorDialog::getColor(lastColor, this, "Select Color");
   if (color.isValid()) {
     lastColor = color;
-    for (GripItem* grip : getSelectedVertices()) {
+    for (GripItem* grip : getSelectedItems<GripItem>()) {
       grip->changeColor(color);
     }
   }
-}
-
-QList<GripItem*> EditorView::getSelectedVertices() const
-{
-  auto items = scene()->selectedItems();
-  QList<GripItem*> grips;
-  for (QGraphicsItem* item : items) {
-    GripItem* grip = dynamic_cast<GripItem*>(item);
-    if (grip) {
-      grips << grip;
-    }
-  }
-  return grips;
-}
-
-QList<GripItem*> EditorView::verticesInRing() const
-{
-  QPainterPath p;
-  QPointF center = mapToScene(mapFromGlobal(QCursor::pos()));
-  double scale = 1.0 / transform().m11();
-  p.addEllipse(center, ringSize * scale, ringSize * scale);
-
-  auto items = scene()->items(p, Qt::IntersectsItemShape, Qt::DescendingOrder, transform());
-  QList<GripItem*> grips;
-  for (QGraphicsItem* item : items) {
-    GripItem* grip = dynamic_cast<GripItem*>(item);
-    if (grip) {
-      grips << grip;
-    }
-  }
-  return grips;
 }
 
 void EditorView::setTool(QAction* toolAction)
