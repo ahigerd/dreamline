@@ -10,14 +10,8 @@ using ToolConstructor = Tool*(*)();
 // XXX: This is a lot more complicated than it needs to be. When I remove
 // the QStyle::StandardPixmap stuff this will mostly disappear.
 struct ToolData {
-  ToolData() = default;
-  ToolData(const ToolData& other) = default;
-  ToolData(const QString& name, const QString& iconPath, const QKeySequence& shortcut, ToolConstructor ctor) : name(name), iconPath(iconPath), shortcut(shortcut), ctor(ctor) {}
-  // XXX: This is a temporary hack
-  ToolData(const QString& name, QStyle::StandardPixmap sp, const QKeySequence& shortcut, ToolConstructor ctor) : name(name), standardIcon(sp), shortcut(shortcut), ctor(ctor) {}
   QString name;
   QString iconPath;
-  QStyle::StandardPixmap standardIcon;
   QKeySequence shortcut;
   ToolConstructor ctor;
 };
@@ -33,11 +27,10 @@ void Tool::initializeToolData()
   }
 
   toolData = QMap<Tool::Type, ToolData>{
-    { MoveVertex, { tr("&Move Vertex"), QStyle::SP_ArrowRight, QKeySequence("v"), &MoveVertexTool::create } },
-    { Color, { tr("&Color"), QStyle::SP_ArrowLeft, QKeySequence("c"), &ColorTool::create } },
+    { MoveVertex, { tr("&Move Vertex"), "", QKeySequence("v"), &MoveVertexTool::create } },
+    { Color,      { tr("&Color"),       "", QKeySequence("c"), &ColorTool::create } },
   };
 }
-
 
 QAction* Tool::makeAction(QActionGroup* group, Tool::Type type)
 {
@@ -45,7 +38,7 @@ QAction* Tool::makeAction(QActionGroup* group, Tool::Type type)
 
   ToolData data = toolData[type];
 
-  QIcon icon = data.iconPath.isEmpty() ? qApp->style()->standardIcon(data.standardIcon) : QIcon(data.iconPath);
+  QIcon icon(data.iconPath);
   QAction* action = new QAction(icon, data.name, group);
   action->setCheckable(true);
   action->setShortcut(data.shortcut);
