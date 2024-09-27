@@ -1,7 +1,6 @@
 #include "editorview.h"
 #include "glviewport.h"
 #include "dreamproject.h"
-#include "gripitem.h"
 #include "tool.h"
 #include <QAction>
 #include <QGraphicsScene>
@@ -257,9 +256,6 @@ void EditorView::selectColor()
   QColor color = QColorDialog::getColor(lastColor, this, "Select Color");
   if (color.isValid()) {
     lastColor = color;
-    for (GripItem* grip : getSelectedItems<GripItem>()) {
-      grip->changeColor(color);
-    }
   }
 }
 

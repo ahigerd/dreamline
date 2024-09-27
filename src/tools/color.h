@@ -12,6 +12,9 @@ public:
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);
+
+private:
+  bool isDragging = false;
 };
 
 #endif
