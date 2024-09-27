@@ -35,25 +35,11 @@ void GripItem::reindex(int newId)
   m_id = newId;
 }
 
-void GripItem::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
-{
-  QMenu menu;
-  QAction* colorAction = menu.addAction(tr("&Color..."));
-  QAction* selected = menu.exec(event->screenPos());
-  if (selected == colorAction) {
-    selectColor(event);
-    return;
-  }
-}
 
-void GripItem::selectColor(QGraphicsSceneContextMenuEvent* event)
+void GripItem::changeColor(const QColor& color)
 {
-  QColor color = QColorDialog::getColor(brush().color(), event->widget(), "Select Color");
-  if (color.isValid())
-  {
-    setBrush(color);
-    emit colorChanged(m_id, color);
-  }
+  setBrush(color);
+  emit colorChanged(m_id, color);
 }
 
 void GripItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*)

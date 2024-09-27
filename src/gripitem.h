@@ -12,6 +12,9 @@ public:
   GripItem(int id, QGraphicsItem* parent = nullptr);
 
   void reindex(int newId);
+
+  void changeColor(const QColor& color);
+
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*);
 
 signals:
@@ -24,8 +27,6 @@ protected:
 private:
   int m_id;
 
-  void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
-  void selectColor(QGraphicsSceneContextMenuEvent* event);
 };
 
 #endif

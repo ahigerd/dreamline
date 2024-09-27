@@ -1,7 +1,9 @@
 #ifndef DL_EDITORVIEW_H
 #define DL_EDITORVIEW_H
 
+#include <QMouseEvent>
 #include <QGraphicsView>
+#include <QElapsedTimer>
 class DreamProject;
 class QPinchGesture;
 class GLViewport;
@@ -35,12 +37,17 @@ private:
   void pinchGesture(QPinchGesture* gesture);
   void updateMouseRect();
 
+  void contextMenu(const QPoint& pos);
+  void selectColor();
+
+  QElapsedTimer timer;
   GLViewport* glViewport;
   DreamProject* project;
   bool isPanning, isResizingRing;
   float ringSize, originalRingSize;
   QPoint dragStart;
   QRectF lastMouseRect;
+  QColor lastColor = Qt::blue;
   Tool* currentTool;
 };
 

@@ -11,6 +11,9 @@
 #include <QPinchGesture>
 #include <QPalette>
 #include <QWindow>
+#include <QColorDialog>
+#include <QColor>
+#include <QMenu>
 #include <cmath>
 
 // #define ALT_RING_MODE 0
@@ -89,6 +92,7 @@ void EditorView::mousePressEvent(QMouseEvent* event)
     isPanning = true;
     dragStart = event->pos();
   } else {
+    timer.start();
     setDragMode(NoDrag);
     isResizingRing = true;
     dragStart = event->globalPos();
@@ -135,6 +139,9 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
     QCursor::setPos(dragStart);
 #endif
     unsetCursor();
+    if (timer.elapsed() < 250) {
+      contextMenu(event->globalPos());
+    }
   }
   QGraphicsView::mouseReleaseEvent(event);
   setDragMode(NoDrag);
@@ -177,6 +184,28 @@ void EditorView::drawForeground(QPainter* p, const QRectF& rect)
     p->drawLine(center, mapFromGlobal(dragStart));
   }
   */
+}
+
+void EditorView::contextMenu(const QPoint& pos)
+{
+  QMenu menu;
+  QAction* colorAction = menu.addAction(tr("Change Color..."));
+  QAction* selected = menu.exec(pos);
+  if (selected == colorAction) {
+    selectColor();
+    return;
+  }
+}
+
+void EditorView::selectColor()
+{
+  QColor color = QColorDialog::getColor(lastColor, this, "Select Color");
+  if (color.isValid()) {
+    lastColor = color;
+    for (GripItem* grip : getSelectedVertices()) {
+      grip->changeColor(color);
+    }
+  }
 }
 
 QList<GripItem*> EditorView::getSelectedVertices() const
