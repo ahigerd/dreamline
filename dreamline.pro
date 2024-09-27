@@ -22,6 +22,9 @@ SOURCES += src/editorview.cpp src/glviewport.cpp src/edgeitem.cpp
 HEADERS += src/glbuffer.h   src/boundprogram.h   src/dreamproject.h
 SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp
 
+HEADERS += src/tools/movevertex.h   src/tools/color.h
+SOURCES += src/tools/movevertex.cpp src/tools/color.cpp
+
 SOURCES += src/main.cpp
 
 RESOURCES += res/shaders.qrc
