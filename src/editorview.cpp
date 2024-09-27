@@ -43,7 +43,7 @@ void EditorView::newProject()
   project = new DreamProject(QSizeF(8.5, 11), this);
   setScene(project);
 
-  underCursor = new QGraphicsRectItem(-1, -1, 2, 2);
+  underCursor = new QGraphicsRectItem(-3, -3, 6, 6);
   underCursor->setPen(QColor(Qt::transparent));
   underCursor->setFlag(QGraphicsItem::ItemIsMovable, true);
   underCursor->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
