@@ -31,6 +31,8 @@ protected:
   void mousePressEvent(QMouseEvent* event);
   void mouseMoveEvent(QMouseEvent* event);
   void mouseReleaseEvent(QMouseEvent* event);
+  void enterEvent(QEvent*);
+  void leaveEvent(QEvent*);
   void drawForeground(QPainter* p, const QRectF& rect);
 
 private:
@@ -43,9 +45,9 @@ private:
   QElapsedTimer timer;
   GLViewport* glViewport;
   DreamProject* project;
-  bool isPanning, isResizingRing;
+  bool isPanning, isResizingRing, containsMouse;
   float ringSize, originalRingSize;
-  QPoint dragStart;
+  QPoint dragStart, lastDrag;
   QRectF lastMouseRect;
   QColor lastColor = Qt::blue;
   Tool* currentTool;

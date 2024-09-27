@@ -21,7 +21,7 @@
 #define ALT_RING_MODE 2
 
 EditorView::EditorView(QWidget* parent)
-: QGraphicsView(parent), isPanning(false), isResizingRing(false), ringSize(10), currentTool(nullptr)
+: QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), ringSize(10), currentTool(nullptr)
 {
   glViewport = new GLViewport(this);
   glViewport->grabGesture(Qt::PinchGesture);
@@ -31,6 +31,7 @@ EditorView::EditorView(QWidget* parent)
   setViewport(glViewport);
   setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
   setDragMode(NoDrag);
+  setCursor(Qt::BlankCursor);
 }
 
 void EditorView::newProject()
@@ -91,13 +92,15 @@ void EditorView::mousePressEvent(QMouseEvent* event)
     setDragMode(ScrollHandDrag);
     isPanning = true;
     dragStart = event->pos();
-  } else {
+  } else if (event->button() == Qt::RightButton) {
     timer.start();
     setDragMode(NoDrag);
     isResizingRing = true;
-    dragStart = event->globalPos();
+    dragStart = lastDrag = event->globalPos();
     originalRingSize = ringSize;
     setCursor(Qt::BlankCursor);
+  } else {
+    setDragMode(NoDrag);
   }
   QGraphicsView::mousePressEvent(event);
 }
@@ -113,12 +116,20 @@ void EditorView::mouseMoveEvent(QMouseEvent* event)
     }
   } else if (isResizingRing) {
 #if ALT_RING_MODE == 2
-    int delta = event->globalPos().x() - dragStart.x();
-    ringSize = originalRingSize + delta;
+    QPoint pt = event->globalPos();
+    int dx = pt.x() - lastDrag.x();
+    int dy = pt.y() - lastDrag.y();
+    int delta = std::sqrt(dx * dx + dy * dy);
+    if (dx - dy < 0) {
+      delta = -delta;
+    }
+
+    ringSize += delta;
     if (ringSize < 3) {
-      originalRingSize = 3 - delta;
       ringSize = 3;
     }
+    QCursor::setPos(dragStart);
+    lastDrag = QCursor::pos();
 #else
     ringSize = QLineF(dragStart, event->globalPos()).length();
 #endif
@@ -138,13 +149,25 @@ void EditorView::mouseReleaseEvent(QMouseEvent* event)
 #if ALT_RING_MODE
     QCursor::setPos(dragStart);
 #endif
-    unsetCursor();
+    setCursor(Qt::BlankCursor);
     if (timer.elapsed() < 250) {
       contextMenu(event->globalPos());
     }
   }
   QGraphicsView::mouseReleaseEvent(event);
   setDragMode(NoDrag);
+}
+
+void EditorView::enterEvent(QEvent*)
+{
+  containsMouse = true;
+  updateMouseRect();
+}
+
+void EditorView::leaveEvent(QEvent*)
+{
+  containsMouse = false;
+  updateMouseRect();
 }
 
 void EditorView::updateMouseRect()
@@ -158,7 +181,7 @@ void EditorView::updateMouseRect()
 void EditorView::drawForeground(QPainter* p, const QRectF& rect)
 {
   QGraphicsView::drawForeground(p, rect);
-  if (isPanning) {
+  if (isPanning || !containsMouse) {
     return;
   }
   p->resetTransform();
