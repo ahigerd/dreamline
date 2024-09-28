@@ -31,7 +31,7 @@ void main()
       coord(normPt, next - pt)
     ) / distance(curr, pt);
 
-    FragColor += colors[(i + N - 2) % N] * w;
+    FragColor += colors[(i + N - 2) % N] * max(w, 0);
     t += w;
 
     prev = curr;
