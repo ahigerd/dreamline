@@ -20,39 +20,39 @@ public:
   void newProject();
   // void openProject(const QString& path);
   // void saveProject(const QString& path);
-template <typename ItemType>
-QList<ItemType*> getSelectedItems() const
-{
-  auto items = scene()->selectedItems();
-  QList<ItemType*> grips;
-  for (QGraphicsItem* item : items) {
-    ItemType* grip = dynamic_cast<ItemType*>(item);
-    if (grip) {
-      grips << grip;
+
+  QList<QGraphicsItem*> itemsInRing() const;
+
+  template <typename ItemType>
+  static QList<ItemType*> filterItemsByType(const QList<QGraphicsItem*>& items)
+  {
+    QList<ItemType*> result;
+    for (QGraphicsItem* genericItem : items) {
+      ItemType* item = dynamic_cast<ItemType*>(genericItem);
+      if (item) {
+        result << item;
+      }
     }
+    return result;
   }
-  return grips;
-}
 
-template <typename ItemType>
-QList<ItemType*> itemsInRing() const
-{
-  QPainterPath p;
-  QPointF center = mapToScene(mapFromGlobal(QCursor::pos()));
-  double scale = 1.0 / transform().m11();
-  p.addEllipse(center, ringSize * scale, ringSize * scale);
-
-  auto items = scene()->items(p, Qt::IntersectsItemShape, Qt::DescendingOrder, transform());
-  QList<ItemType*> grips;
-  for (QGraphicsItem* item : items) {
-    ItemType* grip = dynamic_cast<ItemType*>(item);
-    if (grip) {
-      grips << grip;
-    }
+  template <typename ItemType>
+  QList<ItemType*> itemsOfType() const
+  {
+    return filterItemsByType<ItemType>(scene()->items());
   }
-  return grips;
-}
 
+  template <typename ItemType>
+  QList<ItemType*> selectedItems() const
+  {
+    return filterItemsByType<ItemType>(scene()->selectedItems());
+  }
+
+  template <typename ItemType>
+  QList<ItemType*> itemsInRing() const
+  {
+    return filterItemsByType<ItemType>(itemsInRing());
+  }
 
 public slots:
   void setTool(QAction* toolAction);

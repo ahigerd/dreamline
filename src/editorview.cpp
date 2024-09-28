@@ -257,7 +257,7 @@ void EditorView::selectColor()
   QColor color = QColorDialog::getColor(lastColor, this, "Select Color");
   if (color.isValid()) {
     lastColor = color;
-    for (GripItem* grip : getSelectedItems<GripItem>()) {
+    for (GripItem* grip : selectedItems<GripItem>()) {
       grip->changeColor(color);
     }
   }
@@ -301,4 +301,13 @@ void EditorView::setCursorFromTool()
     underCursor->show();
     updateMouseRect();
   }
+}
+
+QList<QGraphicsItem*> EditorView::itemsInRing() const
+{
+  QPainterPath p;
+  QPointF center = mapToScene(mapFromGlobal(QCursor::pos()));
+  double scale = 1.0 / transform().m11();
+  p.addEllipse(center, ringSize * scale, ringSize * scale);
+  return scene()->items(p, Qt::IntersectsItemShape, Qt::DescendingOrder, transform());
 }
