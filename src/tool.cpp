@@ -1,5 +1,6 @@
 #include "tool.h"
 #include "tools/movevertex.h"
+#include "tools/moveedge.h"
 #include "tools/color.h"
 #include "tools/splitedge.h"
 #include <QAction>
@@ -30,9 +31,10 @@ void Tool::initializeToolData()
   }
 
   toolData = QMap<Tool::Type, ToolData>{
-    { MoveVertex, { tr("&Move Vertex"), "", QKeySequence("v"), &MoveVertexTool::create } },
-    { Color,      { tr("&Color"),       "", QKeySequence("c"), &ColorTool::create } },
-    { SplitEdge,  { tr("Split &Edge"),  "", QKeySequence("e"), &SplitEdgeTool::create } },
+    { VertexTool, { tr("&Vertex Tool"), "", QKeySequence("v"), &MoveVertexTool::create } },
+    { EdgeTool,   { tr("&Edge Tool"),   "", QKeySequence("e"), &MoveEdgeTool::create } },
+    { ColorTool,  { tr("&Color Tool"),  "", QKeySequence("c"), &ColorTool::create } },
+    { SplitEdge,  { tr("Split &Edge"),  "", QKeySequence("d"), &SplitEdgeTool::create } },
   };
 }
 

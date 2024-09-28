@@ -1,7 +1,6 @@
 #include "editorview.h"
 #include "glviewport.h"
 #include "dreamproject.h"
-#include "gripitem.h"
 #include "tool.h"
 #include <QAction>
 #include <QGraphicsScene>
@@ -35,7 +34,7 @@ EditorView::EditorView(QWidget* parent)
   setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
   setDragMode(NoDrag);
   setCursor(Qt::BlankCursor);
-  setTool(Tool::MoveVertex);
+  setTool(Tool::VertexTool);
 }
 
 void EditorView::newProject()
@@ -257,9 +256,6 @@ void EditorView::selectColor()
   QColor color = QColorDialog::getColor(lastColor, this, "Select Color");
   if (color.isValid()) {
     lastColor = color;
-    for (GripItem* grip : selectedItems<GripItem>()) {
-      grip->changeColor(color);
-    }
   }
 }
 

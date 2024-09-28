@@ -21,6 +21,8 @@ public:
   // void openProject(const QString& path);
   // void saveProject(const QString& path);
 
+  QColor lastColor = Qt::blue;
+
   QList<QGraphicsItem*> itemsInRing() const;
 
   template <typename ItemType>
@@ -54,6 +56,7 @@ public:
     return filterItemsByType<ItemType>(itemsInRing());
   }
 
+
 public slots:
   void setTool(QAction* toolAction);
   void setTool(Tool::Type type);
@@ -83,7 +86,6 @@ private:
   float ringSize, originalRingSize;
   QPoint dragStart, lastDrag;
   QRectF lastMouseRect;
-  QColor lastColor = Qt::blue;
   Tool* currentTool;
   QGraphicsRectItem* underCursor;
 };

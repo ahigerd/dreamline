@@ -1,20 +1,17 @@
-#ifndef DL_TOOLS_COLOR_H
-#define DL_TOOLS_COLOR_H
+#ifndef DL_TOOLS_MOVEEDGE_H
+#define DL_TOOLS_MOVEEDGE_H
 
 #include "tool.h"
 
-class ColorTool : public BaseTool<ColorTool>
+class MoveEdgeTool : public BaseTool<MoveEdgeTool>
 {
 Q_OBJECT
 public:
-  ColorTool();
+  MoveEdgeTool();
 
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);
-
-private:
-  bool isDragging = false;
 };
 
 #endif

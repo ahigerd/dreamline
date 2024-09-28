@@ -60,11 +60,15 @@ void MainWindow::makeToolMenu()
   QToolBar* toolBar = new QToolBar(tr("&Tools"), this);
   addToolBar(Qt::LeftToolBarArea, toolBar);
 
-  QAction* aMove = Tool::makeAction(toolGroup, Tool::MoveVertex);
-  toolMenu->addAction(aMove);
-  toolBar->addAction(aMove);
+  QAction* aVertex = Tool::makeAction(toolGroup, Tool::VertexTool);
+  toolMenu->addAction(aVertex);
+  toolBar->addAction(aVertex);
 
-  QAction* aColor = Tool::makeAction(toolGroup, Tool::Color);
+  QAction* aEdge = Tool::makeAction(toolGroup, Tool::EdgeTool);
+  toolMenu->addAction(aEdge);
+  toolBar->addAction(aEdge);
+
+  QAction* aColor = Tool::makeAction(toolGroup, Tool::ColorTool);
   toolMenu->addAction(aColor);
   toolBar->addAction(aColor);
 
@@ -72,7 +76,7 @@ void MainWindow::makeToolMenu()
   toolMenu->addAction(aSplit);
   toolBar->addAction(aSplit);
 
-  aMove->setChecked(true);
+  aVertex->setChecked(true);
 
   QObject::connect(toolGroup, SIGNAL(triggered(QAction*)), editor, SLOT(setTool(QAction*)));
 }
