@@ -121,6 +121,7 @@ void PolygonItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWid
 
   bool isPoly = m_vbo.count() > 3;
 
+  gl->glEnable(GL_BLEND);
   BoundProgram program = isPoly ? gl->useShader("polyramp", m_vbo.count()) : gl->useShader("ramp");
 
   program.bindAttributeBuffer(0, m_vbo);

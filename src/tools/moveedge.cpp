@@ -10,7 +10,7 @@ MoveEdgeTool::MoveEdgeTool()
 
 bool MoveEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  for (EdgeItem* item : editor->getSelectedItems<EdgeItem>()) {
+  for (EdgeItem* item : editor->selectedItems<EdgeItem>()) {
     item->setSelected(false);
   }
   QList<EdgeItem*> gripsInRing = editor->itemsInRing<EdgeItem>();
@@ -18,15 +18,15 @@ bool MoveEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
   {
     item->setSelected(true);
   }
-  return false;
+  return true;
 }
 
 bool MoveEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 {
-  return false;
+  return true;
 }
 
 bool MoveEdgeTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
 {
-  return false;
+  return true;
 }
