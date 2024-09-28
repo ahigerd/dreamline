@@ -17,7 +17,7 @@ bool ColorTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
   {
     item->changeColor(editor->lastColor);
   }
-  return false;
+  return true;
 }
 
 bool ColorTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
@@ -29,11 +29,11 @@ bool ColorTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
       item->changeColor(editor->lastColor);
     }
   }
-  return false;
+  return true;
 }
 
 bool ColorTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
 {
   isDragging = false;
-  return false;
+  return true;
 }
