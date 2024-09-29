@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QVector>
 #include <QColor>
+#include <QVector4D>
 #include "glbuffer.h"
 class GripItem;
 class EdgeItem;
@@ -25,10 +26,18 @@ protected:
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 private:
-  QVector<GripItem*> m_grips;
+  struct Polygon {
+    QVector<GripItem*> vertices;
+    QVector<EdgeItem*> edges;
+    GLBuffer<QPointF> vertexBuffer;
+    QVector<QVector4D> colors;
+
+    bool insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge);
+  };
+
+  QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;
-  GLBuffer<QPointF> m_vbo;
-  GLBuffer<QColor> m_colorBuffer;
+  QList<Polygon> m_polygons;
 };
 
 #endif

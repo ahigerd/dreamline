@@ -11,25 +11,30 @@ MeshItem::MeshItem(QGraphicsItem* parent)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
 
-  m_vbo.resize(3);
-  m_vbo[0] = QPointF(-100, -100);
-  m_vbo[1] = QPointF(100, -50);
-  m_vbo[2] = QPointF(0, 100);
-  setPolygon(m_vbo.vector());
+  QPolygonF poly({
+    QPointF(-100, -100),
+    QPointF(100, -50),
+    QPointF(0, 100),
+  });
+  setPolygon(poly);
 
-  m_colorBuffer = {
-    QColor(Qt::red),
-    QColor(Qt::green),
-    QColor(Qt::blue),
+  Polygon polygonData;
+  polygonData.vertexBuffer = poly;
+  polygonData.colors = {
+    { 1.0, 0.0, 0.0, 1.0 },
+    { 0.0, 1.0, 0.0, 1.0 },
+    { 0.0, 0.0, 1.0, 1.0 },
   };
 
-  int numVertices = m_vbo.count();
+  int numVertices = poly.count();
 
   for (int i = 0; i < numVertices; i++) {
     GripItem* grip = new GripItem(this);
-    grip->setPos(m_vbo[i]);
-    grip->setBrush(m_colorBuffer[i]);
+    grip->setPos(poly[i]);
+    grip->setBrush(QColor::fromRgbF(polygonData.colors[i][0], polygonData.colors[i][1], polygonData.colors[i][2], polygonData.colors[i][3]));
     m_grips.append(grip);
+    m_boundary.append(grip);
+    polygonData.vertices.append(grip);
     QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
     QObject::connect(grip, SIGNAL(colorChanged(GripItem*, QColor)), this, SLOT(changeColor(GripItem*, QColor)));
   }
@@ -39,26 +44,36 @@ MeshItem::MeshItem(QGraphicsItem* parent)
     GripItem* right = m_grips[(i + 1) % numVertices];
     EdgeItem* edge = new EdgeItem(left, right);
     m_edges.append(edge);
+    polygonData.edges.append(edge);
     QObject::connect(edge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
   }
+
+  m_polygons.append(polygonData);
 }
 
 void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
 {
-  int id = m_grips.indexOf(vertex);
-  m_vbo[id] = pos;
-  setPolygon(m_vbo.vector());
-  int numEdges = m_edges.length();
-  EdgeItem* right = m_edges[id];
-  right->setLine(QLineF(pos, right->line().p2()));
-  EdgeItem* left = m_edges[(id + numEdges - 1) % numEdges];
-  left->setLine(QLineF(left->line().p1(), pos));
+  int index = m_boundary.indexOf(vertex);
+  QPolygonF p = polygon();
+  p[index] = pos;
+  setPolygon(p);
+
+  for (Polygon& poly : m_polygons) {
+    int index = poly.vertices.indexOf(vertex);
+    if (index >= 0) {
+      poly.vertexBuffer[index] = pos;
+    }
+  }
 }
 
 void MeshItem::changeColor(GripItem* vertex, const QColor& color)
 {
-  int id = m_grips.indexOf(vertex);
-  m_colorBuffer[id] = color;
+  for (Polygon& poly : m_polygons) {
+    int index = poly.vertices.indexOf(vertex);
+    if (index >= 0) {
+      poly.colors[index] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    }
+  }
 }
 
 void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
@@ -69,37 +84,57 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
     return;
   }
 
-  int numVertices = m_grips.length();
-  int index = (oldIndex + 1) % numVertices;
+  GripItem* p1 = edge->leftGrip();
+  GripItem* p2 = edge->rightGrip();
 
   GripItem* grip = new GripItem(this);
   grip->setPos(pos);
   QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
   QObject::connect(grip, SIGNAL(colorChanged(GripItem*, QColor)), this, SLOT(changeColor(GripItem*, QColor)));
-  m_grips.insert(index, grip);
+  m_grips.append(grip);
 
-  EdgeItem* oldEdge = m_edges[oldIndex];
-  EdgeItem* newEdge = oldEdge->split(grip);
-  QObject::connect(newEdge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
-  m_edges.insert(index, newEdge);
-
-  float t = QLineF(pos, oldEdge->line().p2()).length() / oldEdge->line().length();
-  QColor leftColor = m_colorBuffer[oldIndex];
-  QColor rightColor = m_colorBuffer[index];
+  float t = QLineF(pos, p2->pos()).length() / edge->line().length();
+  QColor leftColor = p1->color();
+  QColor rightColor = p2->color();
   QColor newColor(
     (leftColor.red() * t) + (rightColor.red() * (1.0f - t)),
     (leftColor.green() * t) + (rightColor.green() * (1.0f - t)),
     (leftColor.blue() * t) + (rightColor.blue() * (1.0f - t))
   );
-  QVector<QColor> colors = m_colorBuffer.vector();
-  grip->setBrush(newColor);
-  colors.insert(index, newColor);
-  m_colorBuffer = colors;
+  grip->setColor(newColor);
 
-  QPolygonF p = polygon();
-  p.insert(index, pos);
-  setPolygon(p);
-  m_vbo = p;
+  EdgeItem* newEdge = edge->split(grip);
+  QObject::connect(newEdge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
+  m_edges.append(newEdge);
+
+  int numRefs = 0;
+  for (Polygon& poly : m_polygons) {
+    bool ref = poly.insertVertex(grip, edge, newEdge);
+    if (ref) {
+      numRefs++;
+    }
+  }
+
+  if (numRefs == 1) {
+    // A singly-referenced edge is an exterior edge
+    QPolygonF p = polygon();
+    int len = p.length();
+    bool found = false;
+    for (int i = 0; i < len; i++) {
+      GripItem* pp1 = m_boundary[i];
+      GripItem* pp2 = m_boundary[(i + 1) % len];
+      if ((pp1 == p1 && pp2 == p2) || (pp1 == p2 && pp2 == p1)) {
+        p.insert(i + 1, pos);
+        m_boundary.insert(i + 1, grip);
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      qWarning("XXX: insertion point not found");
+    }
+    setPolygon(p);
+  }
 }
 
 void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
@@ -113,40 +148,55 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
     return;
   }
 
-  bool isPoly = m_vbo.count() > 3;
-
   gl->glEnable(GL_BLEND);
-  BoundProgram program = isPoly ? gl->useShader("polyramp", m_vbo.count()) : gl->useShader("ramp");
+  for (Polygon& poly : m_polygons) {
+    GLBuffer<QPointF>& vbo = poly.vertexBuffer;
+    BoundProgram program = gl->useShader("polyramp", vbo.count());
 
-  program.bindAttributeBuffer(0, m_vbo);
+    program.bindAttributeBuffer(0, vbo);
 
-  QVector<QVector2D> verts(m_vbo.count());
-  for (int i = 0; i < m_vbo.count(); i++) {
-    verts[i] = QVector2D(m_vbo[i].x(), m_vbo[i].y());
-  }
-  program->setUniformValueArray("verts", verts.constData(), verts.size());
-
-  if (isPoly) {
-    // TODO: Is it possible to bind a buffer to a uniform?
-    // Or are VBOs and UBOs fundamentally different objects?
-    QVector<QVector4D> colors(m_colorBuffer.count());
-    for (int i = 0; i < m_colorBuffer.count(); i++) {
-      colors[i] = QVector4D(m_colorBuffer[i].redF(), m_colorBuffer[i].greenF(), m_colorBuffer[i].blueF(), m_colorBuffer[i].alphaF());
+    QVector<QVector2D> verts(vbo.count());
+    for (int i = 0; i < vbo.count(); i++) {
+      verts[i] = QVector2D(vbo[i].x(), vbo[i].y());
     }
-    program->setUniformValueArray("colors", colors.constData(), colors.size());
-  } else {
-    program.bindAttributeBuffer(1, m_colorBuffer);
-  }
+    program->setUniformValueArray("verts", verts.constData(), verts.size());
+    program->setUniformValueArray("colors", poly.colors.constData(), poly.colors.size());
 
-  QTransform transform = gl->transform();
-  program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
-  program->setUniformValue("scale", transform.m11(), transform.m22());
+    QTransform transform = gl->transform();
+    program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
+    program->setUniformValue("scale", transform.m11(), transform.m22());
 
-  gl->glDrawArrays(GL_TRIANGLE_FAN, 0, m_vbo.count());
-  if (isPoly) {
-    m_colorBuffer.release();
+    gl->glDrawArrays(GL_TRIANGLE_FAN, 0, vbo.count());
   }
-  m_vbo.release();
 
   painter->endNativePainting();
+}
+
+bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge)
+{
+  if (!edges.contains(oldEdge)) {
+    return false;
+  }
+
+  edges.append(newEdge);
+  GripItem* p1 = oldEdge->leftGrip();
+  GripItem* p2 = newEdge->rightGrip();
+  QColor color = vertex->color();
+
+  int len = vertices.length();
+  QVector<QPointF> vbo = vertexBuffer.vector();
+  for (int i = 0; i < len; i++) {
+    GripItem* pp1 = vertices[i];
+    GripItem* pp2 = vertices[(i + 1) % len];
+    if ((pp1 == p1 && pp2 == p2) || (pp1 == p2 && pp2 == p1)) {
+      vertices.insert(i + 1, vertex);
+      vbo.insert(i + 1, vertex->pos());
+      colors.insert(i + 1, QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF()));
+      vertexBuffer = vbo;
+      return true;
+    }
+  }
+
+  qWarning("XXX: inconsistent polygon");
+  return false;
 }

@@ -14,6 +14,9 @@ public:
 
   EdgeItem* split(GripItem* newVertex);
 
+  inline GripItem* leftGrip() const { return left; }
+  inline GripItem* rightGrip() const { return right; }
+
   QPainterPath shape() const;
   void updateShape();
 
