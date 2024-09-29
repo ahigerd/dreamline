@@ -1,5 +1,5 @@
-#ifndef DL_POLYGONITEM_H
-#define DL_POLYGONITEM_H
+#ifndef DL_MESHITEM_H
+#define DL_MESHITEM_H
 
 #include <QGraphicsPolygonItem>
 #include <QOpenGLBuffer>
@@ -10,16 +10,16 @@
 class GripItem;
 class EdgeItem;
 
-class PolygonItem : public QObject, public QGraphicsPolygonItem
+class MeshItem : public QObject, public QGraphicsPolygonItem
 {
 Q_OBJECT
 public:
-  PolygonItem(QGraphicsItem* parent = nullptr);
+  MeshItem(QGraphicsItem* parent = nullptr);
 
 public slots:
-  void moveVertex(int id, const QPointF& pos);
+  void moveVertex(GripItem* vertex, const QPointF& pos);
+  void changeColor(GripItem* vertex, const QColor& color);
   void insertVertex(EdgeItem* edge, const QPointF& pos);
-  void changeColor(int id, const QColor& color);
 
 protected:
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);

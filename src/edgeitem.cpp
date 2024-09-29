@@ -5,11 +5,14 @@
 #include <QPen>
 
 EdgeItem::EdgeItem(GripItem* left, GripItem* right)
-: QObject(nullptr), QGraphicsLineItem(QLineF(left->pos(), right->pos()), left->parentItem())
+: QObject(nullptr), QGraphicsLineItem(QLineF(left->pos(), right->pos()), left->parentItem()), left(left), right(right)
 {
   setAcceptHoverEvents(true);
   hoverLeaveEvent(nullptr);
   setZValue(0.1);
+
+  QObject::connect(left, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(updateVertices()));
+  QObject::connect(right, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(updateVertices()));
 }
 
 QPainterPath EdgeItem::shape() const
@@ -62,4 +65,19 @@ void EdgeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
 {
   emit insertVertex(this, event->scenePos());
   event->accept();
+}
+
+void EdgeItem::updateVertices()
+{
+  setLine(QLineF(left->pos(), right->pos()));
+}
+
+EdgeItem* EdgeItem::split(GripItem* newVertex)
+{
+  EdgeItem* other = new EdgeItem(newVertex, right);
+  QObject::disconnect(right, nullptr, this, nullptr);
+  QObject::connect(newVertex, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(updateVertices()));
+  right = newVertex;
+  updateVertices();
+  return other;
 }

@@ -9,24 +9,21 @@ class GripItem : public QObject, public QGraphicsRectItem
 {
 Q_OBJECT
 public:
-  GripItem(int id, QGraphicsItem* parent = nullptr);
+  GripItem(QGraphicsItem* parent = nullptr);
 
-  void reindex(int newId);
-
-  void changeColor(const QColor& color);
+  QColor color() const;
 
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*);
 
+public slots:
+  void setColor(const QColor& color);
+
 signals:
-  void moved(int id, const QPointF& pos);
-  void colorChanged(int id, const QColor& pos);
+  void moved(GripItem* item, const QPointF& pos);
+  void colorChanged(GripItem* item, const QColor& pos);
 
 protected:
   QVariant itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value);
-
-private:
-  int m_id;
-
 };
 
 #endif

@@ -1,5 +1,5 @@
 #include "dreamproject.h"
-#include "polygonitem.h"
+#include "meshitem.h"
 #include <QGraphicsRectItem>
 #include <QPalette>
 #include <QPainter>
@@ -15,7 +15,7 @@ DreamProject::DreamProject(const QSizeF& pageSize, QObject* parent)
   setPageSize(pageSize);
 
   // TODO: A new project should remain blank, but this is convenient for testing.
-  PolygonItem* p = new PolygonItem;
+  MeshItem* p = new MeshItem;
   addItem(p);
 }
 

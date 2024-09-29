@@ -8,8 +8,8 @@
 #include <QPen>
 #include <QPainter>
 
-GripItem::GripItem(int id, QGraphicsItem* parent)
-: QObject(nullptr), QGraphicsRectItem(-4.5, -4.5, 9, 9, parent), m_id(id)
+GripItem::GripItem(QGraphicsItem* parent)
+: QObject(nullptr), QGraphicsRectItem(-4.5, -4.5, 9, 9, parent)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
   setFlag(QGraphicsItem::ItemIsSelectable, true);
@@ -25,25 +25,25 @@ GripItem::GripItem(int id, QGraphicsItem* parent)
 QVariant GripItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value)
 {
   if (change == ItemPositionHasChanged) {
-    emit moved(m_id, value.toPointF());
+    emit moved(this, value.toPointF());
   }
   return value;
 }
 
-void GripItem::reindex(int newId)
+QColor GripItem::color() const
 {
-  m_id = newId;
+  return brush().color();
 }
 
-
-void GripItem::changeColor(const QColor& color)
+void GripItem::setColor(const QColor& color)
 {
   setBrush(color);
-  emit colorChanged(m_id, color);
+  emit colorChanged(this, color);
 }
 
 void GripItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*)
 {
+  // Snap coordinates to device pixels to avoid fuzzy edges
   double xFrac = painter->deviceTransform().dx();
   xFrac = xFrac - int(xFrac);
 

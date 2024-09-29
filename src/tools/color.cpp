@@ -15,7 +15,7 @@ bool ColorTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
   QList<GripItem*> gripsInRing = editor->itemsInRing<GripItem>();
   for (GripItem* item : gripsInRing)
   {
-    item->changeColor(editor->lastColor);
+    item->setColor(editor->lastColor);
   }
   return true;
 }
@@ -26,7 +26,7 @@ bool ColorTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
     QList<GripItem*> gripsInRing = editor->itemsInRing<GripItem>();
     for (GripItem* item : gripsInRing)
     {
-      item->changeColor(editor->lastColor);
+      item->setColor(editor->lastColor);
     }
   }
   return true;

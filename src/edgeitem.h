@@ -12,6 +12,8 @@ Q_OBJECT
 public:
   EdgeItem(GripItem* left, GripItem* right);
 
+  EdgeItem* split(GripItem* newVertex);
+
   QPainterPath shape() const;
   void updateShape();
 
@@ -24,6 +26,13 @@ protected:
   void hoverLeaveEvent(QGraphicsSceneHoverEvent*);
   void mousePressEvent(QGraphicsSceneMouseEvent*);
   void mouseDoubleClickEvent(QGraphicsSceneMouseEvent*);
+
+protected slots:
+  void updateVertices();
+
+private:
+  GripItem* left;
+  GripItem* right;
 };
 
 #endif
