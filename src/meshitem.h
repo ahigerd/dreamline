@@ -7,6 +7,7 @@
 #include <QVector>
 #include <QColor>
 #include <QVector4D>
+#include <QPointer>
 #include "glbuffer.h"
 class GripItem;
 class EdgeItem;
@@ -17,12 +18,19 @@ Q_OBJECT
 public:
   MeshItem(QGraphicsItem* parent = nullptr);
 
+  GripItem* activeVertex() const;
+
 public slots:
   void moveVertex(GripItem* vertex, const QPointF& pos);
   void changeColor(GripItem* vertex, const QColor& color);
   void insertVertex(EdgeItem* edge, const QPointF& pos);
+  void setActiveVertex(GripItem* vertex);
+
+protected slots:
+  void gripDestroyed(QObject* grip);
 
 protected:
+  GripItem* newGrip();
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 private:
@@ -40,6 +48,8 @@ private:
   QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;
   QList<Polygon> m_polygons;
+  QPointer<GripItem> m_lastVertex;
+  QGraphicsEllipseItem* m_lastVertexFocus;
 };
 
 #endif

@@ -49,13 +49,10 @@ MeshItem::MeshItem(QGraphicsItem* parent)
         }
       }
       if (!grip) {
-        grip = new GripItem(this);
-        m_grips.append(grip);
+        grip = newGrip();
         m_boundary.append(grip);
         grip->setPos(p.vertexBuffer[i]);
         grip->setBrush(p.color(i));
-        QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
-        QObject::connect(grip, SIGNAL(colorChanged(GripItem*, QColor)), this, SLOT(changeColor(GripItem*, QColor)));
       }
       p.vertices.append(grip);
     }
@@ -77,6 +74,27 @@ MeshItem::MeshItem(QGraphicsItem* parent)
       p.edges.append(edge);
     }
   }
+
+  m_lastVertexFocus = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, this);
+  QPen pen(Qt::black, 3);
+  pen.setCosmetic(true);
+  m_lastVertexFocus->setPen(pen);
+  QGraphicsEllipseItem* inner = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, m_lastVertexFocus);
+  pen.setColor(Qt::white);
+  pen.setWidth(1.5);
+  inner->setPen(pen);
+  m_lastVertexFocus->setZValue(100);
+  m_lastVertexFocus->hide();
+}
+
+GripItem* MeshItem::newGrip()
+{
+  GripItem* grip = new GripItem(this);
+  m_grips.append(grip);
+  QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
+  QObject::connect(grip, SIGNAL(colorChanged(GripItem*, QColor)), this, SLOT(changeColor(GripItem*, QColor)));
+  QObject::connect(grip, SIGNAL(destroyed(QObject*)), this, SLOT(gripDestroyed(QObject*)));
+  return grip;
 }
 
 void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
@@ -117,11 +135,8 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
   GripItem* p1 = edge->leftGrip();
   GripItem* p2 = edge->rightGrip();
 
-  GripItem* grip = new GripItem(this);
+  GripItem* grip = newGrip();
   grip->setPos(pos);
-  QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
-  QObject::connect(grip, SIGNAL(colorChanged(GripItem*, QColor)), this, SLOT(changeColor(GripItem*, QColor)));
-  m_grips.append(grip);
 
   float t = QLineF(pos, p2->pos()).length() / edge->line().length();
   QColor leftColor = p1->color();
@@ -164,6 +179,26 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
       qWarning("XXX: insertion point not found");
     }
     setPolygon(p);
+  }
+
+  setActiveVertex(grip);
+}
+
+void MeshItem::setActiveVertex(GripItem* vertex)
+{
+  m_lastVertex = vertex;
+  if (!vertex) {
+    m_lastVertexFocus->hide();
+    return;
+  }
+  m_lastVertexFocus->show();
+  m_lastVertexFocus->setPos(vertex->pos());
+}
+
+void MeshItem::gripDestroyed(QObject* grip)
+{
+  if (grip == m_lastVertex) {
+    m_lastVertexFocus->hide();
   }
 }
 

@@ -56,10 +56,10 @@ public:
     return filterItemsByType<ItemType>(itemsInRing());
   }
 
-
 public slots:
   void setTool(QAction* toolAction);
   void setTool(Tool::Type type);
+  void setActiveVertex(GripItem* vertex);
 
 protected:
   bool viewportEvent(QEvent* event);

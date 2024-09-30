@@ -4,7 +4,7 @@ CONFIG += c++17
 CONFIG += release optimze_full
 CONFIG -= optimize_size
 QMAKE_CXXFLAGS_RELEASE -= -O2
-QMAKE_CXXFLAGS += -ffast-math -msse2 -O3
+QMAKE_CXXFLAGS += -ffast-math -msse2 -O3 -ggdb
 
 INCLUDEPATH += src
 
