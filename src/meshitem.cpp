@@ -13,42 +13,70 @@ MeshItem::MeshItem(QGraphicsItem* parent)
 
   QPolygonF poly({
     QPointF(-100, -100),
-    QPointF(100, -50),
-    QPointF(0, 100),
+    QPointF(100, -100),
+    QPointF(100, 100),
+    QPointF(-100, 100),
   });
   setPolygon(poly);
 
   Polygon polygonData;
-  polygonData.vertexBuffer = poly;
+  polygonData.vertexBuffer = QPolygonF({ poly[0], poly[1], poly[2] });
   polygonData.colors = {
     { 1.0, 0.0, 0.0, 1.0 },
     { 0.0, 1.0, 0.0, 1.0 },
     { 0.0, 0.0, 1.0, 1.0 },
   };
 
-  int numVertices = poly.count();
-
-  for (int i = 0; i < numVertices; i++) {
-    GripItem* grip = new GripItem(this);
-    grip->setPos(poly[i]);
-    grip->setBrush(QColor::fromRgbF(polygonData.colors[i][0], polygonData.colors[i][1], polygonData.colors[i][2], polygonData.colors[i][3]));
-    m_grips.append(grip);
-    m_boundary.append(grip);
-    polygonData.vertices.append(grip);
-    QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
-    QObject::connect(grip, SIGNAL(colorChanged(GripItem*, QColor)), this, SLOT(changeColor(GripItem*, QColor)));
-  }
-
-  for (int i = 0; i < numVertices; i++) {
-    GripItem* left = m_grips[i];
-    GripItem* right = m_grips[(i + 1) % numVertices];
-    EdgeItem* edge = new EdgeItem(left, right);
-    m_edges.append(edge);
-    polygonData.edges.append(edge);
-    QObject::connect(edge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
-  }
+  Polygon polygonData2;
+  polygonData2.vertexBuffer = QPolygonF({ poly[2], poly[0], poly[3] });
+  polygonData2.colors = {
+    { 0.0, 0.0, 1.0, 1.0 },
+    { 1.0, 0.0, 0.0, 1.0 },
+    { 1.0, 1.0, 0.0, 1.0 },
+  };
 
   m_polygons.append(polygonData);
+  m_polygons.append(polygonData2);
+
+  for (Polygon& p : m_polygons) {
+    int numVertices = p.vertexBuffer.count();
+    for (int i = 0; i < numVertices; i++) {
+      GripItem* grip = nullptr;
+      for (GripItem* checkGrip : m_grips) {
+        if (checkGrip->pos() == p.vertexBuffer[i]) {
+          grip = checkGrip;
+          break;
+        }
+      }
+      if (!grip) {
+        grip = new GripItem(this);
+        m_grips.append(grip);
+        m_boundary.append(grip);
+        grip->setPos(p.vertexBuffer[i]);
+        grip->setBrush(p.color(i));
+        QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
+        QObject::connect(grip, SIGNAL(colorChanged(GripItem*, QColor)), this, SLOT(changeColor(GripItem*, QColor)));
+      }
+      p.vertices.append(grip);
+    }
+    for (int i = 0; i < numVertices; i++) {
+      GripItem* left = p.vertices[i];
+      GripItem* right = p.vertices[(i + 1) % numVertices];
+      EdgeItem* edge = nullptr;
+      for (EdgeItem* checkEdge : m_edges) {
+        if (checkEdge->hasGrip(left) && checkEdge->hasGrip(right)) {
+          edge = checkEdge;
+          break;
+        }
+      }
+      if (!edge) {
+        edge = new EdgeItem(left, right);
+        m_edges.append(edge);
+        QObject::connect(edge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
+      }
+      p.edges.append(edge);
+    }
+  }
 }
 
 void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
@@ -157,7 +185,7 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
 
     QVector<QVector2D> verts(vbo.count());
     for (int i = 0; i < vbo.count(); i++) {
-      verts[i] = QVector2D(vbo[i].x(), vbo[i].y());
+      verts[i] = QVector2D(vbo[i]);
     }
     program->setUniformValueArray("verts", verts.constData(), verts.size());
     program->setUniformValueArray("colors", poly.colors.constData(), poly.colors.size());
@@ -199,4 +227,14 @@ bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeIt
 
   qWarning("XXX: inconsistent polygon");
   return false;
+}
+
+QColor MeshItem::Polygon::color(int index) const
+{
+  return QColor::fromRgbF(colors[index][0], colors[index][1], colors[index][2], colors[index][3]);
+}
+
+void MeshItem::Polygon::setColor(int index, const QColor& color)
+{
+  colors[index] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
 }

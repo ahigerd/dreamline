@@ -3,6 +3,7 @@
 
 uniform vec2[N] verts;
 uniform vec4[N] colors;
+in float reverseWind;
 in vec2 pt;
 
 out vec4 FragColor;
@@ -26,7 +27,7 @@ void main()
 
   for (int i = 0; i < N; i++) {
     normPt = normalize(curr - pt);
-    w = (
+    w = reverseWind * (
       coord(prev - pt, normPt) +
       coord(normPt, next - pt)
     ) / distance(curr, pt);

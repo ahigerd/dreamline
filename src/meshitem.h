@@ -33,6 +33,8 @@ private:
     QVector<QVector4D> colors;
 
     bool insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge);
+    QColor color(int index) const;
+    void setColor(int index, const QColor& color);
   };
 
   QVector<GripItem*> m_grips, m_boundary;

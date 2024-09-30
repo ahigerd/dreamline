@@ -81,3 +81,8 @@ EdgeItem* EdgeItem::split(GripItem* newVertex)
   updateVertices();
   return other;
 }
+
+bool EdgeItem::hasGrip(GripItem* grip) const
+{
+  return grip == left || grip == right;
+}

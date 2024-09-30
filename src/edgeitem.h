@@ -16,6 +16,7 @@ public:
 
   inline GripItem* leftGrip() const { return left; }
   inline GripItem* rightGrip() const { return right; }
+  bool hasGrip(GripItem* grip) const;
 
   QPainterPath shape() const;
   void updateShape();
