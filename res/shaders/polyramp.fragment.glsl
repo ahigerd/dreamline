@@ -3,7 +3,7 @@
 
 uniform vec2[N] verts;
 uniform vec4[N] colors;
-in float windingDirection;
+uniform float windingDirection;
 in vec2 pt;
 
 out vec4 FragColor;

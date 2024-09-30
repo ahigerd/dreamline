@@ -5,6 +5,28 @@
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
 #include <QFile>
+#include <algorithm>
+
+#define _USE_MATH_DEFINES
+#include <cmath>
+
+static double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c)
+{
+  double t1 = std::atan2(a.y() - b.y(), a.x() - b.x());
+  double t2 = std::atan2(c.y() - b.y(), c.x() - b.x());
+  double t = t1 - t2;
+  // explicitly ensure that the result is between -pi and +pi
+  while (t < -M_PI) {
+    t += M_PI * 2;
+  }
+  while (t > M_PI) {
+    t -= M_PI * 2;
+  }
+  if (t == 0.0) {
+    return M_PI;
+  }
+  return t;
+}
 
 MeshItem::MeshItem(QGraphicsItem* parent)
 : QObject(nullptr), QGraphicsPolygonItem(parent)
@@ -97,6 +119,19 @@ GripItem* MeshItem::newGrip()
   return grip;
 }
 
+QSet<MeshItem::Polygon*> MeshItem::polygonsContainingVertex(GripItem* vertex)
+{
+  QSet<Polygon*> result;
+
+  for (Polygon& poly : m_polygons) {
+    if (poly.vertices.contains(vertex)) {
+      result += &poly;
+    }
+  }
+
+  return result;
+}
+
 void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
 {
   int boundaryIndex = m_boundary.indexOf(vertex);
@@ -110,7 +145,12 @@ void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
     int index = poly.vertices.indexOf(vertex);
     if (index >= 0) {
       poly.vertexBuffer[index] = pos;
+      poly.updateWindingDirection();
     }
+  }
+
+  if (vertex == m_lastVertex) {
+    m_lastVertexFocus->setPos(pos);
   }
 }
 
@@ -184,6 +224,11 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
   setActiveVertex(grip);
 }
 
+GripItem* MeshItem::activeVertex() const
+{
+  return m_lastVertex.data();
+}
+
 void MeshItem::setActiveVertex(GripItem* vertex)
 {
   m_lastVertex = vertex;
@@ -193,6 +238,65 @@ void MeshItem::setActiveVertex(GripItem* vertex)
   }
   m_lastVertexFocus->show();
   m_lastVertexFocus->setPos(vertex->pos());
+}
+
+GripItem* MeshItem::addVertexToPolygon(const QPointF& pos)
+{
+  if (!m_lastVertex) {
+    // No place to connect the edge to
+    return nullptr;
+  }
+  return nullptr;
+}
+
+bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
+{
+  QSet<Polygon*> polys = polygonsContainingVertex(v1);
+  polys.intersect(polygonsContainingVertex(v2));
+  if (!polys.size()) {
+    // The two vertices are in different polygons.
+    return false;
+  }
+  QLineF newLine(v1->pos(), v2->pos());
+  for (Polygon* poly : polys) {
+    if (!poly->windingDirection) {
+      // A degenerate polygon cannot be split
+      continue;
+    }
+    QSet<EdgeItem*> edges1 = poly->edgesContainingVertex(v1);
+    QSet<EdgeItem*> edges2 = poly->edgesContainingVertex(v2);
+    if (edges1.intersects(edges2)) {
+      // v1 and v2 already have a shared edge
+      return false;
+    }
+    if (edges1.size() != 2) {
+      // This shouldn't be possible, but as a sanity check...
+      continue;
+    }
+    EdgeItem* edge1 = *edges1.begin();
+    EdgeItem* edge2 = *(edges1.begin() + 1);
+    GripItem* vertexBefore = edge1->leftGrip() == v1 ? edge1->rightGrip() : edge1->leftGrip();
+    GripItem* vertexAfter = edge2->leftGrip() == v1 ? edge2->rightGrip() : edge2->leftGrip();
+    if (poly->vertices.indexOf(vertexBefore) > poly->vertices.indexOf(vertexAfter)) {
+      std::swap(edge1, edge2);
+      std::swap(vertexBefore, vertexAfter);
+    }
+    QLineF e1 = edge1->line();
+    QLineF e2 = edge2->line();
+    double vertexAngle = signedAngle(vertexBefore->pos(), v1->pos(), vertexAfter->pos());
+    double a1 = signedAngle(vertexBefore->pos(), v1->pos(), v2->pos());
+    if (vertexAngle < 0) {
+      vertexAngle = -vertexAngle;
+      a1 = -a1;
+    }
+    if (0 < a1 && a1 < vertexAngle) {
+      qDebug() << "can split";
+      return true;
+    }
+  }
+  // The edge that would be created is not in the interior
+  // of any of the polygons that we found.
+  return false;
 }
 
 void MeshItem::gripDestroyed(QObject* grip)
@@ -231,10 +335,21 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
     program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
     program->setUniformValue("scale", transform.m11(), transform.m22());
 
+    if (!poly.windingDirection) {
+      poly.updateWindingDirection();
+    }
+    program->setUniformValue("windingDirection", poly.windingDirection);
+
     gl->glDrawArrays(GL_TRIANGLE_FAN, 0, vbo.count());
   }
 
   painter->endNativePainting();
+}
+
+MeshItem::Polygon::Polygon()
+: windingDirection(0)
+{
+  // initializers only
 }
 
 bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge)
@@ -274,4 +389,41 @@ QColor MeshItem::Polygon::color(int index) const
 void MeshItem::Polygon::setColor(int index, const QColor& color)
 {
   colors[index] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+}
+
+QSet<EdgeItem*> MeshItem::Polygon::edgesContainingVertex(GripItem* vertex)
+{
+  QSet<EdgeItem*> result;
+
+  for (EdgeItem* edge : edges) {
+    if (edge->hasGrip(vertex)) {
+      result += edge;
+    }
+  }
+
+  return result;
+}
+
+void MeshItem::Polygon::updateWindingDirection()
+{
+  windingDirection = 0.0f;
+  int n = vertices.length();
+  if (n < 3) {
+    return;
+  }
+  QPointF a = vertices[n - 2]->pos();
+  QPointF b = vertices[n - 1]->pos();
+  QPointF c;
+  for (int i = 0; i < n; i++) {
+    c = vertices[i]->pos();
+    double angle = signedAngle(a, b, c);
+    if (angle > 0) {
+      windingDirection += 1.0f;
+    } else if (angle < 0) {
+      windingDirection -= 1.0f;
+    }
+    a = b;
+    b = c;
+  }
+  windingDirection = std::signbit(windingDirection) ? -1.0f : 1.0f;
 }

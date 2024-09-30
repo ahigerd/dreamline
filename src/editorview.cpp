@@ -311,6 +311,30 @@ QList<QGraphicsItem*> EditorView::itemsInRing() const
   return scene()->items(p, Qt::IntersectsItemShape, Qt::DescendingOrder, transform());
 }
 
+MeshItem* EditorView::activeMesh() const
+{
+  for (QGraphicsItem* item : items()) {
+    MeshItem* mesh = dynamic_cast<MeshItem*>(item);
+    if (!mesh) {
+      continue;
+    }
+    GripItem* grip = mesh->activeVertex();
+    if (grip) {
+      return mesh;
+    }
+  }
+  return nullptr;
+}
+
+GripItem* EditorView::activeVertex() const
+{
+  MeshItem* mesh = activeMesh();
+  if (mesh) {
+    return mesh->activeVertex();
+  }
+  return nullptr;
+}
+
 void EditorView::setActiveVertex(GripItem* vertex)
 {
   QGraphicsItem* targetMesh = vertex ? vertex->parentItem() : nullptr;

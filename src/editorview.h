@@ -10,6 +10,7 @@ class DreamProject;
 class QPinchGesture;
 class GLViewport;
 class GripItem;
+class MeshItem;
 
 class EditorView : public QGraphicsView
 {
@@ -55,6 +56,9 @@ public:
   {
     return filterItemsByType<ItemType>(itemsInRing());
   }
+
+  GripItem* activeVertex() const;
+  MeshItem* activeMesh() const;
 
 public slots:
   void setTool(QAction* toolAction);

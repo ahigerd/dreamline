@@ -8,6 +8,7 @@
 #include <QColor>
 #include <QVector4D>
 #include <QPointer>
+#include <QSet>
 #include "glbuffer.h"
 class GripItem;
 class EdgeItem;
@@ -19,6 +20,9 @@ public:
   MeshItem(QGraphicsItem* parent = nullptr);
 
   GripItem* activeVertex() const;
+  GripItem* addVertexToPolygon(const QPointF& pos);
+  bool splitPolygon(GripItem* v1, GripItem* v2);
+  bool splitPolygon(GripItem* vertex, EdgeItem* edge);
 
 public slots:
   void moveVertex(GripItem* vertex, const QPointF& pos);
@@ -35,15 +39,24 @@ protected:
 
 private:
   struct Polygon {
+  public:
+    Polygon();
     QVector<GripItem*> vertices;
     QVector<EdgeItem*> edges;
     GLBuffer<QPointF> vertexBuffer;
     QVector<QVector4D> colors;
+    GLfloat windingDirection;
 
     bool insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge);
+
     QColor color(int index) const;
     void setColor(int index, const QColor& color);
+
+    QSet<EdgeItem*> edgesContainingVertex(GripItem* vertex);
+    void updateWindingDirection();
   };
+
+  QSet<Polygon*> polygonsContainingVertex(GripItem* vertex);
 
   QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;
