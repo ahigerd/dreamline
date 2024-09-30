@@ -51,7 +51,7 @@ void EdgeItem::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
 
 void EdgeItem::hoverLeaveEvent(QGraphicsSceneHoverEvent*)
 {
-  QPen pen(Qt::transparent, 5);
+  QPen pen(Qt::black, 1);
   pen.setCosmetic(true);
   setPen(pen);
 }

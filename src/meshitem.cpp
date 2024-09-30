@@ -81,10 +81,12 @@ MeshItem::MeshItem(QGraphicsItem* parent)
 
 void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
 {
-  int index = m_boundary.indexOf(vertex);
-  QPolygonF p = polygon();
-  p[index] = pos;
-  setPolygon(p);
+  int boundaryIndex = m_boundary.indexOf(vertex);
+  if (boundaryIndex >= 0) {
+    QPolygonF p = polygon();
+    p[boundaryIndex] = pos;
+    setPolygon(p);
+  }
 
   for (Polygon& poly : m_polygons) {
     int index = poly.vertices.indexOf(vertex);
