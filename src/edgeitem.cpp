@@ -51,7 +51,7 @@ void EdgeItem::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
 
 void EdgeItem::hoverLeaveEvent(QGraphicsSceneHoverEvent*)
 {
-  QPen pen(Qt::transparent, 5);
+  QPen pen(Qt::black, 1);
   pen.setCosmetic(true);
   setPen(pen);
 }
@@ -80,4 +80,9 @@ EdgeItem* EdgeItem::split(GripItem* newVertex)
   right = newVertex;
   updateVertices();
   return other;
+}
+
+bool EdgeItem::hasGrip(GripItem* grip) const
+{
+  return grip == left || grip == right;
 }

@@ -1,6 +1,8 @@
 #version 330 core
+#define N <N>
 
 layout (location = 0) in vec2 pos;
+uniform vec2[N] verts;
 uniform vec2 translate;
 uniform vec2 scale;
 

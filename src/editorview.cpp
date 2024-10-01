@@ -1,6 +1,8 @@
 #include "editorview.h"
 #include "glviewport.h"
 #include "dreamproject.h"
+#include "gripitem.h"
+#include "meshitem.h"
 #include "tool.h"
 #include <QAction>
 #include <QGraphicsScene>
@@ -35,6 +37,7 @@ EditorView::EditorView(QWidget* parent)
   setDragMode(NoDrag);
   setCursor(Qt::BlankCursor);
   setTool(Tool::VertexTool);
+  setRenderHint(QPainter::Antialiasing, true);
 }
 
 void EditorView::newProject()
@@ -306,4 +309,44 @@ QList<QGraphicsItem*> EditorView::itemsInRing() const
   double scale = 1.0 / transform().m11();
   p.addEllipse(center, ringSize * scale, ringSize * scale);
   return scene()->items(p, Qt::IntersectsItemShape, Qt::DescendingOrder, transform());
+}
+
+MeshItem* EditorView::activeMesh() const
+{
+  for (QGraphicsItem* item : items()) {
+    MeshItem* mesh = dynamic_cast<MeshItem*>(item);
+    if (!mesh) {
+      continue;
+    }
+    GripItem* grip = mesh->activeVertex();
+    if (grip) {
+      return mesh;
+    }
+  }
+  return nullptr;
+}
+
+GripItem* EditorView::activeVertex() const
+{
+  MeshItem* mesh = activeMesh();
+  if (mesh) {
+    return mesh->activeVertex();
+  }
+  return nullptr;
+}
+
+void EditorView::setActiveVertex(GripItem* vertex)
+{
+  QGraphicsItem* targetMesh = vertex ? vertex->parentItem() : nullptr;
+  for (QGraphicsItem* item : items()) {
+    MeshItem* mesh = dynamic_cast<MeshItem*>(item);
+    if (!mesh) {
+      continue;
+    }
+    if (mesh == targetMesh) {
+      mesh->setActiveVertex(vertex);
+    } else {
+      mesh->setActiveVertex(nullptr);
+    }
+  }
 }
