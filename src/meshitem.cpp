@@ -10,7 +10,8 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-// This function returns an angle between -pi and +pi.
+// This function returns an angle between -pi and +pi that measures how
+// much the vector AB the vector must rotate to align with the vector BC.
 // Positive numbers are counter-clockwise.
 // Negative numbers are clockwise.
 static double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c)
@@ -22,7 +23,7 @@ static double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c)
   return std::atan2(y2 * x1 - x2 * y1, x1 * x2 + y1 * y2);
 }
 
-// This function returns an angle between 0 and 2*pi.
+// As signedAngle, but this function returns an angle between 0 and 2*pi.
 // Angles increase going counter-clockwise.
 static double ccwAngle(const QPointF& a, const QPointF& b, const QPointF& c)
 {
