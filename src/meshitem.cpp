@@ -385,16 +385,11 @@ void MeshItem::Polygon::updateWindingDirection()
   QPointF c;
   for (int i = 0; i < n; i++) {
     c = vertices[i]->pos();
-    double angle = signedAngle(a, b, c);
-    if (angle > 0) {
-      windingDirection += 1.0f;
-    } else if (angle < 0) {
-      windingDirection -= 1.0f;
-    }
+    windingDirection += signedAngle(b, a, c);
     a = b;
     b = c;
   }
-  windingDirection = std::signbit(windingDirection) ? 1.0f : -1.0f;
+  windingDirection = windingDirection > 0 ? 1.0f : -1.0f;
 }
 
 QSet<EdgeItem*> MeshItem::Polygon::edgesContainingVertex(GripItem* vertex) const
