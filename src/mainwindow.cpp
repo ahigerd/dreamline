@@ -89,7 +89,7 @@ void MainWindow::fileNew()
 
 void MainWindow::fileOpen()
 {
-  QString path = QFileDialog::getOpenFileName(this, "Open DreamLine File", QString(), "DreamLine Files (*.dream)");
+  QString path = QFileDialog::getOpenFileName(this, tr("Open Dreamline File"), QString(), tr("Dreamline Files (*.dream)"));
   if (path.isEmpty()) {
     return;
   }
@@ -98,10 +98,13 @@ void MainWindow::fileOpen()
 
 void MainWindow::openFile(const QString& path)
 {
-  // TODO
   savePath = path;
 
-  // TODO: editor->openProject(path);
+  try {
+    editor->openProject(path);
+  } catch (OpenException& err) {
+    QMessageBox::warning(this, tr("Error loading DreamLine file"), QString::fromUtf8(err.what()));
+  }
 }
 
 void MainWindow::fileSave()
@@ -115,7 +118,7 @@ void MainWindow::fileSave()
 
 void MainWindow::fileSaveAs()
 {
-  QString path = QFileDialog::getSaveFileName(this, "Save DreamLine File", savePath, "DreamLine Files (*.dream)");
+  QString path = QFileDialog::getSaveFileName(this, tr("Save Dreamline File"), savePath, tr("Dreamline Files (*.dream)"));
   if (path.isEmpty()) {
     return;
   }
@@ -125,16 +128,16 @@ void MainWindow::fileSaveAs()
 void MainWindow::saveFile(const QString& path)
 {
   savePath = path;
-  // TODO: bool ok = editor->saveProject(path);
-  bool ok = false; // TODO
-  if (!ok) {
-    QMessageBox::warning(this, tr("Error writing DreamLine file"), tr("%1 could not be saved.").arg(path));
+  try {
+    editor->saveProject(path);
+  } catch (SaveException& err) {
+    QMessageBox::warning(this, tr("Error saving Dreamline file"), QString::fromUtf8(err.what()));
   }
 }
 
 void MainWindow::fileExport()
 {
-  QString path = QFileDialog::getSaveFileName(this, "Export DreamLine File", exportPath, "PNG Files (*.png)");
+  QString path = QFileDialog::getSaveFileName(this, tr("Export Dreamline File"), exportPath, tr("PNG Files (*.png)"));
   if (path.isEmpty()) {
     return;
   }
@@ -146,6 +149,6 @@ void MainWindow::exportFile(const QString& path)
   exportPath = path;
   bool ok = false; // TODO
   if (!ok) {
-    QMessageBox::warning(this, tr("Error exporting DreamLine file"), tr("%1 could not be saved.").arg(path));
+    QMessageBox::warning(this, tr("Error exporting Dreamline file"), tr("%1 could not be saved.").arg(path));
   }
 }

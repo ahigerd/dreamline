@@ -1,6 +1,7 @@
 #include "meshitem.h"
 #include "gripitem.h"
 #include "edgeitem.h"
+#include <QTextStream>
 #include <algorithm>
 
 #define _USE_MATH_DEFINES
@@ -181,4 +182,35 @@ bool MeshItem::Polygon::isEdgeInside(GripItem* v1, GripItem* v2) const
   }
 
   return true;
+}
+
+QString MeshItem::Polygon::debug() const
+{
+  QString result;
+  QTextStream ts(&result, QIODevice::WriteOnly);
+
+  if (windingDirection < 0) {
+    ts << "-";
+  } else if (windingDirection > 0) {
+    ts << "+";
+  } else {
+    ts << "0";
+  }
+
+  ts << "P{";
+
+  int n = vertices.length();
+  for (int i = 0; i < n; i++) {
+    const GripItem* v = vertices[i];
+    QVector4D colorVec = colors[i];
+    QColor color = QColor::fromRgbF(colorVec[0], colorVec[1], colorVec[2], colorVec[3]);
+    if (i > 0) {
+      ts << ",";
+    }
+    ts << "(" << v->pos().x() << "," << v->pos().y() << color.name() << QStringLiteral("%1").arg(color.alpha(), 2, 16) << ")";
+  }
+
+  ts << "}";
+
+  return result;
 }

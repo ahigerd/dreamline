@@ -21,7 +21,7 @@ DreamProject::DreamProject(const QSizeF& pageSize, QObject* parent)
 
 QSizeF DreamProject::pageSize() const
 {
-  return pageRect.size();
+  return pageRect.size() / DPI;
 }
 
 void DreamProject::setPageSize(const QSizeF& size)

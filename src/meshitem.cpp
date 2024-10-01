@@ -2,6 +2,7 @@
 #include "glviewport.h"
 #include "gripitem.h"
 #include "edgeitem.h"
+#include <QJsonArray>
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
 
@@ -84,6 +85,95 @@ MeshItem::MeshItem(QGraphicsItem* parent)
   inner->setPen(pen);
   m_lastVertexFocus->setZValue(100);
   m_lastVertexFocus->hide();
+}
+
+MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
+: MeshItem(parent)
+{
+  m_boundary.clear();
+  m_polygons.clear();
+  qDeleteAll(m_edges);
+  m_edges.clear();
+  qDeleteAll(m_grips);
+  m_grips.clear();
+  m_lastVertex = nullptr;
+
+  for (const QJsonValue& vertexV : source["vertices"].toArray()) {
+    // TODO: error handling
+    QJsonArray vertex = vertexV.toArray();
+    GripItem* grip = new GripItem(this);
+    grip->setPos(vertex[0].toDouble(), vertex[1].toDouble());
+    grip->setColor(QColor(vertex[2].toInt(), vertex[3].toInt(), vertex[4].toInt()));
+    m_grips.append(grip);
+  }
+
+  for (const QJsonValue& polygonV : source["polygons"].toArray()) {
+    Polygon polygon;
+    bool first = true;
+    for (const QJsonValue& indexV : polygonV.toArray()) {
+      int index = indexV.toInt(-1);
+      if (index < 0 || index > m_grips.length()) {
+        // TODO: error handling
+        continue;
+      }
+      if (first) {
+        first = false;
+      } else {
+        polygon.edges.append(findOrCreateEdge(polygon.vertices.last(), m_grips[index]));
+      }
+      polygon.vertices.append(m_grips[index]);
+    }
+    polygon.rebuildBuffers();
+    m_polygons.append(polygon);
+  }
+
+  // TODO: autocompute boundary if missing? Or just throw?
+  for (const QJsonValue& indexV : source["boundary"].toArray()) {
+    int index = indexV.toInt(-1);
+    if (index < 0 || index > m_grips.length()) {
+      // TODO: error handling
+      continue;
+    }
+    m_boundary.append(m_grips[index]);
+  }
+}
+
+QJsonObject MeshItem::serialize() const
+{
+  QJsonObject o;
+
+  QJsonArray vertices;
+  for (const GripItem* grip : m_grips) {
+    QColor color = grip->color();
+    QJsonArray vertex({
+      grip->pos().x(),
+      grip->pos().y(),
+      color.red(),
+      color.green(),
+      color.blue(),
+      color.alpha(),
+    });
+    vertices.append(vertex);
+  }
+  o["vertices"] = vertices;
+
+  QJsonArray polygons;
+  for (const Polygon& polygon : m_polygons) {
+    QJsonArray polyData;
+    for (GripItem* grip : polygon.vertices) {
+      polyData.append(m_grips.indexOf(grip));
+    }
+    polygons.append(polyData);
+  }
+  o["polygons"] = polygons;
+
+  QJsonArray boundary;
+  for (GripItem* grip : m_boundary) {
+    boundary.append(m_grips.indexOf(grip));
+  }
+  o["boundary"] = boundary;
+
+  return o;
 }
 
 GripItem* MeshItem::newGrip()
@@ -344,4 +434,16 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
   }
 
   painter->endNativePainting();
+}
+
+EdgeItem* MeshItem::findOrCreateEdge(GripItem* v1, GripItem* v2)
+{
+  for (EdgeItem* edge : m_edges) {
+    if (edge->hasGrip(v1) && edge->hasGrip(v2)) {
+      return edge;
+    }
+  }
+  EdgeItem* edge = new EdgeItem(v1, v2);
+  m_edges.append(edge);
+  return edge;
 }

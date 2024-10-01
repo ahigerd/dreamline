@@ -8,6 +8,7 @@
 #include <QVector4D>
 #include <QPointer>
 #include <QSet>
+#include <QJsonObject>
 #include "glbuffer.h"
 class GripItem;
 class EdgeItem;
@@ -17,6 +18,9 @@ class MeshItem : public QObject, public QGraphicsPolygonItem
 Q_OBJECT
 public:
   MeshItem(QGraphicsItem* parent = nullptr);
+  MeshItem(const QJsonObject& source, QGraphicsItem* parent = nullptr);
+
+  QJsonObject serialize() const;
 
   GripItem* activeVertex() const;
   GripItem* addVertexToPolygon(const QPointF& pos);
@@ -65,6 +69,7 @@ private:
 
   QSet<Polygon*> polygonsContainingVertex(GripItem* vertex);
   Polygon* findSplittablePolygon(GripItem* v1, GripItem* v2);
+  EdgeItem* findOrCreateEdge(GripItem* v1, GripItem* v2);
 
   QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;
