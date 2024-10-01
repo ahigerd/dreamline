@@ -53,6 +53,8 @@ private:
     void setColor(int index, const QColor& color);
 
     void updateWindingDirection();
+    void rebuildBuffers();
+
     QSet<EdgeItem*> edgesContainingVertex(GripItem* vertex) const;
     bool isEdgeInside(GripItem* v1, GripItem* v2) const;
 
@@ -61,6 +63,7 @@ private:
   };
 
   QSet<Polygon*> polygonsContainingVertex(GripItem* vertex);
+  Polygon* findSplittablePolygon(GripItem* v1, GripItem* v2);
 
   QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;

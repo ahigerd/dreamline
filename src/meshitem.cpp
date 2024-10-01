@@ -268,22 +268,65 @@ GripItem* MeshItem::addVertexToPolygon(const QPointF& pos)
 
 bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
 {
+  Polygon* oldPoly = findSplittablePolygon(v1, v2);
+  if (!oldPoly) {
+    return false;
+  }
+
+  // We do this first because we might swap the vertices later.
+  setActiveVertex(v2);
+
+  m_polygons.append(Polygon());
+  Polygon* newPoly = &m_polygons.back();
+
+  // Get the bounds of the vertices that need to move.
+  int oldPos1 = oldPoly->vertices.indexOf(v1);
+  int oldPos2 = oldPoly->vertices.indexOf(v2);
+  if (oldPos1 > oldPos2) {
+    std::swap(oldPos1, oldPos2);
+    std::swap(v1, v2);
+  }
+  // Make sure not to splice out the first split vertex.
+  // The end doesn't need to move because iterator ranges exclude end.
+  oldPos1++;
+
+  // To preserve the winding order of the existing vertices, the new
+  // polygon must trace the new edge in the opposite direction.
+  newPoly->vertices.append(v2);
+  newPoly->vertices.append(v1);
+  newPoly->vertices += oldPoly->vertices.mid(oldPos1, oldPos2 - oldPos1);
+
+  // Remove the vertices that were spliced into the new polygon.
+  oldPoly->vertices.erase(oldPoly->vertices.begin() + oldPos1, oldPoly->vertices.begin() + oldPos2);
+
+  // Create the new edge.
+  EdgeItem* edge = new EdgeItem(v1, v2);
+  oldPoly->edges.append(edge);
+  newPoly->edges.append(edge);
+
+  // Update cached data.
+  oldPoly->rebuildBuffers();
+  newPoly->rebuildBuffers();
+
+  return true;
+}
+
+MeshItem::Polygon* MeshItem::findSplittablePolygon(GripItem* v1, GripItem* v2)
+{
   QSet<Polygon*> polys = polygonsContainingVertex(v1);
   polys.intersect(polygonsContainingVertex(v2));
   if (!polys.size()) {
     // The two vertices are in different polygons.
-    return false;
+    return nullptr;
   }
   for (Polygon* poly : polys) {
     if (poly->isEdgeInside(v1, v2)) {
-      // TODO: actually split the polygon
-      qDebug() << "can split";
-      return true;
+      return poly;
     }
   }
   // The edge that would be created is not in the interior
   // of any of the polygons that we found.
-  return false;
+  return nullptr;
 }
 
 void MeshItem::gripDestroyed(QObject* grip)
@@ -395,6 +438,19 @@ void MeshItem::Polygon::updateWindingDirection()
     b = c;
   }
   windingDirection = windingDirection > 0 ? 1.0f : -1.0f;
+}
+
+void MeshItem::Polygon::rebuildBuffers()
+{
+  QPolygonF poly;
+  colors.clear();
+  for (GripItem* grip : vertices) {
+    poly.append(grip->pos());
+    QColor color = grip->color();
+    colors.append(QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF()));
+  }
+  vertexBuffer = poly;
+  updateWindingDirection();
 }
 
 QSet<EdgeItem*> MeshItem::Polygon::edgesContainingVertex(GripItem* vertex) const
