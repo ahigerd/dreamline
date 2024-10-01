@@ -10,22 +10,24 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
+// This function returns an angle between -pi and +pi.
+// Positive numbers are counter-clockwise.
+// Negative numbers are clockwise.
 static double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c)
 {
-  double t1 = std::atan2(a.y() - b.y(), a.x() - b.x());
-  double t2 = std::atan2(c.y() - b.y(), c.x() - b.x());
-  double t = t1 - t2;
-  // explicitly ensure that the result is between -pi and +pi
-  while (t < -M_PI) {
-    t += M_PI * 2;
-  }
-  while (t > M_PI) {
-    t -= M_PI * 2;
-  }
-  if (t == 0.0) {
-    return M_PI;
-  }
-  return t;
+  double x1 = a.x() - b.x();
+  double y1 = a.y() - b.y();
+  double x2 = c.x() - b.x();
+  double y2 = c.y() - b.y();
+  return std::atan2(y2 * x1 - x2 * y1, x1 * x2 + y1 * y2);
+}
+
+// This function returns an angle between 0 and 2*pi.
+// Angles increase going counter-clockwise.
+static double ccwAngle(const QPointF& a, const QPointF& b, const QPointF& c)
+{
+  double t = signedAngle(a, b, c);
+  return (t < 0) ? t + M_PI * 2 : t;
 }
 
 MeshItem::MeshItem(QGraphicsItem* parent)
@@ -107,6 +109,16 @@ MeshItem::MeshItem(QGraphicsItem* parent)
   inner->setPen(pen);
   m_lastVertexFocus->setZValue(100);
   m_lastVertexFocus->hide();
+
+  for (EdgeItem* edge : m_edges) {
+    if (edge->hasGrip(m_grips[0]) && edge->hasGrip(m_grips[2])) {
+      insertVertex(edge, QPointF(20, -20));
+      m_lastVertex->setColor(Qt::white);
+      m_lastVertex = nullptr;
+      m_lastVertexFocus->hide();
+      break;
+    }
+  }
 }
 
 GripItem* MeshItem::newGrip()
@@ -257,39 +269,9 @@ bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
     // The two vertices are in different polygons.
     return false;
   }
-  QLineF newLine(v1->pos(), v2->pos());
   for (Polygon* poly : polys) {
-    if (!poly->windingDirection) {
-      // A degenerate polygon cannot be split
-      continue;
-    }
-    QSet<EdgeItem*> edges1 = poly->edgesContainingVertex(v1);
-    QSet<EdgeItem*> edges2 = poly->edgesContainingVertex(v2);
-    if (edges1.intersects(edges2)) {
-      // v1 and v2 already have a shared edge
-      return false;
-    }
-    if (edges1.size() != 2) {
-      // This shouldn't be possible, but as a sanity check...
-      continue;
-    }
-    EdgeItem* edge1 = *edges1.begin();
-    EdgeItem* edge2 = *(edges1.begin() + 1);
-    GripItem* vertexBefore = edge1->leftGrip() == v1 ? edge1->rightGrip() : edge1->leftGrip();
-    GripItem* vertexAfter = edge2->leftGrip() == v1 ? edge2->rightGrip() : edge2->leftGrip();
-    if (poly->vertices.indexOf(vertexBefore) > poly->vertices.indexOf(vertexAfter)) {
-      std::swap(edge1, edge2);
-      std::swap(vertexBefore, vertexAfter);
-    }
-    QLineF e1 = edge1->line();
-    QLineF e2 = edge2->line();
-    double vertexAngle = signedAngle(vertexBefore->pos(), v1->pos(), vertexAfter->pos());
-    double a1 = signedAngle(vertexBefore->pos(), v1->pos(), v2->pos());
-    if (vertexAngle < 0) {
-      vertexAngle = -vertexAngle;
-      a1 = -a1;
-    }
-    if (0 < a1 && a1 < vertexAngle) {
+    if (poly->isEdgeInside(v1, v2)) {
+      // TODO: actually split the polygon
       qDebug() << "can split";
       return true;
     }
@@ -391,19 +373,6 @@ void MeshItem::Polygon::setColor(int index, const QColor& color)
   colors[index] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
 }
 
-QSet<EdgeItem*> MeshItem::Polygon::edgesContainingVertex(GripItem* vertex)
-{
-  QSet<EdgeItem*> result;
-
-  for (EdgeItem* edge : edges) {
-    if (edge->hasGrip(vertex)) {
-      result += edge;
-    }
-  }
-
-  return result;
-}
-
 void MeshItem::Polygon::updateWindingDirection()
 {
   windingDirection = 0.0f;
@@ -425,5 +394,80 @@ void MeshItem::Polygon::updateWindingDirection()
     a = b;
     b = c;
   }
-  windingDirection = std::signbit(windingDirection) ? -1.0f : 1.0f;
+  windingDirection = std::signbit(windingDirection) ? 1.0f : -1.0f;
+}
+
+QSet<EdgeItem*> MeshItem::Polygon::edgesContainingVertex(GripItem* vertex) const
+{
+  QSet<EdgeItem*> result;
+
+  for (EdgeItem* edge : edges) {
+    if (edge->hasGrip(vertex)) {
+      result += edge;
+    }
+  }
+
+  return result;
+}
+
+bool MeshItem::Polygon::testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, EdgeItem* edge2) const
+{
+  // Get the vertices on either side of the target vertex.
+  GripItem* vertexBefore = edge1->leftGrip() == v1 ? edge1->rightGrip() : edge1->leftGrip();
+  GripItem* vertexAfter = edge2->leftGrip() == v1 ? edge2->rightGrip() : edge2->leftGrip();
+
+  // Check the order of the vertices around the winding direction of the polygon.
+  // By reversing the order of the vertices for reverse-wound polygons, we can
+  // ensure you can always use a counter-clockwise angle to determine inclusion.
+  double wind = windingDirection;
+  int beforePos = vertices.indexOf(vertexBefore) * wind;
+  int vertexPos = vertices.indexOf(v1) * wind;
+  int afterPos = vertices.indexOf(vertexAfter) * wind;
+
+  // Because the vertex order wraps around the array, it's possible that the target
+  // vertex isn't numerically between the left and right vertices. Take that into
+  // account while checking to make sure the vertices are in the correct order.
+  // If they're not, switch them around so that they are.
+  bool ascending = beforePos < afterPos;
+  bool vertexBetween = (beforePos < vertexPos && vertexPos < afterPos) || (afterPos < vertexPos && vertexPos < beforePos);
+  if (vertexBetween == ascending) {
+    std::swap(vertexBefore, vertexAfter);
+  }
+
+  // Once things are arranged correctly, you can tell if the new edge is inside
+  // the polygon because it will have less of an angle measured in the winding
+  // direction than the existing angle.
+  double vertexAngle = ccwAngle(vertexBefore->pos(), v1->pos(), vertexAfter->pos());
+  double a1 = ccwAngle(vertexBefore->pos(), v1->pos(), v2->pos());
+  return a1 < vertexAngle;
+}
+
+bool MeshItem::Polygon::isEdgeInside(GripItem* v1, GripItem* v2) const
+{
+  if (!windingDirection) {
+    // A degenerate polygon can't contain anything
+    return false;
+  }
+  QSet<EdgeItem*> edges1 = edgesContainingVertex(v1);
+  QSet<EdgeItem*> edges2 = edgesContainingVertex(v2);
+  if (edges1.intersects(edges2)) {
+    // v1 and v2 already have a shared edge
+    return false;
+  }
+  if (edges1.size() != 2 || edges2.size() != 2) {
+    // This shouldn't be possible, but as a sanity check...
+    return false;
+  }
+
+  // Is the new edge between the edges adjacent to the first vertex?
+  if (!testEdge(v1, v2, *edges1.begin(), *(++edges1.begin()))) {
+    return false;
+  }
+
+  // Is the new edge between the edges adjacent to the second vertex?
+  if (!testEdge(v2, v1, *edges2.begin(), *(++edges2.begin()))) {
+    return false;
+  }
+
+  return true;
 }

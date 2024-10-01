@@ -52,8 +52,12 @@ private:
     QColor color(int index) const;
     void setColor(int index, const QColor& color);
 
-    QSet<EdgeItem*> edgesContainingVertex(GripItem* vertex);
     void updateWindingDirection();
+    QSet<EdgeItem*> edgesContainingVertex(GripItem* vertex) const;
+    bool isEdgeInside(GripItem* v1, GripItem* v2) const;
+
+  private:
+    bool testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, EdgeItem* edge2) const;
   };
 
   QSet<Polygon*> polygonsContainingVertex(GripItem* vertex);
