@@ -23,11 +23,15 @@ static double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c)
   return std::atan2(y2 * x1 - x2 * y1, x1 * x2 + y1 * y2);
 }
 
-// As signedAngle, but this function returns an angle between 0 and 2*pi.
-// Angles increase going counter-clockwise.
+// This function returns an angle between 0 and 2*pi that measures the
+// counterclockwise angle between vector BA and vector CA.
 static double ccwAngle(const QPointF& a, const QPointF& b, const QPointF& c)
 {
-  double t = signedAngle(a, b, c);
+  double x1 = a.x() - b.x();
+  double y1 = a.y() - b.y();
+  double x2 = c.x() - b.x();
+  double y2 = c.y() - b.y();
+  double t = std::atan2(y2 * x1 - x2 * y1, x1 * x2 + y1 * y2);
   return (t < 0) ? t + M_PI * 2 : t;
 }
 
