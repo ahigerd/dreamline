@@ -1,7 +1,5 @@
 #version 330 core
 #define N <N>
-#define PI 3.141592653589793
-#define PI2 6.283185307179586
 
 layout (location = 0) in vec2 pos;
 uniform vec2[N] verts;

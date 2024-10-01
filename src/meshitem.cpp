@@ -114,16 +114,6 @@ MeshItem::MeshItem(QGraphicsItem* parent)
   inner->setPen(pen);
   m_lastVertexFocus->setZValue(100);
   m_lastVertexFocus->hide();
-
-  for (EdgeItem* edge : m_edges) {
-    if (edge->hasGrip(m_grips[0]) && edge->hasGrip(m_grips[2])) {
-      insertVertex(edge, QPointF(20, -20));
-      m_lastVertex->setColor(Qt::white);
-      m_lastVertex = nullptr;
-      m_lastVertexFocus->hide();
-      break;
-    }
-  }
 }
 
 GripItem* MeshItem::newGrip()
