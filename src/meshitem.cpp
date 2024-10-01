@@ -289,6 +289,16 @@ bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
   // Remove the vertices that were spliced into the new polygon.
   oldPoly->vertices.erase(oldPoly->vertices.begin() + oldPos1, oldPoly->vertices.begin() + oldPos2);
 
+  // Move the split-off edges to the new polygon.
+  for (EdgeItem* edge : oldPoly->edges) {
+    if (!oldPoly->vertices.contains(edge->leftGrip()) || !oldPoly->vertices.contains(edge->rightGrip())) {
+      newPoly->edges.append(edge);
+    }
+  }
+  for (EdgeItem* edge : newPoly->edges) {
+    oldPoly->edges.removeAll(edge);
+  }
+
   // Create the new edge.
   EdgeItem* edge = new EdgeItem(v1, v2);
   oldPoly->edges.append(edge);
