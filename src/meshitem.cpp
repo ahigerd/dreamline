@@ -15,8 +15,8 @@
 // Negative numbers are clockwise.
 static double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c)
 {
-  double x1 = a.x() - b.x();
-  double y1 = a.y() - b.y();
+  double x1 = b.x() - a.x();
+  double y1 = b.y() - a.y();
   double x2 = c.x() - b.x();
   double y2 = c.y() - b.y();
   return std::atan2(y2 * x1 - x2 * y1, x1 * x2 + y1 * y2);
@@ -385,7 +385,7 @@ void MeshItem::Polygon::updateWindingDirection()
   QPointF c;
   for (int i = 0; i < n; i++) {
     c = vertices[i]->pos();
-    windingDirection += signedAngle(b, a, c);
+    windingDirection += signedAngle(a, b, c);
     a = b;
     b = c;
   }
