@@ -2,7 +2,6 @@
 #define DL_MESHITEM_H
 
 #include <QGraphicsPolygonItem>
-#include <QOpenGLBuffer>
 #include <QObject>
 #include <QVector>
 #include <QColor>
@@ -57,6 +56,8 @@ private:
 
     QSet<EdgeItem*> edgesContainingVertex(GripItem* vertex) const;
     bool isEdgeInside(GripItem* v1, GripItem* v2) const;
+
+    QString debug() const;
 
   private:
     bool testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, EdgeItem* edge2) const;
