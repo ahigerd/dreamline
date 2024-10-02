@@ -16,8 +16,8 @@ MOC_DIR = .build
 HEADERS += src/mainwindow.h   src/gripitem.h   src/meshitem.h   src/tool.h
 SOURCES += src/mainwindow.cpp src/gripitem.cpp src/meshitem.cpp src/tool.cpp
 
-HEADERS += src/editorview.h   src/glviewport.h   src/edgeitem.h
-SOURCES += src/editorview.cpp src/glviewport.cpp src/edgeitem.cpp
+HEADERS += src/editorview.h   src/glviewport.h   src/edgeitem.h   src/markeritem.h
+SOURCES += src/editorview.cpp src/glviewport.cpp src/edgeitem.cpp src/markeritem.cpp
 
 HEADERS += src/glbuffer.h   src/boundprogram.h   src/dreamproject.h
 SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp
