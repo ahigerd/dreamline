@@ -121,7 +121,7 @@ GripItem* MeshItem::newGrip()
   GripItem* grip = new GripItem(this);
   m_grips.append(grip);
   QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
-  QObject::connect(grip, SIGNAL(colorChanged(GripItem*, QColor)), this, SLOT(changeColor(GripItem*, QColor)));
+  QObject::connect(grip, SIGNAL(colorChanged(MarkerItem*, QColor)), this, SLOT(changeColor(MarkerItem*, QColor)));
   QObject::connect(grip, SIGNAL(destroyed(QObject*)), this, SLOT(gripDestroyed(QObject*)));
   return grip;
 }
@@ -161,10 +161,10 @@ void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
   }
 }
 
-void MeshItem::changeColor(GripItem* vertex, const QColor& color)
+void MeshItem::changeColor(MarkerItem* vertex, const QColor& color)
 {
   for (Polygon& poly : m_polygons) {
-    int index = poly.vertices.indexOf(vertex);
+    int index = poly.vertices.indexOf(static_cast<GripItem*>(vertex));
     if (index >= 0) {
       poly.colors[index] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     }

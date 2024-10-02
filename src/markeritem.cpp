@@ -9,7 +9,7 @@
 #include <QPainter>
 
 MarkerItem::MarkerItem(QGraphicsItem* parent)
-: QObject(nullptr), QGraphicsRectItem(-4.5, -4.5, 9, 9, parent)
+: QObject(nullptr), QGraphicsRectItem(-3.5, -3.5, 7, 7, parent)
 {
   setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
   setFlag(QGraphicsItem::ItemIgnoresParentOpacity, true);
@@ -42,10 +42,15 @@ void MarkerItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
   yFrac = yFrac - int(yFrac);
 
   QRectF r = rect().adjusted(-xFrac, -yFrac, -xFrac, -yFrac);
+  painter->setPen(pen());
+  painter->drawRect(r.adjusted(-1, -1, 1, 1));
   if (option->state & QStyle::State_Selected) {
     painter->setPen(option->palette.color(QPalette::Highlight));
-    painter->drawRect(r);
   }
+  else {
+    painter->setPen(Qt::white);
+  }
+  painter->drawRect(r);
   painter->setPen(pen());
   painter->setBrush(brush());
   painter->drawRect(r.adjusted(1, 1, -1, -1));
