@@ -5,12 +5,25 @@
 #include <QGraphicsView>
 #include <QElapsedTimer>
 #include <QPainterPath>
+#include <stdexcept>
 #include "tool.h"
 class DreamProject;
 class QPinchGesture;
 class GLViewport;
 class GripItem;
 class MeshItem;
+
+class OpenException : public std::runtime_error
+{
+public:
+  OpenException(const QString& what);
+};
+
+class SaveException : public std::runtime_error
+{
+public:
+  SaveException(const QString& what);
+};
 
 class EditorView : public QGraphicsView
 {
@@ -19,8 +32,8 @@ public:
   EditorView(QWidget* parent = nullptr);
 
   void newProject();
-  // void openProject(const QString& path);
-  // void saveProject(const QString& path);
+  void openProject(const QString& path);
+  void saveProject(const QString& path);
 
   QColor lastColor = Qt::blue;
 
@@ -64,6 +77,9 @@ public slots:
   void setTool(QAction* toolAction);
   void setTool(Tool::Type type);
   void setActiveVertex(GripItem* vertex);
+
+signals:
+  void projectModified(bool);
 
 protected:
   bool viewportEvent(QEvent* event);

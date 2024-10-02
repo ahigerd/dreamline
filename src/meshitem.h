@@ -2,13 +2,13 @@
 #define DL_MESHITEM_H
 
 #include <QGraphicsPolygonItem>
-#include <QOpenGLBuffer>
 #include <QObject>
 #include <QVector>
 #include <QColor>
 #include <QVector4D>
 #include <QPointer>
 #include <QSet>
+#include <QJsonObject>
 #include "glbuffer.h"
 class GripItem;
 class EdgeItem;
@@ -18,6 +18,9 @@ class MeshItem : public QObject, public QGraphicsPolygonItem
 Q_OBJECT
 public:
   MeshItem(QGraphicsItem* parent = nullptr);
+  MeshItem(const QJsonObject& source, QGraphicsItem* parent = nullptr);
+
+  QJsonObject serialize() const;
 
   GripItem* activeVertex() const;
   GripItem* addVertexToPolygon(const QPointF& pos);
@@ -32,6 +35,9 @@ public slots:
 
 protected slots:
   void gripDestroyed(QObject* grip);
+
+signals:
+  void modified(bool);
 
 protected:
   GripItem* newGrip();
@@ -58,12 +64,15 @@ private:
     QSet<EdgeItem*> edgesContainingVertex(GripItem* vertex) const;
     bool isEdgeInside(GripItem* v1, GripItem* v2) const;
 
+    QString debug() const;
+
   private:
     bool testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, EdgeItem* edge2) const;
   };
 
   QSet<Polygon*> polygonsContainingVertex(GripItem* vertex);
   Polygon* findSplittablePolygon(GripItem* v1, GripItem* v2);
+  EdgeItem* findOrCreateEdge(GripItem* v1, GripItem* v2);
 
   QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;

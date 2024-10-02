@@ -17,11 +17,25 @@
 #include <QColor>
 #include <QMenu>
 #include <QGraphicsRectItem>
+#include <QJsonDocument>
+#include <QJsonArray>
 #include <cmath>
 
 // #define ALT_RING_MODE 0
 // #define ALT_RING_MODE 1
 #define ALT_RING_MODE 2
+
+OpenException::OpenException(const QString& what)
+: std::runtime_error(what.toUtf8().constData())
+{
+  // initializers only
+}
+
+SaveException::SaveException(const QString& what)
+: std::runtime_error(what.toUtf8().constData())
+{
+  // initializers only
+}
 
 EditorView::EditorView(QWidget* parent)
 : QGraphicsView(parent), isPanning(false), isResizingRing(false), containsMouse(false), useRing(true),
@@ -56,6 +70,63 @@ void EditorView::newProject()
   setCursorFromTool();
 
   delete oldScene;
+
+  // TODO: remove this when new projects start off blank
+  for (MeshItem* mesh : itemsOfType<MeshItem>()) {
+    QObject::connect(mesh, SIGNAL(modified(bool)), this, SIGNAL(projectModified(bool)));
+  }
+}
+
+void EditorView::openProject(const QString& path)
+{
+  newProject();
+  qDeleteAll(itemsOfType<MeshItem>());
+
+  QFile f(path);
+  if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    throw OpenException(tr("Unable to load %1 (error #%2)").arg(path).arg(int(f.error())));
+  }
+
+  QJsonParseError err;
+  QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &err);
+  if (doc.isNull()) {
+    throw OpenException(err.errorString());
+  }
+
+  QJsonObject pageSize = doc["page"].toObject();
+  // If page size is not set, use a default
+  project->setPageSize(QSizeF(pageSize["width"].toInt(8.5), pageSize["height"].toInt(11)));
+
+  QJsonArray meshes = doc["meshes"].toArray();
+  for (const QJsonValue& meshV : meshes) {
+    // TODO: return warnings if invalid
+    MeshItem* mesh = new MeshItem(meshV.toObject());
+    QObject::connect(mesh, SIGNAL(modified(bool)), this, SIGNAL(projectModified(bool)));
+    project->addItem(mesh);
+  }
+}
+
+void EditorView::saveProject(const QString& path)
+{
+  QFile f(path);
+  if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    throw SaveException(tr("Unable to save %1 (error #%2)").arg(path).arg(int(f.error())));
+  }
+
+  QJsonObject o;
+
+  QJsonObject pageSize;
+  pageSize["width"] = project->pageSize().width();
+  pageSize["height"] = project->pageSize().height();
+  o["page"] = pageSize;
+
+  QJsonArray meshes;
+  for (MeshItem* mesh : itemsOfType<MeshItem>()) {
+    meshes.append(mesh->serialize());
+  }
+  o["meshes"] = meshes;
+
+  f.write(QJsonDocument(o).toJson(QJsonDocument::Compact));
 }
 
 bool EditorView::viewportEvent(QEvent* event)

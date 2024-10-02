@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QString>
 class EditorView;
+class QMenu;
 
 class MainWindow : public QMainWindow
 {
@@ -20,6 +21,7 @@ public:
 private slots:
   void fileNew();
   void fileOpen();
+  void fileOpenRecent(QAction* action);
   void fileSave();
   void fileSaveAs();
   void fileExport();
@@ -27,8 +29,13 @@ private slots:
 private:
   void makeFileMenu();
   void makeToolMenu();
+  void updateTitle();
+
+  void updateRecentMenu();
+  void addToRecent(const QString& path);
 
   EditorView* editor;
+  QMenu* recentMenu;
   QString savePath;
   QString exportPath;
 };

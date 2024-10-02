@@ -8,16 +8,20 @@
 #include <QStyle>
 #include <QActionGroup>
 #include <QMessageBox>
+#include <QFileInfo>
+#include <QSettings>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
 {
   editor = new EditorView(this);
   setCentralWidget(editor);
+  QObject::connect(editor, SIGNAL(projectModified(bool)), this, SLOT(setWindowModified(bool)));
 
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
   makeToolMenu();
+  updateRecentMenu();
 
   fileNew();
 }
@@ -27,10 +31,14 @@ MainWindow::~MainWindow() {
 
 void MainWindow::makeFileMenu()
 {
+  recentMenu = new QMenu(tr("Open &Recent"), this);
+  QObject::connect(recentMenu, SIGNAL(triggered(QAction*)), this, SLOT(fileOpenRecent(QAction*)));
+
   QMenu* fileMenu = new QMenu(tr("&File"), this);
   menuBar()->addMenu(fileMenu);
   QAction* aNew = fileMenu->addAction(tr("&New"), this, SLOT(fileNew()), QStringLiteral("Ctrl+N"));
   QAction* aOpen = fileMenu->addAction(tr("&Open..."), this, SLOT(fileOpen()), QStringLiteral("Ctrl+O"));
+  fileMenu->addMenu(recentMenu);
   QAction* aSave = fileMenu->addAction(tr("&Save"), this, SLOT(fileSave()), QStringLiteral("Ctrl+S"));
   fileMenu->addAction(tr("Save &As..."), this, SLOT(fileSaveAs()), QStringLiteral("Ctrl+Shift+S"));
   fileMenu->addSeparator();
@@ -85,23 +93,37 @@ void MainWindow::fileNew()
 {
   savePath.clear();
   editor->newProject();
+  setWindowModified(false);
+  updateTitle();
 }
 
 void MainWindow::fileOpen()
 {
-  QString path = QFileDialog::getOpenFileName(this, "Open DreamLine File", QString(), "DreamLine Files (*.dream)");
+  QString path = QFileDialog::getOpenFileName(this, tr("Open Dreamline File"), QString(), tr("Dreamline Files (*.dream)"));
   if (path.isEmpty()) {
     return;
   }
   openFile(path);
 }
 
+void MainWindow::fileOpenRecent(QAction* action)
+{
+  openFile(action->data().toString());
+}
+
 void MainWindow::openFile(const QString& path)
 {
-  // TODO
   savePath = path;
 
-  // TODO: editor->openProject(path);
+  try {
+    editor->openProject(path);
+    setWindowModified(false);
+    updateTitle();
+    addToRecent(path);
+  } catch (OpenException& err) {
+    QMessageBox::warning(this, tr("Error loading DreamLine file"), QString::fromUtf8(err.what()));
+    fileNew();
+  }
 }
 
 void MainWindow::fileSave()
@@ -115,9 +137,16 @@ void MainWindow::fileSave()
 
 void MainWindow::fileSaveAs()
 {
-  QString path = QFileDialog::getSaveFileName(this, "Save DreamLine File", savePath, "DreamLine Files (*.dream)");
+  QString path = QFileDialog::getSaveFileName(this, tr("Save Dreamline File"), savePath, tr("Dreamline Files (*.dream)"));
   if (path.isEmpty()) {
     return;
+  }
+  // TODO: This is slightly hacky and wouldn't work on mobile or web.
+  // The correct solution is to not use the static convenience function,
+  // and call setDefaultSuffix().
+  QFileInfo info(path);
+  if (!info.exists() && info.suffix().isEmpty()) {
+    path += ".dream";
   }
   saveFile(path);
 }
@@ -125,16 +154,19 @@ void MainWindow::fileSaveAs()
 void MainWindow::saveFile(const QString& path)
 {
   savePath = path;
-  // TODO: bool ok = editor->saveProject(path);
-  bool ok = false; // TODO
-  if (!ok) {
-    QMessageBox::warning(this, tr("Error writing DreamLine file"), tr("%1 could not be saved.").arg(path));
+  updateTitle();
+  try {
+    editor->saveProject(path);
+    setWindowModified(false);
+    addToRecent(path);
+  } catch (SaveException& err) {
+    QMessageBox::warning(this, tr("Error saving Dreamline file"), QString::fromUtf8(err.what()));
   }
 }
 
 void MainWindow::fileExport()
 {
-  QString path = QFileDialog::getSaveFileName(this, "Export DreamLine File", exportPath, "PNG Files (*.png)");
+  QString path = QFileDialog::getSaveFileName(this, tr("Export Dreamline File"), exportPath, tr("PNG Files (*.png)"));
   if (path.isEmpty()) {
     return;
   }
@@ -146,6 +178,47 @@ void MainWindow::exportFile(const QString& path)
   exportPath = path;
   bool ok = false; // TODO
   if (!ok) {
-    QMessageBox::warning(this, tr("Error exporting DreamLine file"), tr("%1 could not be saved.").arg(path));
+    QMessageBox::warning(this, tr("Error exporting Dreamline file"), tr("%1 could not be saved.").arg(path));
   }
+}
+
+void MainWindow::updateTitle()
+{
+  QString name;
+  if (!savePath.isEmpty()) {
+    QFileInfo info(savePath);
+    name = info.fileName();
+  }
+  if (name.isEmpty()) {
+    name = tr("Untitled");
+  }
+  setWindowTitle(tr("%1[*] - Dreamline").arg(name));
+  setWindowFilePath(savePath);
+}
+
+void MainWindow::updateRecentMenu()
+{
+  QSettings settings;
+  recentMenu->clear();
+
+  int i = 0;
+  for (const QString& path : settings.value("recents").toStringList()) {
+    ++i;
+    QFileInfo info(path);
+    QString name = info.fileName();
+    QAction* action = recentMenu->addAction(tr("[&%1] %2").arg(i).arg(name));
+    action->setData(name);
+  }
+}
+
+void MainWindow::addToRecent(const QString& path)
+{
+  QSettings settings;
+  QStringList recents = settings.value("recents").toStringList();
+  recents.removeAll(path);
+  recents.insert(0, path);
+  recents = recents.mid(0, 10);
+  settings.setValue("recents", recents);
+
+  updateRecentMenu();
 }
