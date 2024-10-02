@@ -413,30 +413,47 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
   }
 
   gl->glEnable(GL_BLEND);
+  gl->glDisable(GL_MULTISAMPLE);
+  gl->glEnable(GL_DITHER);
   for (Polygon& poly : m_polygons) {
     GLBuffer<QPointF>& vbo = poly.vertexBuffer;
-    BoundProgram program = gl->useShader("polyramp", vbo.count());
+    {
+      BoundProgram p2 = gl->useShader("ramp");
+      p2.bindAttributeBuffer(0, vbo);
+      p2.bindAttributeBuffer(1, poly.colors);
+      p2->enableAttributeArray(1);
 
-    program.bindAttributeBuffer(0, vbo);
+      QTransform transform = gl->transform();
+      p2->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
+      p2->setUniformValue("scale", transform.m11(), transform.m22());
 
-    QVector<QVector2D> verts(vbo.count());
-    for (int i = 0; i < vbo.count(); i++) {
-      verts[i] = QVector2D(vbo[i]);
+      gl->glDrawArrays(GL_LINE_LOOP, 0, vbo.count());
     }
-    program->setUniformValueArray("verts", verts.constData(), verts.size());
-    program->setUniformValueArray("colors", poly.colors.constData(), poly.colors.size());
+    {
+      BoundProgram program = gl->useShader("polyramp", vbo.count());
 
-    QTransform transform = gl->transform();
-    program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
-    program->setUniformValue("scale", transform.m11(), transform.m22());
+      program.bindAttributeBuffer(0, vbo);
 
-    if (!poly.windingDirection) {
-      poly.updateWindingDirection();
+      QVector<QVector2D> verts(vbo.count());
+      for (int i = 0; i < vbo.count(); i++) {
+        verts[i] = QVector2D(vbo[i]);
+      }
+      program->setUniformValueArray("verts", verts.constData(), verts.size());
+      program->setUniformValueArray("colors", reinterpret_cast<const GLfloat*>(poly.colors.vector().constData()), poly.colors.size(), 4);
+
+      QTransform transform = gl->transform();
+      program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
+      program->setUniformValue("scale", transform.m11(), transform.m22());
+
+      if (!poly.windingDirection) {
+        poly.updateWindingDirection();
+      }
+      program->setUniformValue("windingDirection", poly.windingDirection);
+
+      gl->glDrawArrays(GL_TRIANGLE_FAN, 0, vbo.count());
     }
-    program->setUniformValue("windingDirection", poly.windingDirection);
-
-    gl->glDrawArrays(GL_TRIANGLE_FAN, 0, vbo.count());
   }
+  gl->glEnable(GL_MULTISAMPLE);
 
   painter->endNativePainting();
 }

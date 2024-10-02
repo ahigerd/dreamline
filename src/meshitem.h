@@ -51,7 +51,7 @@ private:
     QVector<GripItem*> vertices;
     QVector<EdgeItem*> edges;
     GLBuffer<QPointF> vertexBuffer;
-    QVector<QVector4D> colors;
+    GLBuffer<QVector4D> colors;
     GLfloat windingDirection;
 
     bool insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge);

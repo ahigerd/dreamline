@@ -40,5 +40,9 @@ void main()
     next = verts[i];
   }
 
-  FragColor /= t;
+  if (t > 0) {
+    FragColor /= t;
+  } else {
+    FragColor = vec4(0, 0, 0, 0);
+  }
 }

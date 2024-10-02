@@ -55,7 +55,9 @@ bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeIt
     GripItem* pp2 = vertices[(i + 1) % len];
     if ((pp1 == p1 && pp2 == p2) || (pp1 == p2 && pp2 == p1)) {
       vertices.insert(i + 1, vertex);
-      colors.insert(i + 1, QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF()));
+      auto colorData = colors.vector();
+      colorData.insert(i + 1, QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF()));
+      colors = colorData;
       rebuildBuffers();
       return true;
     }
