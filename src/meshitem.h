@@ -10,6 +10,7 @@
 #include <QSet>
 #include <QJsonObject>
 #include "glbuffer.h"
+#include "markeritem.h"
 class GripItem;
 class EdgeItem;
 
@@ -29,7 +30,7 @@ public:
 
 public slots:
   void moveVertex(GripItem* vertex, const QPointF& pos);
-  void changeColor(GripItem* vertex, const QColor& color);
+  void changeColor(MarkerItem* vertex, const QColor& color);
   void insertVertex(EdgeItem* edge, const QPointF& pos);
   void setActiveVertex(GripItem* vertex);
 
