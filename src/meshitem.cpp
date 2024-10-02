@@ -85,6 +85,10 @@ MeshItem::MeshItem(QGraphicsItem* parent)
   inner->setPen(pen);
   m_lastVertexFocus->setZValue(100);
   m_lastVertexFocus->hide();
+
+  for (Polygon& poly : m_polygons) {
+    poly.rebuildBuffers();
+  }
 }
 
 MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
@@ -109,16 +113,13 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
 
   for (const QJsonValue& polygonV : source["polygons"].toArray()) {
     Polygon polygon;
-    bool first = true;
     for (const QJsonValue& indexV : polygonV.toArray()) {
       int index = indexV.toInt(-1);
       if (index < 0 || index > m_grips.length()) {
         // TODO: error handling
         continue;
       }
-      if (first) {
-        first = false;
-      } else {
+      if (!polygon.vertices.isEmpty()) {
         polygon.edges.append(findOrCreateEdge(polygon.vertices.last(), m_grips[index]));
       }
       polygon.vertices.append(m_grips[index]);

@@ -50,15 +50,13 @@ bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeIt
   QColor color = vertex->color();
 
   int len = vertices.length();
-  QVector<QPointF> vbo = vertexBuffer.vector();
   for (int i = 0; i < len; i++) {
     GripItem* pp1 = vertices[i];
     GripItem* pp2 = vertices[(i + 1) % len];
     if ((pp1 == p1 && pp2 == p2) || (pp1 == p2 && pp2 == p1)) {
       vertices.insert(i + 1, vertex);
-      vbo.insert(i + 1, vertex->pos());
       colors.insert(i + 1, QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF()));
-      vertexBuffer = vbo;
+      rebuildBuffers();
       return true;
     }
   }
@@ -98,12 +96,14 @@ void MeshItem::Polygon::updateWindingDirection()
 
 void MeshItem::Polygon::rebuildBuffers()
 {
-  QPolygonF poly;
-  colors.clear();
-  for (GripItem* grip : vertices) {
-    poly.append(grip->pos());
+  int numVertices = vertices.length();
+  QPolygonF poly(numVertices);
+  colors.resize(numVertices);
+  for (int i = 0; i < numVertices; i++) {
+    GripItem* grip = vertices[i];
     QColor color = grip->color();
-    colors.append(QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF()));
+    poly[i] = grip->pos();
+    colors[i] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
   }
   vertexBuffer = poly;
   updateWindingDirection();
