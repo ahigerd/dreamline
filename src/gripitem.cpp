@@ -1,12 +1,4 @@
 #include "gripitem.h"
-#include <QContextMenuEvent>
-#include <QGraphicsSceneHoverEvent>
-#include <QStyleOptionGraphicsItem>
-#include <QColorDialog>
-#include <QColor>
-#include <QMenu>
-#include <QPen>
-#include <QPainter>
 #include "markeritem.h"
 
 GripItem::GripItem(QGraphicsItem* parent) : MarkerItem(parent)

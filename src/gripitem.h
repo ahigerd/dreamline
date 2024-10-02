@@ -3,7 +3,6 @@
 
 #include <QGraphicsRectItem>
 #include <QObject>
-#include <QColor>
 #include "markeritem.h"
 
 class GripItem : public MarkerItem
