@@ -77,9 +77,11 @@ public slots:
   void setTool(QAction* toolAction);
   void setTool(Tool::Type type);
   void setActiveVertex(GripItem* vertex);
+  void selectColor();
 
 signals:
   void projectModified(bool);
+  void colorSelected(const QColor&);
 
 protected:
   bool viewportEvent(QEvent* event);
@@ -97,7 +99,6 @@ private:
   void setCursorFromTool();
 
   void contextMenu(const QPoint& pos);
-  void selectColor();
 
   QElapsedTimer timer;
   GLViewport* glViewport;

@@ -10,6 +10,8 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QSettings>
+#include <QImage>
+#include <QPainter>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -17,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
   editor = new EditorView(this);
   setCentralWidget(editor);
   QObject::connect(editor, SIGNAL(projectModified(bool)), this, SLOT(setWindowModified(bool)));
+  QObject::connect(editor, SIGNAL(colorSelected(QColor)), this, SLOT(setCurrentColor(QColor)));
 
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
@@ -83,6 +86,10 @@ void MainWindow::makeToolMenu()
   QAction* aSplit = Tool::makeAction(toolGroup, Tool::SplitEdge);
   toolMenu->addAction(aSplit);
   toolBar->addAction(aSplit);
+
+  toolBar->addSeparator();
+  colorButton = toolBar->addAction("Color", editor, SLOT(selectColor()));
+  setCurrentColor(editor->lastColor);
 
   aVertex->setChecked(true);
 
@@ -221,4 +228,22 @@ void MainWindow::addToRecent(const QString& path)
   settings.setValue("recents", recents);
 
   updateRecentMenu();
+}
+
+QColor MainWindow::currentColor() const
+{
+  return editor->lastColor;
+}
+
+void MainWindow::setCurrentColor(const QColor& color)
+{
+  QImage img(24, 24, QImage::Format_RGB32);
+  img.fill(color.toRgb());
+  QPainter p(&img);
+  QPen pen(Qt::black, 0);
+  pen.setCosmetic(true);
+  p.setPen(pen);
+  p.drawRect(0, 0, 23, 23);
+  colorButton->setIcon(QPixmap::fromImage(img));
+  editor->lastColor = color;
 }

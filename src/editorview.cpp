@@ -328,8 +328,9 @@ void EditorView::contextMenu(const QPoint& pos)
 void EditorView::selectColor()
 {
   QColor color = QColorDialog::getColor(lastColor, this, "Select Color");
-  if (color.isValid()) {
+  if (color.isValid() && color != lastColor) {
     lastColor = color;
+    emit colorSelected(color);
   }
 }
 

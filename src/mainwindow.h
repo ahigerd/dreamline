@@ -18,6 +18,11 @@ public:
   void saveFile(const QString& path);
   void exportFile(const QString& path);
 
+  QColor currentColor() const;
+
+public slots:
+  void setCurrentColor(const QColor& color);
+
 private slots:
   void fileNew();
   void fileOpen();
@@ -35,6 +40,7 @@ private:
   void addToRecent(const QString& path);
 
   EditorView* editor;
+  QAction* colorButton;
   QMenu* recentMenu;
   QString savePath;
   QString exportPath;
