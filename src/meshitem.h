@@ -36,6 +36,9 @@ public slots:
 protected slots:
   void gripDestroyed(QObject* grip);
 
+signals:
+  void modified(bool);
+
 protected:
   GripItem* newGrip();
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);

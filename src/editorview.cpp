@@ -70,6 +70,11 @@ void EditorView::newProject()
   setCursorFromTool();
 
   delete oldScene;
+
+  // TODO: remove this when new projects start off blank
+  for (MeshItem* mesh : itemsOfType<MeshItem>()) {
+    QObject::connect(mesh, SIGNAL(modified(bool)), this, SIGNAL(projectModified(bool)));
+  }
 }
 
 void EditorView::openProject(const QString& path)
@@ -96,6 +101,7 @@ void EditorView::openProject(const QString& path)
   for (const QJsonValue& meshV : meshes) {
     // TODO: return warnings if invalid
     MeshItem* mesh = new MeshItem(meshV.toObject());
+    QObject::connect(mesh, SIGNAL(modified(bool)), this, SIGNAL(projectModified(bool)));
     project->addItem(mesh);
   }
 }

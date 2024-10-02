@@ -219,6 +219,7 @@ void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
   if (vertex == m_lastVertex) {
     m_lastVertexFocus->setPos(pos);
   }
+  emit modified(true);
 }
 
 void MeshItem::changeColor(GripItem* vertex, const QColor& color)
@@ -229,6 +230,7 @@ void MeshItem::changeColor(GripItem* vertex, const QColor& color)
       poly.colors[index] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     }
   }
+  emit modified(true);
 }
 
 void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
@@ -289,6 +291,7 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
   }
 
   setActiveVertex(grip);
+  emit modified(true);
 }
 
 GripItem* MeshItem::activeVertex() const
@@ -368,6 +371,7 @@ bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
   oldPoly->rebuildBuffers();
   newPoly->rebuildBuffers();
 
+  emit modified(true);
   return true;
 }
 

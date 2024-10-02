@@ -78,6 +78,9 @@ public slots:
   void setTool(Tool::Type type);
   void setActiveVertex(GripItem* vertex);
 
+signals:
+  void projectModified(bool);
+
 protected:
   bool viewportEvent(QEvent* event);
   void mousePressEvent(QMouseEvent* event);

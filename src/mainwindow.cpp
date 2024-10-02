@@ -8,12 +8,14 @@
 #include <QStyle>
 #include <QActionGroup>
 #include <QMessageBox>
+#include <QFileInfo>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
 {
   editor = new EditorView(this);
   setCentralWidget(editor);
+  QObject::connect(editor, SIGNAL(projectModified(bool)), this, SLOT(setWindowModified(bool)));
 
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
@@ -85,6 +87,8 @@ void MainWindow::fileNew()
 {
   savePath.clear();
   editor->newProject();
+  setWindowModified(false);
+  updateTitle();
 }
 
 void MainWindow::fileOpen()
@@ -102,8 +106,11 @@ void MainWindow::openFile(const QString& path)
 
   try {
     editor->openProject(path);
+    setWindowModified(false);
+    updateTitle();
   } catch (OpenException& err) {
     QMessageBox::warning(this, tr("Error loading DreamLine file"), QString::fromUtf8(err.what()));
+    fileNew();
   }
 }
 
@@ -128,8 +135,10 @@ void MainWindow::fileSaveAs()
 void MainWindow::saveFile(const QString& path)
 {
   savePath = path;
+  updateTitle();
   try {
     editor->saveProject(path);
+    setWindowModified(false);
   } catch (SaveException& err) {
     QMessageBox::warning(this, tr("Error saving Dreamline file"), QString::fromUtf8(err.what()));
   }
@@ -151,4 +160,17 @@ void MainWindow::exportFile(const QString& path)
   if (!ok) {
     QMessageBox::warning(this, tr("Error exporting Dreamline file"), tr("%1 could not be saved.").arg(path));
   }
+}
+
+void MainWindow::updateTitle()
+{
+  QString name;
+  if (!savePath.isEmpty()) {
+    QFileInfo info(savePath);
+    name = info.fileName();
+  }
+  if (name.isEmpty()) {
+    name = tr("Untitled");
+  }
+  setWindowTitle(tr("%1[*] - Dreamline").arg(name));
 }
