@@ -193,6 +193,7 @@ void MainWindow::updateTitle()
     name = tr("Untitled");
   }
   setWindowTitle(tr("%1[*] - Dreamline").arg(name));
+  setWindowFilePath(savePath);
 }
 
 void MainWindow::updateRecentMenu()
