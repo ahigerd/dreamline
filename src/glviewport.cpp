@@ -75,7 +75,7 @@ BoundProgram GLViewport::useShader(const QString& name, int n)
   QOpenGLShaderProgram* program = m_shaders.value(templatedName);
   if (!program) {
     program = new QOpenGLShaderProgram(this);
-    m_shaders[name] = program;
+    m_shaders[templatedName] = program;
     addShader(program, name, n, QOpenGLShader::Fragment);
     addShader(program, name, n, QOpenGLShader::Vertex);
     bool ok = program->link();
