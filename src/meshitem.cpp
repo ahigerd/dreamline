@@ -59,29 +59,18 @@ MeshItem::MeshItem(QGraphicsItem* parent)
     for (int i = 0; i < numVertices; i++) {
       GripItem* left = p.vertices[i];
       GripItem* right = p.vertices[(i + 1) % numVertices];
-      EdgeItem* edge = nullptr;
-      for (EdgeItem* checkEdge : m_edges) {
-        if (checkEdge->hasGrip(left) && checkEdge->hasGrip(right)) {
-          edge = checkEdge;
-          break;
-        }
-      }
-      if (!edge) {
-        edge = new EdgeItem(left, right);
-        m_edges.append(edge);
-        QObject::connect(edge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
-      }
+      EdgeItem* edge = findOrCreateEdge(left, right);
       p.edges.append(edge);
     }
   }
 
   m_lastVertexFocus = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, this);
-  QPen pen(Qt::black, 3);
+  QPen pen(Qt::black, 3.8);
   pen.setCosmetic(true);
   m_lastVertexFocus->setPen(pen);
   QGraphicsEllipseItem* inner = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, m_lastVertexFocus);
   pen.setColor(Qt::white);
-  pen.setWidth(1.5);
+  pen.setWidthF(1.4);
   inner->setPen(pen);
   m_lastVertexFocus->setZValue(100);
   m_lastVertexFocus->hide();
@@ -356,7 +345,7 @@ bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
   }
 
   // Create the new edge.
-  EdgeItem* edge = new EdgeItem(v1, v2);
+  EdgeItem* edge = findOrCreateEdge(v1, v2);
   oldPoly->edges.append(edge);
   newPoly->edges.append(edge);
 
@@ -458,6 +447,7 @@ EdgeItem* MeshItem::findOrCreateEdge(GripItem* v1, GripItem* v2)
     }
   }
   EdgeItem* edge = new EdgeItem(v1, v2);
+  QObject::connect(edge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
   m_edges.append(edge);
   return edge;
 }
