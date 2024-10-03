@@ -11,6 +11,9 @@ Q_OBJECT
 public:
   SplitTool();
 
+  virtual void activated(EditorView* editor);
+  virtual void deactivated(EditorView* editor);
+
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);

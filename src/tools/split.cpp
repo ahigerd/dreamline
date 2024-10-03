@@ -11,6 +11,15 @@ SplitTool::SplitTool()
 {
 }
 
+void SplitTool::activated(EditorView* editor)
+{
+}
+
+void SplitTool::deactivated(EditorView* editor)
+{
+    marker->setVisible(false);
+}
+
 bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
   GripItem* grip = closestGrip;
@@ -45,6 +54,7 @@ bool SplitTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
   if (marker == nullptr) {
     marker = new MarkerItem();
     editor->scene()->addItem(marker);
+    marker->setHighlight(QColor("#FF4444"));
   }
   closestEdge = nullptr;
   closestGrip = nullptr;
