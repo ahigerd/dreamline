@@ -86,3 +86,15 @@ bool EdgeItem::hasGrip(GripItem* grip) const
 {
   return grip == left || grip == right;
 }
+
+QPointF EdgeItem::nearestPointOnLine(const QPointF& point)
+{
+  QLineF norm = line().normalVector();
+  norm.setPoints(point, point + QPointF(norm.dx(), norm.dy()));
+  QPointF result;
+  norm.intersects(line(), &result);
+  // This is the nearest point as if it were an infinite line.
+  // If you want to snap it to one end of the line, there's some
+  // more work to do.
+  return result;
+}

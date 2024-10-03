@@ -9,11 +9,6 @@ SplitEdgeTool::SplitEdgeTool()
 {
 }
 
-Qt::CursorShape SplitEdgeTool::cursorShape() const
-{
-  return Qt::ArrowCursor;
-}
-
 bool SplitEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
   GripItem* grip = dynamic_cast<GripItem*>(editor->itemAt(event->pos()));

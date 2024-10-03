@@ -9,8 +9,6 @@ Q_OBJECT
 public:
   SplitEdgeTool();
 
-  virtual Qt::CursorShape cursorShape() const;
-
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);
