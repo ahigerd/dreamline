@@ -72,6 +72,20 @@ void EdgeItem::split(const QPointF& pos)
   emit insertVertex(this, pos);
 }
 
+QColor EdgeItem::colorAt(const QPointF& pos)
+{
+
+  float t = QLineF(pos, right->pos()).length() / line().length();
+  QColor leftColor = left->color();
+  QColor rightColor = right->color();
+  QColor newColor(
+    (leftColor.red() * t) + (rightColor.red() * (1.0f - t)),
+    (leftColor.green() * t) + (rightColor.green() * (1.0f - t)),
+    (leftColor.blue() * t) + (rightColor.blue() * (1.0f - t))
+  );
+  return newColor;
+}
+
 void EdgeItem::updateVertices()
 {
   setLine(QLineF(left->pos(), right->pos()));

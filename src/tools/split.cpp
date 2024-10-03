@@ -22,7 +22,6 @@ void SplitTool::deactivated(EditorView* editor)
 
 bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  GripItem* grip = closestGrip;
   MeshItem* mesh = editor->activeMesh();
   GripItem* oldActive = editor->activeVertex();
   if (closestEdge) {
@@ -82,7 +81,12 @@ bool SplitTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
   }
   if (closestEdge || closestGrip) {
     marker->setVisible(true);
-    marker->setBrush(editor->lastColor);
+    if (closestGrip) {
+      marker->setBrush(closestGrip->color());
+    }
+    else {
+      marker->setBrush(closestEdge->colorAt(snapPoint));
+    }
     marker->setPos(snapPoint);
   }
   else {
