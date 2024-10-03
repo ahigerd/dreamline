@@ -37,35 +37,21 @@ QPainterPath EdgeItem::shape() const
   return path;
 }
 
-void EdgeItem::hoverEnterEvent(QGraphicsSceneHoverEvent*)
+void EdgeItem::hoverEnter()
 {
   QPen pen(Qt::black, 3);
   pen.setCosmetic(true);
   setPen(pen);
 }
 
-void EdgeItem::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
-{
-  hoverEnterEvent(event);
-}
 
-void EdgeItem::hoverLeaveEvent(QGraphicsSceneHoverEvent*)
+void EdgeItem::hoverLeave()
 {
   QPen pen(Qt::black, 1);
   pen.setCosmetic(true);
   setPen(pen);
 }
 
-void EdgeItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
-{
-  event->accept();
-}
-
-void EdgeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
-{
-  emit insertVertex(this, event->scenePos());
-  event->accept();
-}
 
 void EdgeItem::updateVertices()
 {

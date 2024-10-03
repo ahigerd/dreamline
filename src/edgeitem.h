@@ -21,15 +21,13 @@ public:
   QPainterPath shape() const;
   void updateShape();
 
+  void hoverEnter();
+  void hoverLeave();
+
 signals:
   void insertVertex(EdgeItem*, const QPointF&);
 
 protected:
-  void hoverEnterEvent(QGraphicsSceneHoverEvent*);
-  void hoverMoveEvent(QGraphicsSceneHoverEvent*);
-  void hoverLeaveEvent(QGraphicsSceneHoverEvent*);
-  void mousePressEvent(QGraphicsSceneMouseEvent*);
-  void mouseDoubleClickEvent(QGraphicsSceneMouseEvent*);
 
 protected slots:
   void updateVertices();
