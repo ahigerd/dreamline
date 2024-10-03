@@ -93,8 +93,15 @@ QPointF EdgeItem::nearestPointOnLine(const QPointF& point)
   norm.setPoints(point, point + QPointF(norm.dx(), norm.dy()));
   QPointF result;
   norm.intersects(line(), &result);
-  // This is the nearest point as if it were an infinite line.
-  // If you want to snap it to one end of the line, there's some
-  // more work to do.
+
+  // Check if the result is outside the bounds of the line segment
+    if (QLineF(line().center(), result).length() > line().length() / 2) {
+        // If the point is outside, snap to the nearest endpoint
+        if (QLineF(line().p1(), result).length() > QLineF(line().p2(), result).length()) {
+            result = line().p2();
+        } else {
+            result = line().p1();
+        }
+    }
   return result;
 }
