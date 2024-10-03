@@ -3,6 +3,7 @@
 #include "meshitem.h"
 #include "gripitem.h"
 #include <QMouseEvent>
+#include <limits>
 
 SplitEdgeTool::SplitEdgeTool()
 : BaseTool()
@@ -28,6 +29,23 @@ bool SplitEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 
 bool SplitEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 {
+  if (!marker) {
+    marker = new MarkerItem();
+    editor->scene()->addItem(marker);
+  }
+  QList<EdgeItem*> items = editor->itemsInRing<EdgeItem>();
+  qreal closest = std::numeric_limits<qreal>::max();
+  for (EdgeItem* item : items) {
+    QPointF snap = item->nearestPointOnLine(editor->pos());
+    qreal distance = QLineF(editor->pos(), snap).length();
+    if (distance < closest) {
+      snapPoint = snap;
+      closestEdge = item;
+    }
+  }
+  if (!closestEdge) {
+    marker->setPos(snapPoint);
+  }
   return false;
 }
 

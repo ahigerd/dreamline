@@ -2,6 +2,8 @@
 #define DL_TOOLS_SPLITEDGE_H
 
 #include "tool.h"
+#include "edgeitem.h"
+#include "markeritem.h"
 
 class SplitEdgeTool : public BaseTool<SplitEdgeTool>
 {
@@ -12,6 +14,11 @@ public:
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);
+
+private:
+  EdgeItem* closestEdge;
+  QPointF snapPoint;
+  MarkerItem* marker;
 };
 
 #endif
