@@ -11,6 +11,7 @@ class DreamProject;
 class QPinchGesture;
 class GLViewport;
 class GripItem;
+class EdgeItem;
 class MeshItem;
 
 class OpenException : public std::runtime_error
@@ -72,6 +73,9 @@ public:
 
   GripItem* activeVertex() const;
   MeshItem* activeMesh() const;
+  GripItem* getSnapGrip() const;
+  EdgeItem* getSnapEdge() const;
+  QPointF getSnapPosition() const;
 
 public slots:
   void setTool(QAction* toolAction);
@@ -97,6 +101,7 @@ private:
   void pinchGesture(QPinchGesture* gesture);
   void updateMouseRect();
   void setCursorFromTool();
+  void findSnapPosition(const QPoint& pos);
 
   void contextMenu(const QPoint& pos);
 
@@ -109,6 +114,9 @@ private:
   QRectF lastMouseRect;
   Tool* currentTool;
   QGraphicsRectItem* underCursor;
+  GripItem* snapGrip;
+  EdgeItem* snapEdge;
+  QPointF snapPosition;
 };
 
 #endif

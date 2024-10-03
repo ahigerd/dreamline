@@ -19,9 +19,6 @@ public:
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);
 
 private:
-  EdgeItem* closestEdge = nullptr;
-  GripItem* closestGrip = nullptr;
-  QPointF snapPoint;
   MarkerItem* marker = nullptr;
 };
 

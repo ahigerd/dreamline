@@ -2,6 +2,7 @@
 #include "glviewport.h"
 #include "dreamproject.h"
 #include "gripitem.h"
+#include "edgeitem.h"
 #include "meshitem.h"
 #include "tool.h"
 #include <QAction>
@@ -20,6 +21,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <cmath>
+#include <limits>
 
 // #define ALT_RING_MODE 0
 // #define ALT_RING_MODE 1
@@ -190,6 +192,7 @@ void EditorView::mousePressEvent(QMouseEvent* event)
 
 void EditorView::mouseMoveEvent(QMouseEvent* event)
 {
+  findSnapPosition(event->pos());
   if (isPanning) {
     QPoint delta = dragStart - event->pos();
     if (!delta.isNull()) {
@@ -419,6 +422,49 @@ void EditorView::setActiveVertex(GripItem* vertex)
       mesh->setActiveVertex(vertex);
     } else {
       mesh->setActiveVertex(nullptr);
+    }
+  }
+}
+
+GripItem* EditorView::getSnapGrip() const
+{
+  return snapGrip;
+}
+
+EdgeItem* EditorView::getSnapEdge() const
+{
+  return snapEdge;
+}
+
+QPointF EditorView::getSnapPosition() const
+{
+  return snapPosition;
+}
+
+void EditorView::findSnapPosition(const QPoint& pos)
+{
+  snapEdge = nullptr;
+  snapGrip = nullptr;
+  QPointF mouse = mapToScene(pos);
+  QList<EdgeItem*> edges = itemsInRing<EdgeItem>();
+  qreal closest = std::numeric_limits<qreal>::max();
+  for (EdgeItem* edge : edges) {
+    QPointF snap = edge->nearestPointOnLine(mouse);
+    qreal distance = QLineF(mouse, snap).length();
+    if (distance < closest) {
+      snapPosition = snap;
+      snapEdge = edge;
+      closest = distance;
+    }
+  }
+  closest = std::numeric_limits<qreal>::max();
+  QList<GripItem*> grips = itemsInRing<GripItem>();
+  for (GripItem* grip : grips) {
+    qreal distance = QLineF(mouse, grip->pos()).length();
+    if (distance < closest) {
+      snapPosition = grip->pos();
+      snapGrip = grip;
+      closest = distance;
     }
   }
 }
