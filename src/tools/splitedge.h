@@ -17,6 +17,7 @@ public:
 
 private:
   EdgeItem* closestEdge = nullptr;
+  GripItem* closestGrip = nullptr;
   QPointF snapPoint;
   MarkerItem* marker = nullptr;
 };

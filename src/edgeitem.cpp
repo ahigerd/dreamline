@@ -67,6 +67,11 @@ void EdgeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
   event->accept();
 }
 
+void EdgeItem::split(const QPointF& pos)
+{
+  emit insertVertex(this, pos);
+}
+
 void EdgeItem::updateVertices()
 {
   setLine(QLineF(left->pos(), right->pos()));

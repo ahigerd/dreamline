@@ -21,6 +21,7 @@ public:
 
   QPainterPath shape() const;
   void updateShape();
+  void split(const QPointF& pos);
 
 signals:
   void insertVertex(EdgeItem*, const QPointF&);

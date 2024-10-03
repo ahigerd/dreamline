@@ -13,18 +13,30 @@ SplitEdgeTool::SplitEdgeTool()
 
 bool SplitEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  GripItem* grip = dynamic_cast<GripItem*>(editor->itemAt(event->pos()));
+  GripItem* grip = closestGrip;
   MeshItem* mesh = editor->activeMesh();
-  if (grip) {
-    if (mesh && (event->modifiers() & Qt::ShiftModifier) && mesh->activeVertex() != grip) {
-      mesh->splitPolygon(mesh->activeVertex(), grip);
-      return true;
-    } else {
-      editor->setActiveVertex(grip);
+  GripItem* oldActive = editor->activeVertex();
+  if (closestEdge) {
+    if (!closestGrip) {
+      closestEdge->split(snapPoint);
     }
-  } else {
-    editor->setActiveVertex(nullptr);
+    else {
+      editor->setActiveVertex(closestGrip);
+    }
+    if (oldActive) {
+      mesh->splitPolygon(oldActive, editor->activeVertex());
+    }
   }
+  /* if (grip) { */
+  /*   if (mesh && (event->modifiers() & Qt::ShiftModifier) && mesh->activeVertex() != grip) { */
+  /*     mesh->splitPolygon(mesh->activeVertex(), grip); */
+  /*     return true; */
+  /*   } else { */
+  /*     editor->setActiveVertex(grip); */
+  /*   } */
+  /* } else { */
+  /*   editor->setActiveVertex(nullptr); */
+  /* } */
   return false;
 }
 
@@ -33,25 +45,38 @@ bool SplitEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
   if (marker == nullptr) {
     marker = new MarkerItem();
     editor->scene()->addItem(marker);
-    editor->setCursor(Qt::ArrowCursor);
   }
+  closestEdge = nullptr;
+  closestGrip = nullptr;
   QPointF mouse = editor->mapToScene(event->pos());
-  QList<EdgeItem*> items = editor->itemsInRing<EdgeItem>();
+  QList<EdgeItem*> edges = editor->itemsInRing<EdgeItem>();
   qreal closest = std::numeric_limits<qreal>::max();
-  for (EdgeItem* item : items) {
-    QPointF snap = item->nearestPointOnLine(mouse);
+  for (EdgeItem* edge : edges) {
+    QPointF snap = edge->nearestPointOnLine(mouse);
     qreal distance = QLineF(mouse, snap).length();
     if (distance < closest) {
       snapPoint = snap;
-      closestEdge = item;
+      closestEdge = edge;
       closest = distance;
     }
   }
-  if (closestEdge) {
-      qDebug() << "test";
+  closest = std::numeric_limits<qreal>::max();
+  QList<GripItem*> grips = editor->itemsInRing<GripItem>();
+  for (GripItem* grip : grips) {
+    qreal distance = QLineF(mouse, grip->pos()).length();
+    if (distance < closest) {
+      snapPoint = grip->pos();
+      closestGrip = grip;
+      closest = distance;
+    }
+  }
+  if (closestEdge || closestGrip) {
+    marker->setVisible(true);
+    marker->setBrush(editor->lastColor);
     marker->setPos(snapPoint);
   }
   else {
+    marker->setVisible(false);
     marker->setPos(mouse);
   }
   return false;
