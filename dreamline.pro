@@ -1,5 +1,5 @@
 TEMPLATE = app
-QT = core widgets
+QT = core widgets core-private widgets-private
 CONFIG += c++17
 CONFIG += release optimze_full
 CONFIG -= optimize_size
@@ -19,8 +19,8 @@ SOURCES += src/mainwindow.cpp src/gripitem.cpp src/meshitem.cpp src/tool.cpp
 HEADERS += src/editorview.h   src/glviewport.h   src/edgeitem.h   src/markeritem.h
 SOURCES += src/editorview.cpp src/glviewport.cpp src/edgeitem.cpp src/markeritem.cpp
 
-HEADERS += src/glbuffer.h   src/boundprogram.h   src/dreamproject.h
-SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp
+HEADERS += src/glbuffer.h   src/boundprogram.h   src/dreamproject.h   src/commandline.h
+SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp src/commandline.cpp
 
 HEADERS += src/tools/movevertex.h   src/tools/moveedge.h   src/tools/color.h   src/tools/splitedge.h
 SOURCES += src/tools/movevertex.cpp src/tools/moveedge.cpp src/tools/color.cpp src/tools/splitedge.cpp
