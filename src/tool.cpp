@@ -2,7 +2,7 @@
 #include "tools/movevertex.h"
 #include "tools/moveedge.h"
 #include "tools/color.h"
-#include "tools/splitedge.h"
+#include "tools/split.h"
 #include <QAction>
 #include <QActionGroup>
 #include <QIcon>
@@ -34,7 +34,7 @@ void Tool::initializeToolData()
     { VertexTool, { tr("&Vertex Tool"), "", QKeySequence("v"), &MoveVertexTool::create } },
     { EdgeTool,   { tr("&Edge Tool"),   "", QKeySequence("e"), &MoveEdgeTool::create } },
     { ColorTool,  { tr("&Color Tool"),  "", QKeySequence("c"), &ColorTool::create } },
-    { SplitEdge,  { tr("Split &Edge"),  "", QKeySequence("d"), &SplitEdgeTool::create } },
+    { Split,      { tr("&Split Tool"),  "", QKeySequence("s"), &SplitTool::create } },
   };
 }
 

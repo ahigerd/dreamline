@@ -5,11 +5,11 @@
 #include "edgeitem.h"
 #include "markeritem.h"
 
-class SplitEdgeTool : public BaseTool<SplitEdgeTool>
+class SplitTool : public BaseTool<SplitTool>
 {
 Q_OBJECT
 public:
-  SplitEdgeTool();
+  SplitTool();
 
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event);

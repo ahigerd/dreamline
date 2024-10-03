@@ -1,4 +1,4 @@
-#include "splitedge.h"
+#include "split.h"
 #include "editorview.h"
 #include "meshitem.h"
 #include "gripitem.h"
@@ -6,12 +6,12 @@
 #include <QDebug>
 #include <limits>
 
-SplitEdgeTool::SplitEdgeTool()
+SplitTool::SplitTool()
 : BaseTool()
 {
 }
 
-bool SplitEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
+bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
   GripItem* grip = closestGrip;
   MeshItem* mesh = editor->activeMesh();
@@ -40,7 +40,7 @@ bool SplitEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
   return false;
 }
 
-bool SplitEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
+bool SplitTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 {
   if (marker == nullptr) {
     marker = new MarkerItem();
@@ -82,7 +82,7 @@ bool SplitEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
   return false;
 }
 
-bool SplitEdgeTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
+bool SplitTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
 {
   return false;
 }
