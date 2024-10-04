@@ -74,7 +74,6 @@ void EdgeItem::split(const QPointF& pos)
 
 QColor EdgeItem::colorAt(const QPointF& pos)
 {
-
   float t = QLineF(pos, right->pos()).length() / line().length();
   QColor leftColor = left->color();
   QColor rightColor = right->color();
@@ -114,13 +113,13 @@ QPointF EdgeItem::nearestPointOnLine(const QPointF& point)
   norm.intersects(line(), &result);
 
   // Check if the result is outside the bounds of the line segment
-    if (QLineF(line().center(), result).length() > line().length() / 2) {
-        // If the point is outside, snap to the nearest endpoint
-        if (QLineF(line().p1(), result).length() > QLineF(line().p2(), result).length()) {
-            result = line().p2();
-        } else {
-            result = line().p1();
-        }
+  if (QLineF(line().center(), result).length() > line().length() / 2) {
+    // If the point is outside, snap to the nearest endpoint
+    if (QLineF(line().p1(), result).length() > QLineF(line().p2(), result).length()) {
+      result = line().p2();
+    } else {
+      result = line().p1();
     }
+  }
   return result;
 }
