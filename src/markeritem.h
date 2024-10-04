@@ -4,7 +4,6 @@
 #include <QGraphicsRectItem>
 #include <QObject>
 #include <QColor>
-#include <QPalette>
 
 class MarkerItem : public QObject, public QGraphicsRectItem
 {
