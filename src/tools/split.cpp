@@ -2,9 +2,9 @@
 #include "editorview.h"
 #include "meshitem.h"
 #include "gripitem.h"
+#include "edgeitem.h"
 #include <QMouseEvent>
 #include <QDebug>
-#include <limits>
 
 SplitTool::SplitTool()
 : BaseTool()
@@ -13,32 +13,12 @@ SplitTool::SplitTool()
 
 void SplitTool::activated(EditorView* editor)
 {
-  if (marker == nullptr) {
-    marker = new MarkerItem();
-    editor->scene()->addItem(marker);
-    marker->setHighlight(QColor("#FF4444"));
-  }
-  GripItem* closestGrip = editor->snapGrip();
-  EdgeItem* closestEdge = editor->snapEdge();
-
-  if (closestEdge || closestGrip) {
-    marker->setVisible(true);
-    if (closestGrip) {
-      marker->setBrush(closestGrip->color());
-    }
-    else {
-      marker->setBrush(closestEdge->colorAt(editor->snapPosition()));
-    }
-    marker->setPos(editor->snapPosition());
-  }
-  else {
-    marker->setVisible(false);
-  }
+  snapAndColorMarker(editor);
 }
 
 void SplitTool::deactivated(EditorView* editor)
 {
-    marker->setVisible(false);
+  marker->setVisible(false);
 }
 
 bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
@@ -58,20 +38,22 @@ bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
       mesh->splitPolygon(oldActive, editor->activeVertex());
     }
   }
-  /* if (grip) { */
-  /*   if (mesh && (event->modifiers() & Qt::ShiftModifier) && mesh->activeVertex() != grip) { */
-  /*     mesh->splitPolygon(mesh->activeVertex(), grip); */
-  /*     return true; */
-  /*   } else { */
-  /*     editor->setActiveVertex(grip); */
-  /*   } */
-  /* } else { */
-  /*   editor->setActiveVertex(nullptr); */
-  /* } */
+
   return false;
 }
 
 bool SplitTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
+{
+  snapAndColorMarker(editor);
+  return false;
+}
+
+bool SplitTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
+{
+  return false;
+}
+
+void SplitTool::snapAndColorMarker(EditorView* editor)
 {
   if (marker == nullptr) {
     marker = new MarkerItem();
@@ -85,19 +67,11 @@ bool SplitTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
     marker->setVisible(true);
     if (closestGrip) {
       marker->setBrush(closestGrip->color());
-    }
-    else {
+    } else {
       marker->setBrush(closestEdge->colorAt(editor->snapPosition()));
     }
     marker->setPos(editor->snapPosition());
-  }
-  else {
+  } else {
     marker->setVisible(false);
   }
-  return false;
-}
-
-bool SplitTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
-{
-  return false;
 }

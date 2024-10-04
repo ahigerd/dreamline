@@ -2,7 +2,6 @@
 #define DL_TOOLS_SPLITEDGE_H
 
 #include "tool.h"
-#include "edgeitem.h"
 #include "markeritem.h"
 
 class SplitTool : public BaseTool<SplitTool>
@@ -20,6 +19,8 @@ public:
 
 private:
   MarkerItem* marker = nullptr;
+
+  void snapAndColorMarker(EditorView* editor);
 };
 
 #endif
