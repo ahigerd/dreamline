@@ -31,10 +31,7 @@ void MoveEdgeTool::deactivated(EditorView* editor)
 bool MoveEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
   pressed = true;
-  for (GripItem* grip : editor->selectedItems<GripItem>()) {
-    grip->setSelected(false);
-  }
-  for (EdgeItem* item : editor->selectedItems<EdgeItem>()) {
+  for (QGraphicsItem* item : editor->scene()->selectedItems()) {
     item->setSelected(false);
   }
   QList<EdgeItem*> gripsInRing = editor->itemsInRing<EdgeItem>();
@@ -53,8 +50,7 @@ bool MoveEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
       item->hoverLeave();
     }
     QList<EdgeItem*> gripsInRing = editor->itemsInRing<EdgeItem>();
-    for (EdgeItem* item : gripsInRing)
-    {
+    for (EdgeItem* item : gripsInRing) {
       item->hoverEnter();
     }
   }
@@ -68,8 +64,7 @@ bool MoveEdgeTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
     item->hoverLeave();
   }
   QList<EdgeItem*> gripsInRing = editor->itemsInRing<EdgeItem>();
-  for (EdgeItem* item : gripsInRing)
-  {
+  for (EdgeItem* item : gripsInRing) {
     item->hoverEnter();
   }
   return false;
