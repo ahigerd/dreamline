@@ -73,9 +73,9 @@ public:
 
   GripItem* activeVertex() const;
   MeshItem* activeMesh() const;
-  GripItem* getSnapGrip() const;
-  EdgeItem* getSnapEdge() const;
-  QPointF getSnapPosition() const;
+  GripItem* snapGrip() const;
+  EdgeItem* snapEdge() const;
+  QPointF snapPosition() const;
 
 public slots:
   void setTool(QAction* toolAction);
@@ -114,9 +114,9 @@ private:
   QRectF lastMouseRect;
   Tool* currentTool;
   QGraphicsRectItem* underCursor;
-  GripItem* snapGrip;
-  EdgeItem* snapEdge;
-  QPointF snapPosition;
+  GripItem* m_snapGrip;
+  EdgeItem* m_snapEdge;
+  QPointF m_snapPosition;
 };
 
 #endif

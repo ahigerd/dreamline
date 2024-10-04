@@ -18,8 +18,8 @@ void SplitTool::activated(EditorView* editor)
     editor->scene()->addItem(marker);
     marker->setHighlight(QColor("#FF4444"));
   }
-  GripItem* closestGrip = editor->getSnapGrip();
-  EdgeItem* closestEdge = editor->getSnapEdge();
+  GripItem* closestGrip = editor->snapGrip();
+  EdgeItem* closestEdge = editor->snapEdge();
 
   if (closestEdge || closestGrip) {
     marker->setVisible(true);
@@ -27,9 +27,9 @@ void SplitTool::activated(EditorView* editor)
       marker->setBrush(closestGrip->color());
     }
     else {
-      marker->setBrush(closestEdge->colorAt(editor->getSnapPosition()));
+      marker->setBrush(closestEdge->colorAt(editor->snapPosition()));
     }
-    marker->setPos(editor->getSnapPosition());
+    marker->setPos(editor->snapPosition());
   }
   else {
     marker->setVisible(false);
@@ -45,11 +45,11 @@ bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
   MeshItem* mesh = editor->activeMesh();
   GripItem* oldActive = editor->activeVertex();
-  GripItem* closestGrip = editor->getSnapGrip();
-  EdgeItem* closestEdge = editor->getSnapEdge();
+  GripItem* closestGrip = editor->snapGrip();
+  EdgeItem* closestEdge = editor->snapEdge();
   if (closestEdge) {
     if (!closestGrip) {
-      closestEdge->split(editor->getSnapPosition());
+      closestEdge->split(editor->snapPosition());
     }
     else {
       editor->setActiveVertex(closestGrip);
@@ -78,8 +78,8 @@ bool SplitTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
     editor->scene()->addItem(marker);
     marker->setHighlight(QColor("#FF4444"));
   }
-  GripItem* closestGrip = editor->getSnapGrip();
-  EdgeItem* closestEdge = editor->getSnapEdge();
+  GripItem* closestGrip = editor->snapGrip();
+  EdgeItem* closestEdge = editor->snapEdge();
 
   if (closestEdge || closestGrip) {
     marker->setVisible(true);
@@ -87,9 +87,9 @@ bool SplitTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
       marker->setBrush(closestGrip->color());
     }
     else {
-      marker->setBrush(closestEdge->colorAt(editor->getSnapPosition()));
+      marker->setBrush(closestEdge->colorAt(editor->snapPosition()));
     }
-    marker->setPos(editor->getSnapPosition());
+    marker->setPos(editor->snapPosition());
   }
   else {
     marker->setVisible(false);
