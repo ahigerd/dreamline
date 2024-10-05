@@ -3,6 +3,22 @@
 #include <private/qapplication_p.h>
 #include <iostream>
 
+/*
+ * DLApplication mostly exists to work around limitations in Qt's built-in
+ * command-line parsing. There are two specific issues:
+ * - QApplication mutates argv to remove the options that it consumed.
+ *   However, its parser is naive and can't tell if something that looks like
+ *   a Qt option is actually a parameter to a different option.
+ * - QCommandLineParser doesn't integrate very nicely with Windows. It only
+ *   supports -option and --option, but not /option. It also doesn't provide
+ *   any control over its help formatting.
+ *
+ * As an additional wart of Qt's built-in command-line handling, there is no
+ * public API to collect the flags that QApplication recognizes. This means
+ * that the only way to work around the aforementioned issues is to use APIs
+ * from private Qt headers.
+ */
+
 // These Qt options are useless for Dreamline.
 // They will be hidden from the help text.
 static QStringList hiddenQtOptions{
@@ -56,6 +72,7 @@ DLApplication::DLApplication(int argc, char** argv)
 
   // This mutates argc and argv but that's okay: we've already copied them
   QApplication tempApp(argc, argv);
+  // The only way to get the Qt options is through private headers.
   QApplicationPrivate::instance()->addQtOptions(&m_qtOpts);
   for (QCommandLineOption& opt : m_qtOpts) {
     for (const QString& name : opt.names()) {
