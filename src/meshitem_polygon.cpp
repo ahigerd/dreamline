@@ -99,15 +99,14 @@ void MeshItem::Polygon::updateWindingDirection()
 void MeshItem::Polygon::rebuildBuffers()
 {
   int numVertices = vertices.length();
-  QPolygonF poly(numVertices);
+  vertexBuffer.resize(numVertices);
   colors.resize(numVertices);
   for (int i = 0; i < numVertices; i++) {
     GripItem* grip = vertices[i];
     QColor color = grip->color();
-    poly[i] = grip->pos();
-    colors[i] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    setVertex(i, grip->pos());
+    setColor(i, color);
   }
-  vertexBuffer = poly;
   updateWindingDirection();
 }
 
