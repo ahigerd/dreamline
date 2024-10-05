@@ -25,6 +25,9 @@ SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp
 HEADERS += src/tools/movevertex.h   src/tools/moveedge.h   src/tools/color.h   src/tools/split.h
 SOURCES += src/tools/movevertex.cpp src/tools/moveedge.cpp src/tools/color.cpp src/tools/split.cpp
 
+HEADERS += src/mathutil.h
+SOURCES += src/mathutil.cpp
+
 SOURCES += src/main.cpp src/meshitem_polygon.cpp
 
 RESOURCES += res/shaders.qrc

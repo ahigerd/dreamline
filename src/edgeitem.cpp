@@ -1,5 +1,7 @@
 #include "edgeitem.h"
 #include "gripitem.h"
+#include "meshitem.h"
+#include "mathutil.h"
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsPathItem>
 #include <QPen>
@@ -35,6 +37,15 @@ QPainterPath EdgeItem::shape() const
   path.lineTo(p2 - norm);
   path.closeSubpath();
   return path;
+}
+
+void EdgeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+  MeshItem* mesh = dynamic_cast<MeshItem*>(parentItem());
+  if (mesh && !mesh->edgesVisible()) {
+    return;
+  }
+  QGraphicsLineItem::paint(painter, option, widget);
 }
 
 void EdgeItem::hoverEnterEvent(QGraphicsSceneHoverEvent*)
@@ -77,11 +88,7 @@ QColor EdgeItem::colorAt(const QPointF& pos)
   float t = QLineF(pos, right->pos()).length() / line().length();
   QColor leftColor = left->color();
   QColor rightColor = right->color();
-  QColor newColor(
-    (leftColor.red() * t) + (rightColor.red() * (1.0f - t)),
-    (leftColor.green() * t) + (rightColor.green() * (1.0f - t)),
-    (leftColor.blue() * t) + (rightColor.blue() * (1.0f - t))
-  );
+  QColor newColor = lerp(leftColor, rightColor, t);
   return newColor;
 }
 

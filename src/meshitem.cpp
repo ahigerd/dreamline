@@ -7,7 +7,7 @@
 #include <QPainter>
 
 MeshItem::MeshItem(QGraphicsItem* parent)
-: QObject(nullptr), QGraphicsPolygonItem(parent)
+: QObject(nullptr), QGraphicsPolygonItem(parent), m_edgesVisible(true), m_verticesVisible(true)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
 
@@ -20,7 +20,7 @@ MeshItem::MeshItem(QGraphicsItem* parent)
   setPolygon(poly);
 
   Polygon polygonData;
-  polygonData.vertexBuffer = QPolygonF({ poly[0], poly[1], poly[2] });
+  polygonData.vertexBuffer = { QVector2D(poly[0]), QVector2D(poly[1]), QVector2D(poly[2]) };
   polygonData.colors = {
     { 1.0, 0.0, 0.0, 1.0 },
     { 0.0, 1.0, 0.0, 1.0 },
@@ -28,7 +28,7 @@ MeshItem::MeshItem(QGraphicsItem* parent)
   };
 
   Polygon polygonData2;
-  polygonData2.vertexBuffer = QPolygonF({ poly[2], poly[0], poly[3] });
+  polygonData2.vertexBuffer = { QVector2D(poly[2]), QVector2D(poly[0]), QVector2D(poly[3]) };
   polygonData2.colors = {
     { 0.0, 0.0, 1.0, 1.0 },
     { 1.0, 0.0, 0.0, 1.0 },
@@ -51,7 +51,7 @@ MeshItem::MeshItem(QGraphicsItem* parent)
       if (!grip) {
         grip = newGrip();
         m_boundary.append(grip);
-        grip->setPos(p.vertexBuffer[i]);
+        grip->setPos(p.vertex(i));
         grip->setBrush(p.color(i));
       }
       p.vertices.append(grip);
@@ -96,7 +96,7 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
     QJsonArray vertex = vertexV.toArray();
     GripItem* grip = new GripItem(this);
     grip->setPos(vertex[0].toDouble(), vertex[1].toDouble());
-    grip->setColor(QColor(vertex[2].toInt(), vertex[3].toInt(), vertex[4].toInt()));
+    grip->setColor(QColor(vertex[2].toInt(), vertex[3].toInt(), vertex[4].toInt(), vertex[5].toInt(255)));
     m_grips.append(grip);
   }
 
@@ -166,6 +166,28 @@ QJsonObject MeshItem::serialize() const
   return o;
 }
 
+bool MeshItem::edgesVisible() const
+{
+  return m_edgesVisible;
+}
+
+void MeshItem::setEdgesVisible(bool on)
+{
+  m_edgesVisible = on;
+  update();
+}
+
+bool MeshItem::verticesVisible() const
+{
+  return m_verticesVisible;
+}
+
+void MeshItem::setVerticesVisible(bool on)
+{
+  m_verticesVisible = on;
+  update();
+}
+
 GripItem* MeshItem::newGrip()
 {
   GripItem* grip = new GripItem(this);
@@ -201,7 +223,7 @@ void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
   for (Polygon& poly : m_polygons) {
     int index = poly.vertices.indexOf(vertex);
     if (index >= 0) {
-      poly.vertexBuffer[index] = pos;
+      poly.setVertex(index, pos);
       poly.updateWindingDirection();
     }
   }
@@ -397,42 +419,25 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
   gl->glDisable(GL_MULTISAMPLE);
   gl->glEnable(GL_DITHER);
   for (Polygon& poly : m_polygons) {
-    GLBuffer<QPointF>& vbo = poly.vertexBuffer;
-    {
-      BoundProgram p2 = gl->useShader("ramp");
-      p2.bindAttributeBuffer(0, vbo);
-      p2.bindAttributeBuffer(1, poly.colors);
-      p2->enableAttributeArray(1);
+    auto& vbo = poly.vertexBuffer;
+    BoundProgram program = gl->useShader("polyramp", vbo.count());
 
-      QTransform transform = gl->transform();
-      p2->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
-      p2->setUniformValue("scale", transform.m11(), transform.m22());
+    program.bindAttributeBuffer(0, vbo);
+    program.bindAttributeBuffer(1, poly.colors);
 
-      gl->glDrawArrays(GL_LINE_LOOP, 0, vbo.count());
+    program.setUniformValueArray("verts", vbo);
+    program.setUniformValueArray("colors", poly.colors);
+
+    QTransform transform = gl->transform();
+    program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
+    program->setUniformValue("scale", transform.m11(), transform.m22());
+
+    if (!poly.windingDirection) {
+      poly.updateWindingDirection();
     }
-    {
-      BoundProgram program = gl->useShader("polyramp", vbo.count());
+    program->setUniformValue("windingDirection", poly.windingDirection);
 
-      program.bindAttributeBuffer(0, vbo);
-
-      QVector<QVector2D> verts(vbo.count());
-      for (int i = 0; i < vbo.count(); i++) {
-        verts[i] = QVector2D(vbo[i]);
-      }
-      program->setUniformValueArray("verts", verts.constData(), verts.size());
-      program->setUniformValueArray("colors", reinterpret_cast<const GLfloat*>(poly.colors.vector().constData()), poly.colors.size(), 4);
-
-      QTransform transform = gl->transform();
-      program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
-      program->setUniformValue("scale", transform.m11(), transform.m22());
-
-      if (!poly.windingDirection) {
-        poly.updateWindingDirection();
-      }
-      program->setUniformValue("windingDirection", poly.windingDirection);
-
-      gl->glDrawArrays(GL_TRIANGLE_FAN, 0, vbo.count());
-    }
+    gl->glDrawArrays(GL_TRIANGLE_FAN, 0, vbo.count());
   }
   gl->glEnable(GL_MULTISAMPLE);
 

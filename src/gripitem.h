@@ -15,6 +15,7 @@ signals:
   void moved(GripItem* item, const QPointF& pos);
 
 protected:
+  void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
   QVariant itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant& value);
 };
 

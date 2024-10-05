@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QVector>
 #include <QColor>
+#include <QVector2D>
 #include <QVector4D>
 #include <QPointer>
 #include <QSet>
@@ -22,6 +23,11 @@ public:
   MeshItem(const QJsonObject& source, QGraphicsItem* parent = nullptr);
 
   QJsonObject serialize() const;
+
+  bool edgesVisible() const;
+  void setEdgesVisible(bool on);
+  bool verticesVisible() const;
+  void setVerticesVisible(bool on);
 
   GripItem* activeVertex() const;
   GripItem* addVertexToPolygon(const QPointF& pos);
@@ -50,11 +56,14 @@ private:
     Polygon();
     QVector<GripItem*> vertices;
     QVector<EdgeItem*> edges;
-    GLBuffer<QPointF> vertexBuffer;
+    GLBuffer<QVector2D> vertexBuffer;
     GLBuffer<QVector4D> colors;
     GLfloat windingDirection;
 
     bool insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge);
+
+    inline QPointF vertex(int index) const { return vertexBuffer[index].toPointF(); }
+    inline void setVertex(int index, const QPointF& pos) { vertexBuffer[index] = QVector2D(pos); }
 
     QColor color(int index) const;
     void setColor(int index, const QColor& color);
@@ -80,6 +89,17 @@ private:
   QList<Polygon> m_polygons;
   QPointer<GripItem> m_lastVertex;
   QGraphicsEllipseItem* m_lastVertexFocus;
+  bool m_edgesVisible, m_verticesVisible;
 };
+
+inline bool operator==(const QVector2D& lhs, const QPointF& rhs)
+{
+  return lhs == QVector2D(rhs);
+}
+
+inline bool operator==(const QPointF& lhs, const QVector2D& rhs)
+{
+  return rhs == QVector2D(lhs);
+}
 
 #endif

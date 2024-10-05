@@ -29,6 +29,7 @@ signals:
   void insertVertex(EdgeItem*, const QPointF&);
 
 protected:
+  void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
   void hoverEnterEvent(QGraphicsSceneHoverEvent*);
   void hoverMoveEvent(QGraphicsSceneHoverEvent*);
   void hoverLeaveEvent(QGraphicsSceneHoverEvent*);
