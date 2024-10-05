@@ -2,11 +2,11 @@
 #define DL_BOUNDPROGRAM_H
 
 #include <QList>
-class QOpenGLShaderProgram;
+#include <QOpenGLShaderProgram>
+#include "glbuffer.h"
 class QOpenGLVertexArrayObject;
 class QOpenGLBuffer;
 class GLViewport;
-class GLBufferBase;
 
 class BoundProgram
 {
@@ -19,6 +19,11 @@ public:
 
   bool bindAttributeBuffer(int location, GLBufferBase& buffer, int offset = 0, int stride = -1);
   bool bindAttributeBuffer(const char* location, GLBufferBase& buffer, int offset = 0, int stride = -1);
+
+  template <typename T>
+  void setUniformValueArray(const char* location, GLBuffer<T>& buffer) {
+    program->setUniformValueArray(location, reinterpret_cast<const GLfloat*>(buffer.vector().constData()), buffer.size(), buffer.elementLength());
+  }
 
   GLViewport* gl;
   QOpenGLShaderProgram* program;

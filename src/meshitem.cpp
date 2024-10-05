@@ -2,6 +2,7 @@
 #include "glviewport.h"
 #include "gripitem.h"
 #include "edgeitem.h"
+#include "mathutil.h"
 #include <QJsonArray>
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
@@ -96,7 +97,7 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
     QJsonArray vertex = vertexV.toArray();
     GripItem* grip = new GripItem(this);
     grip->setPos(vertex[0].toDouble(), vertex[1].toDouble());
-    grip->setColor(QColor(vertex[2].toInt(), vertex[3].toInt(), vertex[4].toInt()));
+    grip->setColor(QColor(vertex[2].toInt(), vertex[3].toInt(), vertex[4].toInt(), vertex[5].toInt(255)));
     m_grips.append(grip);
   }
 
@@ -262,11 +263,7 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
   float t = QLineF(pos, p2->pos()).length() / edge->line().length();
   QColor leftColor = p1->color();
   QColor rightColor = p2->color();
-  QColor newColor(
-    (leftColor.red() * t) + (rightColor.red() * (1.0f - t)),
-    (leftColor.green() * t) + (rightColor.green() * (1.0f - t)),
-    (leftColor.blue() * t) + (rightColor.blue() * (1.0f - t))
-  );
+  QColor newColor = lerp(leftColor, rightColor, t);
   grip->setColor(newColor);
 
   EdgeItem* newEdge = edge->split(grip);
@@ -433,8 +430,8 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
     program.bindAttributeBuffer(0, vbo);
     program.bindAttributeBuffer(1, poly.colors);
 
-    program->setUniformValueArray("verts", reinterpret_cast<const GLfloat*>(vbo.vector().constData()), vbo.size(), 2);
-    program->setUniformValueArray("colors", reinterpret_cast<const GLfloat*>(poly.colors.vector().constData()), poly.colors.size(), 4);
+    program.setUniformValueArray("verts", vbo);
+    program.setUniformValueArray("colors", poly.colors);
 
     QTransform transform = gl->transform();
     program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
