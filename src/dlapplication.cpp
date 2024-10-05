@@ -30,9 +30,20 @@ QPair<QString, QString> parseOption(const QString& arg)
   }
 
   int valuePos = content.indexOf('=');
-  if (valuePos < 1) {
+  // Option names must be at least one character long. If the = is in position
+  // 0, that means the user typed something like --= or -= or /=, which is not
+  // a valid option. Treat it as a positional argument.
+  if (valuePos == 0) {
+    return qMakePair(QString(), arg);
+  }
+
+  // If there is no equals sign, don't return a value.
+  if (valuePos < 0) {
     return qMakePair(content, QString());
   }
+
+  // We intentionally preserve the = so that we can distinguish
+  // between an empty value and no value.
   return qMakePair(content.left(valuePos), content.mid(valuePos));
 }
 
@@ -105,59 +116,96 @@ static QString canonicalOptionName(const QCommandLineOption* opt)
   return canonicalName;
 }
 
-bool DLApplication::processCommandLine(int* exitCode)
+const QCommandLineOption* DLApplication::findOption(const QString& name, bool* isQtOpt) const
 {
+  auto iter = m_dlOptNames.find(name);
+  if (iter != m_dlOptNames.end()) {
+    *isQtOpt = false;
+    return &iter->second;
+  } else {
+    iter = m_qtOptNames.find(name);
+    if (iter != m_qtOptNames.end()) {
+      *isQtOpt = true;
+      return &iter->second;
+    }
+  }
+  return nullptr;
+}
+
+void DLApplication::addArgv(const QString& arg)
+{
+  m_argc++;
+  m_argvData << arg.toLocal8Bit();
+  m_argvPtrs << m_argvData.last().data();
+}
+
+bool DLApplication::parseCommandLine()
+{
+  // If parseCommandLine() is called more than once, be sure
+  // to clear the previous results.
+  m_argc = 0;
+  m_argvData.clear();
+  m_argvPtrs.clear();
+  m_positional.clear();
+  m_values.clear();
+  m_optionCount.clear();
+
+  // Always pass in the application name.
+  if (m_args.isEmpty()) {
+    qFatal("Invalid command line provided to DLApplication");
+  }
+  addArgv(m_args[0]);
+
   bool hasError = false;
   int numArgs = m_args.length();
-  m_argvData << m_args[0].toLocal8Bit();
-  m_argvPtrs << m_argvData[0].data();
   bool foundDoubleDash = false;
   for (int i = 1; i < numArgs; i++) {
     QString arg = m_args[i];
+
+    // -- indicates that all following arguments are positional
+    // and should be handled as-is, not parsed.
     if (foundDoubleDash) {
       m_positional << arg;
       continue;
-    }
-    if (arg == "--") {
+    } else if (arg == "--") {
       foundDoubleDash = true;
       continue;
     }
+
     auto parsed = parseOption(arg);
     QString optName = parsed.first;
     QString optValue = parsed.second;
+
+    // parseOption said this is a positional parameter.
     if (optName.isEmpty()) {
       m_positional << optValue;
       continue;
     }
-    auto iter = m_dlOptNames.find(optName);
+
     bool isQtOpt = false;
-    QCommandLineOption* opt = nullptr;
-    if (iter != m_dlOptNames.end()) {
-      opt = &iter->second;
-    } else {
-      iter = m_qtOptNames.find(optName);
-      if (iter != m_qtOptNames.end()) {
-        isQtOpt = true;
-        opt = &iter->second;
-      }
-    }
+    const QCommandLineOption* opt = findOption(optName, &isQtOpt);
     if (!opt) {
       showUnknownError(optName);
       hasError = true;
       continue;
     }
-    QString canonicalName = canonicalOptionName(opt);
+
     if (isQtOpt) {
-      m_argvData << ("--" + optName).toLocal8Bit();
-      m_argvPtrs << m_argvData.last().data();
+      addArgv("--" + optName);
     }
-    if (opt->valueName().isEmpty()) {
-      if (!optValue.isEmpty()) {
-        showUnexpectedValueError(optName);
-        hasError = true;
-        continue;
-      }
-    } else {
+
+    bool valueRequired = !opt->valueName().isEmpty();
+
+    // If the option does not require a value, but one was provided, error.
+    if (!valueRequired && !optValue.isEmpty()) {
+      showUnexpectedValueError(optName);
+      hasError = true;
+      continue;
+    }
+
+    if (valueRequired) {
+      // If the option requires a value and the = syntax wasn't used, consume
+      // the next argument in the input. Throw an error if one isn't present.
       if (optValue.isEmpty()) {
         if (i == numArgs - 1) {
           showMissingValueError(optName);
@@ -168,34 +216,48 @@ bool DLApplication::processCommandLine(int* exitCode)
       } else {
         optValue = optValue.mid(1);
       }
+
+      // Qt options just go in the modified argv.
+      // Non-Qt options go where we can look up the values.
       if (isQtOpt) {
-        m_argvData << optValue.toLocal8Bit();
-        m_argvPtrs << m_argvData.last().data();
+        addArgv(optValue);
       } else {
         m_values.insert(opt->valueName(), optValue);
       }
     }
+
+    // Look up the "canonical" name of the option and use that to store that
+    // the option was provided.
+    QString canonicalName = canonicalOptionName(opt);
     m_optionCount[canonicalName] = m_optionCount.value(canonicalName, 0) + 1;
   }
 
-  if (hasError) {
+  return !hasError;
+}
+
+bool DLApplication::processCommandLine(int* exitCode)
+{
+  // If the command line hasn't been parsed already, parse it.
+  if (m_argvData.isEmpty() && !parseCommandLine()) {
     *exitCode = 1;
     return true;
   }
 
+  // Show help if requested, and exit afterward.
   if (isSet("help") || isSet("help-all")) {
     showHelp(isSet("help-all"));
     *exitCode = 0;
     return true;
   }
 
+  // Show version information if requested, and exit afterward.
   if (isSet("version")) {
     showVersion();
     *exitCode = 0;
     return true;
   }
 
-  m_argc = m_argvPtrs.length();
+  // If we didn't already exit, build a QApplication.
   m_qtApp.reset(new QApplication(m_argc, m_argvPtrs.data()));
   return false;
 }
@@ -309,14 +371,9 @@ void DLApplication::showHelp(const QCommandLineOption& opt, int columnWidth, int
     return;
   }
 
-  QString leftColumn = "  ";
-  bool first = true;
+  QString leftColumn;
   for (const QString& name : opt.names()) {
-    if (first) {
-      first = false;
-    } else {
-      leftColumn += ", ";
-    }
+    leftColumn += leftColumn.isEmpty() ? "  " : ", ";
 #ifdef Q_OS_WIN
     leftColumn += "/";
 #else
@@ -330,7 +387,7 @@ void DLApplication::showHelp(const QCommandLineOption& opt, int columnWidth, int
   }
 
   QStringList wrapped = lineWrap(opt.description(), lineWidth - columnWidth);
-  first = true;
+  bool first = true;
   for (const QString& line : wrapped) {
     if (first) {
       std::cerr << qPrintable(QStringLiteral("%1%2").arg(leftColumn, -columnWidth).arg(line)) << std::endl;

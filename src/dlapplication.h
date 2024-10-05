@@ -17,6 +17,7 @@ public:
 
   void addOption(const QCommandLineOption& opt);
 
+  bool parseCommandLine();
   bool processCommandLine(int* exitCode);
   int exec();
 
@@ -29,6 +30,9 @@ public:
   QApplication* qtApp() const;
 
 private:
+  const QCommandLineOption* findOption(const QString& name, bool* isQtOpt) const;
+  void addArgv(const QString& arg);
+
   void showHelp(bool addQtOpts) const;
   void showHelp(const QCommandLineOption& opt, int columnWidth, int lineWidth) const;
   void showVersion() const;
@@ -36,17 +40,22 @@ private:
   void showUnexpectedValueError(const QString& optName) const;
   void showMissingValueError(const QString& optName) const;
 
-  std::unique_ptr<QApplication> m_qtApp;
+  // Option definitions
   QList<QCommandLineOption> m_dlOpts, m_qtOpts;
   std::map<QString, QCommandLineOption> m_dlOptNames, m_qtOptNames;
+  QMap<QString, QString> m_canonicalNames;
+
+  // Provided command line arguments
+  QStringList m_args;
   QMultiMap<QString, QString> m_values;
   QMap<QString, int> m_optionCount;
-  QMap<QString, QString> m_canonicalNames;
-  QStringList m_args;
   QStringList m_positional;
+
+  // Data for QApplication
   int m_argc;
   QVector<QByteArray> m_argvData;
   QVector<char*> m_argvPtrs;
+  std::unique_ptr<QApplication> m_qtApp;
 };
 
 #endif
