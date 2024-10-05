@@ -28,6 +28,7 @@ signals:
   void insertVertex(EdgeItem*, const QPointF&);
 
 protected:
+  void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 protected slots:
   void updateVertices();

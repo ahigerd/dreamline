@@ -1,36 +1,9 @@
 #include "meshitem.h"
 #include "gripitem.h"
 #include "edgeitem.h"
+#include "mathutil.h"
 #include <QTextStream>
 #include <algorithm>
-
-#define _USE_MATH_DEFINES
-#include <cmath>
-
-// This function returns an angle between -pi and +pi that measures how
-// much the vector AB the vector must rotate to align with the vector BC.
-// Positive numbers are counter-clockwise.
-// Negative numbers are clockwise.
-static double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c)
-{
-  double x1 = b.x() - a.x();
-  double y1 = b.y() - a.y();
-  double x2 = c.x() - b.x();
-  double y2 = c.y() - b.y();
-  return std::atan2(y2 * x1 - x2 * y1, x1 * x2 + y1 * y2);
-}
-
-// This function returns an angle between 0 and 2*pi that measures the
-// counterclockwise angle between vector BA and vector CA.
-static double ccwAngle(const QPointF& a, const QPointF& b, const QPointF& c)
-{
-  double x1 = a.x() - b.x();
-  double y1 = a.y() - b.y();
-  double x2 = c.x() - b.x();
-  double y2 = c.y() - b.y();
-  double t = std::atan2(y2 * x1 - x2 * y1, x1 * x2 + y1 * y2);
-  return (t < 0) ? t + M_PI * 2 : t;
-}
 
 MeshItem::Polygon::Polygon()
 : windingDirection(0)
@@ -47,7 +20,6 @@ bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeIt
   edges.append(newEdge);
   GripItem* p1 = oldEdge->leftGrip();
   GripItem* p2 = newEdge->rightGrip();
-  QColor color = vertex->color();
 
   int len = vertices.length();
   for (int i = 0; i < len; i++) {
@@ -55,9 +27,6 @@ bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeIt
     GripItem* pp2 = vertices[(i + 1) % len];
     if ((pp1 == p1 && pp2 == p2) || (pp1 == p2 && pp2 == p1)) {
       vertices.insert(i + 1, vertex);
-      auto colorData = colors.vector();
-      colorData.insert(i + 1, QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF()));
-      colors = colorData;
       rebuildBuffers();
       return true;
     }
@@ -99,15 +68,14 @@ void MeshItem::Polygon::updateWindingDirection()
 void MeshItem::Polygon::rebuildBuffers()
 {
   int numVertices = vertices.length();
-  QPolygonF poly(numVertices);
+  vertexBuffer.resize(numVertices);
   colors.resize(numVertices);
   for (int i = 0; i < numVertices; i++) {
     GripItem* grip = vertices[i];
     QColor color = grip->color();
-    poly[i] = grip->pos();
-    colors[i] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    setVertex(i, grip->pos());
+    setColor(i, color);
   }
-  vertexBuffer = poly;
   updateWindingDirection();
 }
 

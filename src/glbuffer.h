@@ -23,6 +23,8 @@ namespace GLBufferContainer {
   MAP_TYPE(GLdouble, GL_DOUBLE);
   MAP_TYPE_VEC(QPointF, GL_FLOAT, GLfloat, 2);
   MAP_TYPE_VEC(QColor, GL_FLOAT, GLfloat, 4);
+  MAP_TYPE_VEC(QVector2D, GL_FLOAT, GLfloat, 2);
+  MAP_TYPE_VEC(QVector3D, GL_FLOAT, GLfloat, 3);
   MAP_TYPE_VEC(QVector4D, GL_FLOAT, GLfloat, 4);
 #undef MAP_TYPE
 #undef MAP_TYPE_VEC
