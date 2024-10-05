@@ -7,7 +7,7 @@
 #include <QPainter>
 
 MeshItem::MeshItem(QGraphicsItem* parent)
-: QObject(nullptr), QGraphicsPolygonItem(parent)
+: QObject(nullptr), QGraphicsPolygonItem(parent), m_edgesVisible(true), m_verticesVisible(true)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
 
@@ -164,6 +164,28 @@ QJsonObject MeshItem::serialize() const
   o["boundary"] = boundary;
 
   return o;
+}
+
+bool MeshItem::edgesVisible() const
+{
+  return m_edgesVisible;
+}
+
+void MeshItem::setEdgesVisible(bool on)
+{
+  m_edgesVisible = on;
+  update();
+}
+
+bool MeshItem::verticesVisible() const
+{
+  return m_verticesVisible;
+}
+
+void MeshItem::setVerticesVisible(bool on)
+{
+  m_verticesVisible = on;
+  update();
 }
 
 GripItem* MeshItem::newGrip()

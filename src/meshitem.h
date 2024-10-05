@@ -24,6 +24,11 @@ public:
 
   QJsonObject serialize() const;
 
+  bool edgesVisible() const;
+  void setEdgesVisible(bool on);
+  bool verticesVisible() const;
+  void setVerticesVisible(bool on);
+
   GripItem* activeVertex() const;
   GripItem* addVertexToPolygon(const QPointF& pos);
   bool splitPolygon(GripItem* v1, GripItem* v2);
@@ -84,6 +89,7 @@ private:
   QList<Polygon> m_polygons;
   QPointer<GripItem> m_lastVertex;
   QGraphicsEllipseItem* m_lastVertexFocus;
+  bool m_edgesVisible, m_verticesVisible;
 };
 
 inline bool operator==(const QVector2D& lhs, const QPointF& rhs)

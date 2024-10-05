@@ -1,5 +1,6 @@
 #include "edgeitem.h"
 #include "gripitem.h"
+#include "meshitem.h"
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsPathItem>
 #include <QPen>
@@ -35,6 +36,15 @@ QPainterPath EdgeItem::shape() const
   path.lineTo(p2 - norm);
   path.closeSubpath();
   return path;
+}
+
+void EdgeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+  MeshItem* mesh = dynamic_cast<MeshItem*>(parentItem());
+  if (mesh && !mesh->edgesVisible()) {
+    return;
+  }
+  QGraphicsLineItem::paint(painter, option, widget);
 }
 
 void EdgeItem::hoverEnterEvent(QGraphicsSceneHoverEvent*)
