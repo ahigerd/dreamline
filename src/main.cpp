@@ -1,4 +1,4 @@
-#include <QApplication>
+#include "dlapplication.h"
 #include "mainwindow.h"
 
 #define STRINGIFY_(x) #x
@@ -13,11 +13,21 @@ int main(int argc, char** argv)
   QApplication::setOrganizationDomain("com.alkahest");
   QApplication::setDesktopFileName("dreamline.desktop");
 
-  QApplication app(argc, argv);
+  DLApplication app(argc, argv);
+  int exitCode = 0;
+  bool shouldExit = app.processCommandLine(&exitCode);
+  if (shouldExit) {
+    return exitCode;
+  }
 
   MainWindow v;
   v.resize(800, 600);
   v.show();
+
+  if (app.positionalArguments().count()) {
+    // TODO: open more than one file
+    v.openFile(app.positionalArguments().first());
+  }
 
   return app.exec();
 }
