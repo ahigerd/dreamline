@@ -25,14 +25,14 @@ bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
   MeshItem* mesh = editor->activeMesh();
   GripItem* oldActive = editor->activeVertex();
-  GripItem* snaptGrip = editor->snapGrip();
+  GripItem* snapGrip = editor->snapGrip();
   QPair<EdgeItem*, QPointF> snapEdge = editor->snapEdge();
-  if (snapEdge.first || snaptGrip) {
-    if (!snaptGrip) {
+  if (snapEdge.first || snapGrip) {
+    if (!snapGrip) {
       snapEdge.first->split(snapEdge.second);
     }
     else {
-      editor->setActiveVertex(snaptGrip);
+      editor->setActiveVertex(snapGrip);
     }
     if (oldActive) {
       mesh->splitPolygon(oldActive, editor->activeVertex());
