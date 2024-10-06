@@ -464,3 +464,25 @@ QPointF EditorView::cursorPos() const
 {
   return mapToScene(mapFromGlobal(QCursor::pos()));
 }
+
+bool EditorView::edgesVisible() const
+{
+  return m_edgesVisible;
+}
+
+void EditorView::setEdgesVisible(bool on)
+{
+  m_edgesVisible = on;
+  updateScene({ mapToScene(rect()).boundingRect() });
+}
+
+bool EditorView::verticesVisible() const
+{
+  return m_verticesVisible;
+}
+
+void EditorView::setVerticesVisible(bool on)
+{
+  m_verticesVisible = on;
+  updateScene({ mapToScene(rect()).boundingRect() });
+}
