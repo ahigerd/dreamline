@@ -36,6 +36,8 @@ public:
   void openProject(const QString& path);
   void saveProject(const QString& path);
 
+  QPointF cursorPos() const;
+
   QColor lastColor = Qt::blue;
 
   QList<QGraphicsItem*> itemsInRing() const;
@@ -74,8 +76,7 @@ public:
   GripItem* activeVertex() const;
   MeshItem* activeMesh() const;
   GripItem* snapGrip() const;
-  EdgeItem* snapEdge() const;
-  QPointF snapPosition() const;
+  QPair<EdgeItem*, QPointF> snapEdge() const;
 
 public slots:
   void setTool(QAction* toolAction);
@@ -101,7 +102,6 @@ private:
   void pinchGesture(QPinchGesture* gesture);
   void updateMouseRect();
   void setCursorFromTool();
-  void findSnapPosition(const QPoint& pos);
 
   void contextMenu(const QPoint& pos);
 
@@ -114,9 +114,6 @@ private:
   QRectF lastMouseRect;
   Tool* currentTool;
   QGraphicsRectItem* underCursor;
-  GripItem* m_snapGrip;
-  EdgeItem* m_snapEdge;
-  QPointF m_snapPosition;
 };
 
 #endif

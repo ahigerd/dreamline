@@ -192,7 +192,6 @@ void EditorView::mousePressEvent(QMouseEvent* event)
 
 void EditorView::mouseMoveEvent(QMouseEvent* event)
 {
-  findSnapPosition(event->pos());
   if (isPanning) {
     QPoint delta = dragStart - event->pos();
     if (!delta.isNull()) {
@@ -279,7 +278,7 @@ void EditorView::wheelEvent(QWheelEvent* event)
 
 void EditorView::updateMouseRect()
 {
-  QPointF center = mapToScene(mapFromGlobal(QCursor::pos()));
+  QPointF center = cursorPos();
   underCursor->setPos(center);
   QRectF mouseRect(center.x() - ringSize - 1.5, center.y() - ringSize - 1.5, 2 * ringSize + 3, 2 * ringSize + 3);
   updateScene({ mouseRect, lastMouseRect });
@@ -426,45 +425,42 @@ void EditorView::setActiveVertex(GripItem* vertex)
   }
 }
 
-GripItem* EditorView::snapGrip() const
+QPair<EdgeItem*, QPointF> EditorView::snapEdge() const
 {
-  return m_snapGrip;
-}
-
-EdgeItem* EditorView::snapEdge() const
-{
-  return m_snapEdge;
-}
-
-QPointF EditorView::snapPosition() const
-{
-  return m_snapPosition;
-}
-
-void EditorView::findSnapPosition(const QPoint& pos)
-{
-  m_snapEdge = nullptr;
-  m_snapGrip = nullptr;
-  QPointF mouse = mapToScene(pos);
+  QPointF mouse = cursorPos();
+  EdgeItem* snapEdge = nullptr;
+  QPointF snapPosition;
   QList<EdgeItem*> edges = itemsInRing<EdgeItem>();
   qreal closest = std::numeric_limits<qreal>::max();
   for (EdgeItem* edge : edges) {
     QPointF snap = edge->nearestPointOnLine(mouse);
     qreal distance = QLineF(mouse, snap).length();
     if (distance < closest) {
-      m_snapPosition = snap;
-      m_snapEdge = edge;
+      snapPosition = snap;
+      snapEdge = edge;
       closest = distance;
     }
   }
-  closest = std::numeric_limits<qreal>::max();
+  return QPair<EdgeItem*, QPointF>(snapEdge, snapPosition);
+}
+
+GripItem* EditorView::snapGrip() const
+{
+  QPointF mouse = cursorPos();
+  GripItem* snapGrip = nullptr;
+  qreal closest = std::numeric_limits<qreal>::max();
   QList<GripItem*> grips = itemsInRing<GripItem>();
   for (GripItem* grip : grips) {
     qreal distance = QLineF(mouse, grip->pos()).length();
     if (distance < closest) {
-      m_snapPosition = grip->pos();
-      m_snapGrip = grip;
+      snapGrip = grip;
       closest = distance;
     }
   }
+  return snapGrip;
+}
+
+QPointF EditorView::cursorPos() const
+{
+  return mapToScene(mapFromGlobal(QCursor::pos()));
 }

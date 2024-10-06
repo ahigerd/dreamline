@@ -23,7 +23,7 @@ public:
   void updateShape();
   void split(const QPointF& pos);
 
-  QColor colorAt(const QPointF& pos);
+  QColor colorAt(const QPointF& pos) const;
 
 signals:
   void insertVertex(EdgeItem*, const QPointF&);

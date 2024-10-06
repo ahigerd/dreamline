@@ -18,21 +18,21 @@ void SplitTool::activated(EditorView* editor)
 
 void SplitTool::deactivated(EditorView* editor)
 {
-  marker->setVisible(false);
+  m_marker->setVisible(false);
 }
 
 bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
   MeshItem* mesh = editor->activeMesh();
   GripItem* oldActive = editor->activeVertex();
-  GripItem* closestGrip = editor->snapGrip();
-  EdgeItem* closestEdge = editor->snapEdge();
-  if (closestEdge) {
-    if (!closestGrip) {
-      closestEdge->split(editor->snapPosition());
+  GripItem* snaptGrip = editor->snapGrip();
+  QPair<EdgeItem*, QPointF> snapEdge = editor->snapEdge();
+  if (snapEdge.first || snaptGrip) {
+    if (!snaptGrip) {
+      snapEdge.first->split(snapEdge.second);
     }
     else {
-      editor->setActiveVertex(closestGrip);
+      editor->setActiveVertex(snaptGrip);
     }
     if (oldActive) {
       mesh->splitPolygon(oldActive, editor->activeVertex());
@@ -55,23 +55,24 @@ bool SplitTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
 
 void SplitTool::snapAndColorMarker(EditorView* editor)
 {
-  if (marker == nullptr) {
-    marker = new MarkerItem();
-    editor->scene()->addItem(marker);
-    marker->setHighlight(QColor("#FF4444"));
+  if (m_marker == nullptr) {
+    m_marker = new MarkerItem();
+    editor->scene()->addItem(m_marker);
+    m_marker->setHighlight(QColor("#FF4444"));
   }
-  GripItem* closestGrip = editor->snapGrip();
-  EdgeItem* closestEdge = editor->snapEdge();
 
-  if (closestEdge || closestGrip) {
-    marker->setVisible(true);
-    if (closestGrip) {
-      marker->setBrush(closestGrip->color());
-    } else {
-      marker->setBrush(closestEdge->colorAt(editor->snapPosition()));
-    }
-    marker->setPos(editor->snapPosition());
+  GripItem* snapGrip = editor->snapGrip();
+  QPair<EdgeItem*, QPointF> snapEdge = editor->snapEdge();
+
+  if (snapGrip) {
+    m_marker->setVisible(true);
+    m_marker->setBrush(snapGrip->color());
+    m_marker->setPos(snapGrip->pos());
+  } else if (snapEdge.first) {
+    m_marker->setVisible(true);
+    m_marker->setBrush(snapEdge.first->colorAt(snapEdge.second));
+    m_marker->setPos(snapEdge.second);
   } else {
-    marker->setVisible(false);
+    m_marker->setVisible(false);
   }
 }

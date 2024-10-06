@@ -18,7 +18,7 @@ public:
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);
 
 private:
-  MarkerItem* marker = nullptr;
+  MarkerItem* m_marker = nullptr;
 
   void snapAndColorMarker(EditorView* editor);
 };
