@@ -336,6 +336,13 @@ void EditorView::selectColor()
   }
 }
 
+void EditorView::toggleSmooth()
+{
+  for (GripItem* grip : selectedItems<GripItem>()) {
+    grip->setSmooth(!grip->isSmooth());
+  }
+}
+
 void EditorView::setTool(QAction* toolAction)
 {
   setTool(Tool::Type(toolAction->data().toInt()));

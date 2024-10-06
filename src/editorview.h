@@ -88,6 +88,7 @@ public slots:
   void setTool(Tool::Type type);
   void setActiveVertex(GripItem* vertex);
   void selectColor();
+  void toggleSmooth();
 
 signals:
   void projectModified(bool);

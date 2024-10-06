@@ -3,7 +3,6 @@
 
 #include <QGraphicsRectItem>
 #include <QObject>
-#include <QColor>
 
 class MarkerItem : public QObject, public QGraphicsRectItem
 {
@@ -13,6 +12,7 @@ public:
   MarkerItem(QGraphicsItem* parent = nullptr);
 
   QColor color() const;
+  bool isSmooth() const;
 
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*);
 
@@ -20,12 +20,17 @@ public:
 
 public slots:
   void setColor(const QColor& color);
+  void setSmooth(bool on);
 
 signals:
   void colorChanged(MarkerItem* item, const QColor& pos);
+  void smoothChanged(MarkerItem* item, bool smooth);
 
 private:
+  void drawFrame(QPainter* painter, const QRectF& rect);
   QColor highlightColor = Qt::white;
+
+  bool m_smooth;
 };
 
 #endif

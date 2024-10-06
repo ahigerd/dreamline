@@ -91,6 +91,10 @@ void MainWindow::makeToolMenu()
   colorButton = toolBar->addAction("Color", editor, SLOT(selectColor()));
   setCurrentColor(editor->lastColor);
 
+  toolBar->addSeparator();
+  QAction* aSmooth = toolBar->addAction("Sharp/Smooth", editor, SLOT(toggleSmooth()));
+  aSmooth->setShortcut(QKeySequence("t"));
+
   aVertex->setChecked(true);
 
   QObject::connect(toolGroup, SIGNAL(triggered(QAction*)), editor, SLOT(setTool(QAction*)));

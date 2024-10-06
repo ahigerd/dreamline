@@ -2,7 +2,8 @@
 #include "markeritem.h"
 #include "meshitem.h"
 
-GripItem::GripItem(QGraphicsItem* parent) : MarkerItem(parent)
+GripItem::GripItem(QGraphicsItem* parent)
+: MarkerItem(parent)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
   setFlag(QGraphicsItem::ItemIsSelectable, true);
