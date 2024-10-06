@@ -14,7 +14,7 @@ public:
     VertexTool,
     EdgeTool,
     ColorTool,
-    SplitEdge,
+    Split,
   };
   Q_ENUM(Type)
 

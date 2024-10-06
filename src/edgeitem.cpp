@@ -1,6 +1,7 @@
 #include "edgeitem.h"
 #include "gripitem.h"
 #include "meshitem.h"
+#include "mathutil.h"
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsPathItem>
 #include <QPen>
@@ -77,6 +78,20 @@ void EdgeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
   event->accept();
 }
 
+void EdgeItem::split(const QPointF& pos)
+{
+  emit insertVertex(this, pos);
+}
+
+QColor EdgeItem::colorAt(const QPointF& pos) const
+{
+  float t = QLineF(pos, right->pos()).length() / line().length();
+  QColor leftColor = left->color();
+  QColor rightColor = right->color();
+  QColor newColor = lerp(leftColor, rightColor, t);
+  return newColor;
+}
+
 void EdgeItem::updateVertices()
 {
   setLine(QLineF(left->pos(), right->pos()));
@@ -95,4 +110,23 @@ EdgeItem* EdgeItem::split(GripItem* newVertex)
 bool EdgeItem::hasGrip(GripItem* grip) const
 {
   return grip == left || grip == right;
+}
+
+QPointF EdgeItem::nearestPointOnLine(const QPointF& point)
+{
+  QLineF norm = line().normalVector();
+  norm.setPoints(point, point + QPointF(norm.dx(), norm.dy()));
+  QPointF result;
+  norm.intersects(line(), &result);
+
+  // Check if the result is outside the bounds of the line segment
+  if (QLineF(line().center(), result).length() > line().length() / 2) {
+    // If the point is outside, snap to the nearest endpoint
+    if (QLineF(line().p1(), result).length() > QLineF(line().p2(), result).length()) {
+      result = line().p2();
+    } else {
+      result = line().p1();
+    }
+  }
+  return result;
 }
