@@ -1,4 +1,5 @@
 #include "glviewport.h"
+#include "editorview.h"
 #include <QMap>
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
@@ -101,4 +102,9 @@ void GLViewport::addShader(QOpenGLShaderProgram* program, const QString& name, i
   if (!ok) {
     qFatal(qPrintable(QStringLiteral("Shader compilation failed in %1:\n%2").arg(filename).arg(program->log())));
   }
+}
+
+EditorView* GLViewport::editor() const
+{
+  return dynamic_cast<EditorView*>(parent());
 }

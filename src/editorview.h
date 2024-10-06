@@ -78,6 +78,11 @@ public:
   GripItem* snapGrip() const;
   QPair<EdgeItem*, QPointF> snapEdge() const;
 
+  bool edgesVisible() const;
+  void setEdgesVisible(bool on);
+  bool verticesVisible() const;
+  void setVerticesVisible(bool on);
+
 public slots:
   void setTool(QAction* toolAction);
   void setTool(Tool::Type type);
@@ -109,6 +114,8 @@ private:
   GLViewport* glViewport;
   DreamProject* project;
   bool isPanning, isResizingRing, containsMouse, useRing;
+  bool m_edgesVisible = true;
+  bool m_verticesVisible = true;
   float ringSize, originalRingSize;
   QPoint dragStart, lastDrag;
   QRectF lastMouseRect;

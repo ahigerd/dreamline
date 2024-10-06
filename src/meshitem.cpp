@@ -2,6 +2,7 @@
 #include "glviewport.h"
 #include "gripitem.h"
 #include "edgeitem.h"
+#include "editorview.h"
 #include <QJsonArray>
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
@@ -168,7 +169,13 @@ QJsonObject MeshItem::serialize() const
 
 bool MeshItem::edgesVisible() const
 {
-  return m_edgesVisible;
+  if (m_edgesVisible) {
+    GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
+    if (gl && gl->editor()->edgesVisible()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void MeshItem::setEdgesVisible(bool on)
@@ -179,7 +186,13 @@ void MeshItem::setEdgesVisible(bool on)
 
 bool MeshItem::verticesVisible() const
 {
-  return m_verticesVisible;
+  if (m_verticesVisible) {
+    GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
+    if (gl && gl->editor()->verticesVisible()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void MeshItem::setVerticesVisible(bool on)
