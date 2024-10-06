@@ -2,6 +2,7 @@
 #include "editorview.h"
 #include "edgeitem.h"
 #include "gripitem.h"
+#include "meshitem.h"
 #include <QMouseEvent>
 
 MoveEdgeTool::MoveEdgeTool()
@@ -11,18 +12,12 @@ MoveEdgeTool::MoveEdgeTool()
 
 void MoveEdgeTool::activated(EditorView* editor)
 {
-  QList<GripItem*> grips = editor->itemsOfType<GripItem>();
-  for (GripItem* grip : grips) {
-    grip->visible = false;
-  }
+  editor->setVerticesVisible(false);
 }
 
 void MoveEdgeTool::deactivated(EditorView* editor)
 {
-  QList<GripItem*> grips = editor->itemsOfType<GripItem>();
-  for (GripItem* grip : grips) {
-    grip->visible = true;
-  }
+  editor->setVerticesVisible(true);
   for (EdgeItem* item : editor->itemsOfType<EdgeItem>()) {
     item->hoverLeave();
   }
