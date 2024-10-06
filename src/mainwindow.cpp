@@ -83,7 +83,7 @@ void MainWindow::makeToolMenu()
   toolMenu->addAction(aColor);
   toolBar->addAction(aColor);
 
-  QAction* aSplit = Tool::makeAction(toolGroup, Tool::SplitEdge);
+  QAction* aSplit = Tool::makeAction(toolGroup, Tool::Split);
   toolMenu->addAction(aSplit);
   toolBar->addAction(aSplit);
 

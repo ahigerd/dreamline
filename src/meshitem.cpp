@@ -2,7 +2,6 @@
 #include "glviewport.h"
 #include "gripitem.h"
 #include "edgeitem.h"
-#include "mathutil.h"
 #include <QJsonArray>
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
@@ -260,11 +259,7 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
   GripItem* grip = newGrip();
   grip->setPos(pos);
 
-  float t = QLineF(pos, p2->pos()).length() / edge->line().length();
-  QColor leftColor = p1->color();
-  QColor rightColor = p2->color();
-  QColor newColor = lerp(leftColor, rightColor, t);
-  grip->setColor(newColor);
+  grip->setColor(edge->colorAt(pos));
 
   EdgeItem* newEdge = edge->split(grip);
   QObject::connect(newEdge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));

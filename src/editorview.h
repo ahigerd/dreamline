@@ -11,6 +11,7 @@ class DreamProject;
 class QPinchGesture;
 class GLViewport;
 class GripItem;
+class EdgeItem;
 class MeshItem;
 
 class OpenException : public std::runtime_error
@@ -34,6 +35,8 @@ public:
   void newProject();
   void openProject(const QString& path);
   void saveProject(const QString& path);
+
+  QPointF cursorPos() const;
 
   QColor lastColor = Qt::blue;
 
@@ -72,6 +75,8 @@ public:
 
   GripItem* activeVertex() const;
   MeshItem* activeMesh() const;
+  GripItem* snapGrip() const;
+  QPair<EdgeItem*, QPointF> snapEdge() const;
 
 public slots:
   void setTool(QAction* toolAction);

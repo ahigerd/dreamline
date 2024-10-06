@@ -26,6 +26,11 @@ QColor MarkerItem::color() const
   return brush().color();
 }
 
+void MarkerItem::setHighlight(const QColor& color)
+{
+  highlightColor = color;
+}
+
 void MarkerItem::setColor(const QColor& color)
 {
   setBrush(color);
@@ -51,7 +56,7 @@ void MarkerItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
     painter->setPen(option->palette.color(QPalette::Highlight));
   }
   else {
-    painter->setPen(Qt::white);
+    painter->setPen(highlightColor);
   }
   painter->drawRect(r);
   painter->setPen(pen());
