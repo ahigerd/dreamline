@@ -25,7 +25,6 @@ void MoveEdgeTool::deactivated(EditorView* editor)
 
 bool MoveEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  pressed = true;
   for (QGraphicsItem* item : editor->scene()->selectedItems()) {
     item->setSelected(false);
   }
@@ -40,7 +39,7 @@ bool MoveEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 
 bool MoveEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 {
-  if (!pressed) {
+  if (event->buttons() ^ Qt::LeftButton) {
     for (EdgeItem* item : editor->itemsOfType<EdgeItem>()) {
       item->hoverLeave();
     }
@@ -54,7 +53,6 @@ bool MoveEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 
 bool MoveEdgeTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
 {
-  pressed = false;
   for (EdgeItem* item : editor->itemsOfType<EdgeItem>()) {
     item->hoverLeave();
   }
