@@ -17,11 +17,7 @@ bool MoveVertexTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
   for (GripItem* item : gripsInRing) {
     item->setSelected(true);
   }
-  if (gripsInRing.length() == 1) {
-    editor->setActiveVertex(gripsInRing[0]);
-  } else {
-    editor->setActiveVertex(nullptr);
-  }
+  editor->setActiveVertex(nullptr);
   return false;
 }
 

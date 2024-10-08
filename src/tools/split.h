@@ -2,18 +2,25 @@
 #define DL_TOOLS_SPLITEDGE_H
 
 #include "tool.h"
+#include "markeritem.h"
 
-class SplitEdgeTool : public BaseTool<SplitEdgeTool>
+class SplitTool : public BaseTool<SplitTool>
 {
 Q_OBJECT
 public:
-  SplitEdgeTool();
+  SplitTool();
 
-  virtual Qt::CursorShape cursorShape() const;
+  virtual void activated(EditorView* editor);
+  virtual void deactivated(EditorView* editor);
 
   virtual bool mousePressEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseMoveEvent(EditorView* editor, QMouseEvent* event);
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);
+
+private:
+  MarkerItem* m_marker = nullptr;
+
+  void snapAndColorMarker(EditorView* editor);
 };
 
 #endif

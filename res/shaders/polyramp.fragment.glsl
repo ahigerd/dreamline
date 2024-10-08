@@ -5,6 +5,7 @@ uniform vec2[N] verts;
 uniform vec4[N] colors;
 uniform float windingDirection;
 in vec2 pt;
+in vec4 edgeColor;
 
 out vec4 FragColor;
 
@@ -40,9 +41,17 @@ void main()
     next = verts[i];
   }
 
+  // 1e-37: Numerical instability causes calculations to be
+  // off by 1 ULP, which results in gaps between polygons.
   if (t > 0) {
-    FragColor /= t;
-  } else {
+    if (FragColor.w / t > 1e-37) {
+      FragColor /= t;
+    } else {
+      FragColor = edgeColor;
+    }
+  } else if (t > -1e37) {
     FragColor = vec4(0, 0, 0, 0);
+  } else {
+    FragColor = edgeColor;
   }
 }

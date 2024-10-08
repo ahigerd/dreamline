@@ -11,6 +11,7 @@
 #include <QTransform>
 #include "boundprogram.h"
 class QOpenGLContext;
+class EditorView;
 
 class GLViewport : public QOpenGLWidget, public QOpenGLFunctions
 {
@@ -23,6 +24,7 @@ public:
 
   BoundProgram useShader(const QString& name, int n = 0);
   QTransform transform() const;
+  EditorView* editor() const;
 
 protected:
   void initializeGL();

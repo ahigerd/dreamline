@@ -17,14 +17,19 @@ public:
   inline GripItem* leftGrip() const { return left; }
   inline GripItem* rightGrip() const { return right; }
   bool hasGrip(GripItem* grip) const;
+  QPointF nearestPointOnLine(const QPointF& point);
 
   QPainterPath shape() const;
   void updateShape();
+  void split(const QPointF& pos);
+
+  QColor colorAt(const QPointF& pos) const;
 
 signals:
   void insertVertex(EdgeItem*, const QPointF&);
 
 protected:
+  void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
   void hoverEnterEvent(QGraphicsSceneHoverEvent*);
   void hoverMoveEvent(QGraphicsSceneHoverEvent*);
   void hoverLeaveEvent(QGraphicsSceneHoverEvent*);
