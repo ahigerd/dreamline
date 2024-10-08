@@ -25,16 +25,14 @@ public:
 
   QColor colorAt(const QPointF& pos) const;
 
+  void hoverEnter();
+  void hoverLeave();
+
 signals:
   void insertVertex(EdgeItem*, const QPointF&);
 
 protected:
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
-  void hoverEnterEvent(QGraphicsSceneHoverEvent*);
-  void hoverMoveEvent(QGraphicsSceneHoverEvent*);
-  void hoverLeaveEvent(QGraphicsSceneHoverEvent*);
-  void mousePressEvent(QGraphicsSceneMouseEvent*);
-  void mouseDoubleClickEvent(QGraphicsSceneMouseEvent*);
 
 protected slots:
   void updateVertices();

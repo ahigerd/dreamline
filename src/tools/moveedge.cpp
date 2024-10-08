@@ -1,6 +1,8 @@
 #include "moveedge.h"
 #include "editorview.h"
 #include "edgeitem.h"
+#include "gripitem.h"
+#include "meshitem.h"
 #include <QMouseEvent>
 
 MoveEdgeTool::MoveEdgeTool()
@@ -8,25 +10,55 @@ MoveEdgeTool::MoveEdgeTool()
 {
 }
 
+void MoveEdgeTool::activated(EditorView* editor)
+{
+  editor->setVerticesVisible(false);
+  for (EdgeItem* item : editor->itemsInRing<EdgeItem>()) {
+    item->hoverEnter();
+  }
+}
+
+void MoveEdgeTool::deactivated(EditorView* editor)
+{
+  editor->setVerticesVisible(true);
+  for (EdgeItem* item : editor->itemsOfType<EdgeItem>()) {
+    item->hoverLeave();
+  }
+}
+
 bool MoveEdgeTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  for (EdgeItem* item : editor->selectedItems<EdgeItem>()) {
+  for (QGraphicsItem* item : editor->scene()->selectedItems()) {
     item->setSelected(false);
   }
-  QList<EdgeItem*> gripsInRing = editor->itemsInRing<EdgeItem>();
-  for (EdgeItem* item : gripsInRing)
-  {
-    item->setSelected(true);
+  for (EdgeItem* item : editor->itemsInRing<EdgeItem>()) {
+    item->leftGrip()->setSelected(true);
+    item->rightGrip()->setSelected(true);
   }
-  return true;
+  return false;
 }
 
 bool MoveEdgeTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 {
-  return true;
+  if (!(event->buttons() & Qt::LeftButton)) {
+    for (EdgeItem* item : editor->itemsOfType<EdgeItem>()) {
+      item->hoverLeave();
+    }
+    for (EdgeItem* item : editor->itemsInRing<EdgeItem>()) {
+      item->hoverEnter();
+    }
+  }
+  return false;
 }
 
 bool MoveEdgeTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
 {
-  return true;
+  for (EdgeItem* item : editor->itemsOfType<EdgeItem>()) {
+    item->hoverLeave();
+  }
+  QList<EdgeItem*> gripsInRing = editor->itemsInRing<EdgeItem>();
+  for (EdgeItem* item : gripsInRing) {
+    item->hoverEnter();
+  }
+  return false;
 }

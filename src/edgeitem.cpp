@@ -48,35 +48,21 @@ void EdgeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
   QGraphicsLineItem::paint(painter, option, widget);
 }
 
-void EdgeItem::hoverEnterEvent(QGraphicsSceneHoverEvent*)
+void EdgeItem::hoverEnter()
 {
   QPen pen(Qt::black, 3);
   pen.setCosmetic(true);
   setPen(pen);
 }
 
-void EdgeItem::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
-{
-  hoverEnterEvent(event);
-}
 
-void EdgeItem::hoverLeaveEvent(QGraphicsSceneHoverEvent*)
+void EdgeItem::hoverLeave()
 {
   QPen pen(Qt::black, 1);
   pen.setCosmetic(true);
   setPen(pen);
 }
 
-void EdgeItem::mousePressEvent(QGraphicsSceneMouseEvent* event)
-{
-  event->accept();
-}
-
-void EdgeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* event)
-{
-  emit insertVertex(this, event->scenePos());
-  event->accept();
-}
 
 void EdgeItem::split(const QPointF& pos)
 {
