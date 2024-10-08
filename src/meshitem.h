@@ -42,6 +42,7 @@ public slots:
 
 protected slots:
   void gripDestroyed(QObject* grip);
+  void updateBoundary();
 
 signals:
   void modified(bool);
@@ -87,6 +88,8 @@ private:
   QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;
   QList<Polygon> m_polygons;
+  GLBuffer<QPointF> m_boundaryTris, m_control;
+  GLBuffer<GLint> m_smooth;
   QPointer<GripItem> m_lastVertex;
   QGraphicsEllipseItem* m_lastVertexFocus;
   bool m_edgesVisible, m_verticesVisible;

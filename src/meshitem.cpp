@@ -207,6 +207,7 @@ GripItem* MeshItem::newGrip()
   m_grips.append(grip);
   QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
   QObject::connect(grip, SIGNAL(colorChanged(MarkerItem*, QColor)), this, SLOT(changeColor(MarkerItem*, QColor)));
+  QObject::connect(grip, SIGNAL(smoothChanged(MarkerItem*, bool)), this, SLOT(updateBoundary()));
   QObject::connect(grip, SIGNAL(destroyed(QObject*)), this, SLOT(gripDestroyed(QObject*)));
   return grip;
 }
@@ -231,6 +232,7 @@ void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
     QPolygonF p = polygon();
     p[boundaryIndex] = pos;
     setPolygon(p);
+    updateBoundary();
   }
 
   for (Polygon& poly : m_polygons) {
@@ -431,15 +433,16 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
   gl->glEnable(GL_BLEND);
   gl->glDisable(GL_MULTISAMPLE);
   gl->glEnable(GL_DITHER);
+  if (m_boundaryTris.count()) {
+    gl->glEnable(GL_STENCIL_TEST);
+    gl->glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+  }
   for (Polygon& poly : m_polygons) {
     auto& vbo = poly.vertexBuffer;
     BoundProgram program = gl->useShader("polyramp", vbo.count());
 
-    program.bindAttributeBuffer(0, vbo);
-    program.bindAttributeBuffer(1, poly.colors);
-
-    program.setUniformValueArray("verts", vbo);
-    program.setUniformValueArray("colors", poly.colors);
+    program->setUniformValueArray("verts", vbo.vector().constData(), vbo.vector().size());
+    program->setUniformValueArray("colors", poly.colors.vector().constData(), poly.colors.vector().size());
 
     QTransform transform = gl->transform();
     program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
@@ -450,11 +453,50 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
     }
     program->setUniformValue("windingDirection", poly.windingDirection);
 
+    gl->glClear(GL_STENCIL_BUFFER_BIT);
+
+    if (m_boundaryTris.count()) {
+      gl->glStencilFunc(GL_ALWAYS, 1, 0xFF);
+      gl->glStencilMask(0xFF);
+      program.bindAttributeBuffer(0, m_boundaryTris);
+      int controlSize = m_control.elementSize();
+      int controlStride = controlSize * 3;
+      for (int i = 0; i < 3; i++) {
+        program.bindAttributeBuffer(i + 1, m_control, i * controlSize, controlStride);
+      }
+      program.bindAttributeBuffer(4, m_smooth);
+      program.bindAttributeBuffer(5, poly.colors);
+      program->setUniformValue("useEllipse", true);
+      gl->glDrawArrays(GL_TRIANGLES, 0, m_boundaryTris.count());
+
+      gl->glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+      gl->glStencilMask(0x00);
+    }
+    program.bindAttributeBuffer(0, vbo);
+    program->setUniformValue("useEllipse", false);
     gl->glDrawArrays(GL_TRIANGLE_FAN, 0, vbo.count());
   }
+  gl->glDisable(GL_STENCIL_TEST);
   gl->glEnable(GL_MULTISAMPLE);
 
   painter->endNativePainting();
+
+  /*
+  QPen stroke(QColor(0, 0, 0, 128), 0);
+  stroke.setCosmetic(true);
+  painter->setPen(stroke);
+  QPointF prev = m_boundary.last()->pos();
+  QPointF lastMidpoint = (prev + m_boundary[m_boundary.length() - 2]->pos()) / 2;
+  for (GripItem* grip : m_boundary) {
+    QPointF curr = grip->pos();
+    QPointF midpoint = (curr + prev) / 2;
+
+    painter->drawLine(midpoint, lastMidpoint);
+
+    prev = curr;
+    lastMidpoint = midpoint;
+  }
+  */
 }
 
 EdgeItem* MeshItem::findOrCreateEdge(GripItem* v1, GripItem* v2)
@@ -468,4 +510,42 @@ EdgeItem* MeshItem::findOrCreateEdge(GripItem* v1, GripItem* v2)
   QObject::connect(edge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
   m_edges.append(edge);
   return edge;
+}
+
+void MeshItem::updateBoundary()
+{
+  if (m_boundary.length() < 3) {
+    return;
+  }
+  QPolygonF tris(m_boundary.length() * 3);
+  QVector<QPointF> control(m_boundary.length() * 9);
+  QVector<int> smooth(m_boundary.length() * 3);
+  QPointF prev = m_boundary.last()->pos();
+  QPointF lastMidpoint = (prev + m_boundary[m_boundary.length() - 2]->pos()) / 2;
+  int i = 0;
+  int j = 0;
+  bool lastSmooth = m_boundary.last()->isSmooth();
+  for (GripItem* grip : m_boundary) {
+    QPointF curr = grip->pos();
+    QPointF midpoint = (curr + prev) / 2;
+
+    if (lastSmooth) {
+      for (int k = 0; k < 3; k++) {
+        smooth[i + k] = lastSmooth ? 1 : 0;
+        control[j++] = prev;
+        control[j++] = lastMidpoint;
+        control[j++] = midpoint;
+      }
+      tris[i++] = prev;
+      tris[i++] = midpoint;
+      tris[i++] = lastMidpoint;
+    }
+
+    prev = curr;
+    lastMidpoint = midpoint;
+    lastSmooth = grip->isSmooth();
+  }
+  m_boundaryTris = tris;
+  m_control = control;
+  m_smooth = smooth;
 }
