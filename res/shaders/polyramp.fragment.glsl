@@ -51,17 +51,13 @@ vec4 getColor(vec2 point)
     if (result.a / t > EPSILON) {
       result /= t;
       return result;
-    } else if (useEllipse) {
-      return vec4(0, 0, 0, -1);
     } else {
-      return edgeColor;
+      return vec4(0, 0, 0, -1);
     }
   } else if (t > -1e30) {
     return vec4(0, 0, 0, 0);
-  } else if (useEllipse) {
-    return vec4(0, 0, 0, -1);
   } else {
-    return edgeColor;
+    return vec4(0, 0, 0, -1);
   }
 }
 
