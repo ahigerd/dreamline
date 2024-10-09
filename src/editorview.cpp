@@ -474,7 +474,7 @@ QPointF EditorView::cursorPos() const
 
 bool EditorView::edgesVisible() const
 {
-  return m_edgesVisible;
+  return m_edgesVisible && !m_preview;
 }
 
 void EditorView::setEdgesVisible(bool on)
@@ -485,11 +485,22 @@ void EditorView::setEdgesVisible(bool on)
 
 bool EditorView::verticesVisible() const
 {
-  return m_verticesVisible;
+  return m_verticesVisible && !m_preview;
 }
 
 void EditorView::setVerticesVisible(bool on)
 {
   m_verticesVisible = on;
+  updateScene({ mapToScene(rect()).boundingRect() });
+}
+
+bool EditorView::isPreview() const
+{
+  return m_preview;
+}
+
+void EditorView::setPreview(bool on)
+{
+  m_preview = on;
   updateScene({ mapToScene(rect()).boundingRect() });
 }

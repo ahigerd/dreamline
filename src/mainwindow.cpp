@@ -58,6 +58,10 @@ void MainWindow::makeFileMenu()
   aSave->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
   fileBar->addAction(aSave);
 
+  QAction* aPreview = fileBar->addAction(style()->standardIcon(QStyle::SP_FileDialogContentsView), tr("Preview"));
+  aPreview->setCheckable(true);
+  QObject::connect(aPreview, SIGNAL(toggled(bool)), editor, SLOT(setPreview(bool)));
+
   fileBar->setIconSize(QSize(16, 16));
 }
 

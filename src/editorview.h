@@ -83,7 +83,10 @@ public:
   bool verticesVisible() const;
   void setVerticesVisible(bool on);
 
+  bool isPreview() const;
+
 public slots:
+  void setPreview(bool on);
   void setTool(QAction* toolAction);
   void setTool(Tool::Type type);
   void setActiveVertex(GripItem* vertex);
@@ -117,6 +120,7 @@ private:
   bool isPanning, isResizingRing, containsMouse, useRing;
   bool m_edgesVisible = true;
   bool m_verticesVisible = true;
+  bool m_preview = false;
   float ringSize, originalRingSize;
   QPoint dragStart, lastDrag;
   QRectF lastMouseRect;
