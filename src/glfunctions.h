@@ -18,9 +18,10 @@ public:
   virtual ~GLFunctions();
 
   BoundProgram useShader(const QString& name, int n = 0);
-  virtual QTransform transform() const;
 
-protected:
+  virtual QTransform transform() const;
+  void setTransform(const QTransform& transform);
+
   void initialize(QOpenGLContext* ctx);
 
 private:
@@ -30,6 +31,7 @@ private:
   QOpenGLVertexArrayObject m_vao;
   QSurface* m_surface;
   QOpenGLContext* m_ctx;
+  QTransform m_transform;
 };
 
 #endif

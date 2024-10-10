@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include "editorview.h"
 #include "tool.h"
+#include "glfunctions.h"
+#include "meshitem.h"
+#include "dreamproject.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMenuBar>
@@ -12,6 +15,9 @@
 #include <QSettings>
 #include <QImage>
 #include <QPainter>
+#include <QOffscreenSurface>
+#include <QOpenGLFramebufferObject>
+#include <QLabel>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -191,7 +197,29 @@ void MainWindow::fileExport()
 void MainWindow::exportFile(const QString& path)
 {
   exportPath = path;
-  bool ok = false; // TODO
+
+  // TODO: Maybe this should be on a different thread
+  QOffscreenSurface surface;
+  QOpenGLContext* ctx = QOpenGLContext::currentContext();
+  surface.create();
+  ctx->makeCurrent(&surface);
+
+  QSizeF size = editor->project()->pageSize() * 100; // TODO: DPI
+  QOpenGLFramebufferObject fbo(size.toSize(), QOpenGLFramebufferObject::CombinedDepthStencil);
+  fbo.bind();
+
+  GLFunctions gl(&surface);
+  gl.initialize(ctx);
+  gl.glViewport(0, 0, size.width(), size.height());
+  gl.setTransform(QTransform(2.0/size.width(), 0, 0, -2.0/size.height(), 0, 0));
+
+  // TODO: make a renderable class maybe?
+  for (MeshItem* mesh : editor->itemsOfType<MeshItem>()) {
+    mesh->renderGL();
+  }
+
+  bool ok = fbo.toImage().save(path);
+
   if (!ok) {
     QMessageBox::warning(this, tr("Error exporting Dreamline file"), tr("%1 could not be saved.").arg(path));
   }

@@ -85,6 +85,8 @@ public:
 
   bool isPreview() const;
 
+  DreamProject* project() const;
+
 public slots:
   void setPreview(bool on);
   void setTool(QAction* toolAction);
@@ -116,7 +118,7 @@ private:
 
   QElapsedTimer timer;
   GLViewport* glViewport;
-  DreamProject* project;
+  DreamProject* projectScene;
   bool isPanning, isResizingRing, containsMouse, useRing;
   bool m_edgesVisible = true;
   bool m_verticesVisible = true;

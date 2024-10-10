@@ -60,15 +60,15 @@ void EditorView::newProject()
 {
   QGraphicsScene* oldScene = scene();
 
-  project = new DreamProject(QSizeF(8.5, 11), this);
-  setScene(project);
+  projectScene = new DreamProject(QSizeF(8.5, 11), this);
+  setScene(projectScene);
 
   underCursor = new QGraphicsRectItem(-3, -3, 6, 6);
   underCursor->setPen(QColor(Qt::transparent));
   underCursor->setFlag(QGraphicsItem::ItemIsMovable, true);
   underCursor->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
   underCursor->setZValue(HUGE_VAL);
-  project->addItem(underCursor);
+  projectScene->addItem(underCursor);
   setCursorFromTool();
 
   delete oldScene;
@@ -97,14 +97,14 @@ void EditorView::openProject(const QString& path)
 
   QJsonObject pageSize = doc["page"].toObject();
   // If page size is not set, use a default
-  project->setPageSize(QSizeF(pageSize["width"].toInt(8.5), pageSize["height"].toInt(11)));
+  projectScene->setPageSize(QSizeF(pageSize["width"].toInt(8.5), pageSize["height"].toInt(11)));
 
   QJsonArray meshes = doc["meshes"].toArray();
   for (const QJsonValue& meshV : meshes) {
     // TODO: return warnings if invalid
     MeshItem* mesh = new MeshItem(meshV.toObject());
     QObject::connect(mesh, SIGNAL(modified(bool)), this, SIGNAL(projectModified(bool)));
-    project->addItem(mesh);
+    projectScene->addItem(mesh);
   }
 }
 
@@ -118,8 +118,8 @@ void EditorView::saveProject(const QString& path)
   QJsonObject o;
 
   QJsonObject pageSize;
-  pageSize["width"] = project->pageSize().width();
-  pageSize["height"] = project->pageSize().height();
+  pageSize["width"] = projectScene->pageSize().width();
+  pageSize["height"] = projectScene->pageSize().height();
   o["page"] = pageSize;
 
   QJsonArray meshes;
@@ -503,4 +503,9 @@ void EditorView::setPreview(bool on)
 {
   m_preview = on;
   updateScene({ mapToScene(rect()).boundingRect() });
+}
+
+DreamProject* EditorView::project() const
+{
+  return projectScene;
 }

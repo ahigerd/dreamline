@@ -419,13 +419,10 @@ void MeshItem::gripDestroyed(QObject* grip)
   }
 }
 
-void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
+void MeshItem::renderGL()
 {
-  painter->beginNativePainting();
-
   GLFunctions* gl = GLFunctions::instance(QOpenGLContext::currentContext());
   if (!gl) {
-    painter->endNativePainting();
     qFatal("no context");
     return;
   }
@@ -478,6 +475,13 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
   }
   gl->glDisable(GL_STENCIL_TEST);
   gl->glEnable(GL_MULTISAMPLE);
+}
+
+void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
+{
+  painter->beginNativePainting();
+
+  renderGL();
 
   painter->endNativePainting();
 

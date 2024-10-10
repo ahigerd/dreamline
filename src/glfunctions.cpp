@@ -4,6 +4,7 @@
 #include <QOffscreenSurface>
 #include <QWindow>
 #include <QFile>
+#include <QtDebug>
 
 static QMap<QOpenGLContext*, GLFunctions*> ctxMap;
 static const QMap<QOpenGLShader::ShaderType, QString> shaderTypeNames{
@@ -51,18 +52,12 @@ void GLFunctions::initialize(QOpenGLContext* ctx)
 
 QTransform GLFunctions::transform() const
 {
-  /*
-  QGraphicsView* view = qobject_cast<QGraphicsView*>(parentWidget());
-  if (view) {
-    QPointF tl = view->mapToScene(0, 0);
-    QPointF br = view->mapToScene(width(), height());
-    QPointF center = (tl + br) / 2.0;
-    float scaleX = 2.0 / (br.x() - tl.x());
-    float scaleY = 2.0 / (br.y() - tl.y());
-    return QTransform(scaleX, 0, 0, -scaleY, center.x() * -scaleX, center.y() * scaleY);
-  }
-  */
-  return QTransform();
+  return m_transform;
+}
+
+void GLFunctions::setTransform(const QTransform& transform)
+{
+  m_transform = transform;
 }
 
 BoundProgram GLFunctions::useShader(const QString& name, int n)

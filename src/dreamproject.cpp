@@ -37,6 +37,8 @@ void DreamProject::drawBackground(QPainter* p, const QRectF& rect)
   p->fillRect(rect, backgroundBrush());
 
   p->setBrush(Qt::white);
-  p->setPen(QPen(Qt::black));
+  QPen pen(Qt::black, 1);
+  pen.setCosmetic(true);
+  p->setPen(pen);
   p->drawRect(pageRect);
 }
