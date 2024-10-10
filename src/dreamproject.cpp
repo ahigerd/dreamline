@@ -69,7 +69,9 @@ QImage DreamProject::render(int dpi)
 
   GLFunctions gl(&surface);
   gl.initialize(ctx);
-  gl.glViewport(0, 0, pageRect.width(), pageRect.height());
+
+  // Map scene coordinates to output coordinates
+  gl.glViewport(0, 0, size.width(), size.height());
   gl.setTransform(QTransform(2.0 / pageRect.width(), 0, 0, -2.0 / pageRect.height(), 0, 0));
 
   // TODO: make a renderable class maybe?

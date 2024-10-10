@@ -204,14 +204,17 @@ void MainWindow::fileExport()
     return;
   }
 
-  exportFile(dlg.selectedFiles().first());
+  exportFile(dlg.selectedFiles().first(), dlg.selectedMimeTypeFilter());
 }
 
-void MainWindow::exportFile(const QString& path)
+void MainWindow::exportFile(const QString& path, const QString& format)
 {
   exportPath = path;
 
-  bool ok = editor->project()->exportToFile(path, "PNG", 200);
+  QByteArray formatCode = QImageWriter::imageFormatsForMimeType(format.toUtf8()).first();
+
+  // TODO: configurable output DPI
+  bool ok = editor->project()->exportToFile(path, formatCode.constData(), 100);
 
   if (!ok) {
     QMessageBox::warning(this, tr("Error exporting Dreamline file"), tr("%1 could not be saved.").arg(path));
