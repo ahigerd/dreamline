@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "editorview.h"
 #include "tool.h"
+#include "dreamproject.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMenuBar>
@@ -10,8 +11,9 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QSettings>
-#include <QImage>
 #include <QPainter>
+#include <QImageWriter>
+#include <QMimeDatabase>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -131,12 +133,13 @@ void MainWindow::openFile(const QString& path)
   savePath = path;
 
   try {
-    editor->openProject(path);
+    editor->newProject();
+    editor->project()->open(path);
     setWindowModified(false);
     updateTitle();
     addToRecent(path);
   } catch (OpenException& err) {
-    QMessageBox::warning(this, tr("Error loading DreamLine file"), QString::fromUtf8(err.what()));
+    QMessageBox::warning(this, tr("Error loading Dreamline file"), QString::fromUtf8(err.what()));
     fileNew();
   }
 }
@@ -171,7 +174,7 @@ void MainWindow::saveFile(const QString& path)
   savePath = path;
   updateTitle();
   try {
-    editor->saveProject(path);
+    editor->project()->save(path);
     setWindowModified(false);
     addToRecent(path);
   } catch (SaveException& err) {
@@ -181,17 +184,38 @@ void MainWindow::saveFile(const QString& path)
 
 void MainWindow::fileExport()
 {
-  QString path = QFileDialog::getSaveFileName(this, tr("Export Dreamline File"), exportPath, tr("PNG Files (*.png)"));
-  if (path.isEmpty()) {
+  QFileDialog dlg(this, tr("Export Dreamline File"), exportPath);
+  QStringList filters;
+  for (const QByteArray& mime : QImageWriter::supportedMimeTypes()) {
+    filters << QString::fromUtf8(mime);
+  }
+  dlg.setMimeTypeFilters(filters);
+  dlg.selectMimeTypeFilter("image/png");
+  dlg.setDefaultSuffix("png");
+  dlg.setAcceptMode(QFileDialog::AcceptSave);
+
+  // I don't know why QFileDialog doesn't do this by default,
+  // but this is the recommended solution.
+  QObject::connect(&dlg, &QFileDialog::filterSelected, [&dlg]{
+    dlg.setDefaultSuffix(QMimeDatabase().mimeTypeForName(dlg.selectedMimeTypeFilter()).preferredSuffix());
+  });
+
+  if (dlg.exec() == QDialog::Rejected) {
     return;
   }
-  exportFile(path);
+
+  exportFile(dlg.selectedFiles().first(), dlg.selectedMimeTypeFilter());
 }
 
-void MainWindow::exportFile(const QString& path)
+void MainWindow::exportFile(const QString& path, const QString& format)
 {
   exportPath = path;
-  bool ok = false; // TODO
+
+  QByteArray formatCode = QImageWriter::imageFormatsForMimeType(format.toUtf8()).first();
+
+  // TODO: configurable output DPI
+  bool ok = editor->project()->exportToFile(path, formatCode.constData(), 100);
+
   if (!ok) {
     QMessageBox::warning(this, tr("Error exporting Dreamline file"), tr("%1 could not be saved.").arg(path));
   }

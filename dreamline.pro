@@ -13,21 +13,20 @@ OBJECTS_DIR = .build
 RCC_DIR = .build
 MOC_DIR = .build
 
-HEADERS += src/mainwindow.h   src/gripitem.h   src/meshitem.h   src/tool.h
-SOURCES += src/mainwindow.cpp src/gripitem.cpp src/meshitem.cpp src/tool.cpp
+HEADERS += src/mainwindow.h   src/editorview.h   src/glfunctions.h   src/glviewport.h
+SOURCES += src/mainwindow.cpp src/editorview.cpp src/glfunctions.cpp src/glviewport.cpp
 
-HEADERS += src/editorview.h   src/glviewport.h   src/edgeitem.h   src/markeritem.h
-SOURCES += src/editorview.cpp src/glviewport.cpp src/edgeitem.cpp src/markeritem.cpp
+HEADERS += src/glbuffer.h   src/boundprogram.h   src/dreamproject.h    src/tool.h
+SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp  src/tool.cpp
 
-HEADERS += src/glbuffer.h   src/boundprogram.h   src/dreamproject.h
-SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp
-
-
-HEADERS += src/tools/movevertex.h   src/tools/moveedge.h   src/tools/color.h   src/tools/split.h
-SOURCES += src/tools/movevertex.cpp src/tools/moveedge.cpp src/tools/color.cpp src/tools/split.cpp
+HEADERS += src/gripitem.h   src/meshitem.h   src/edgeitem.h   src/markeritem.h
+SOURCES += src/gripitem.cpp src/meshitem.cpp src/edgeitem.cpp src/markeritem.cpp
 
 HEADERS += src/mathutil.h   src/dlapplication.h
 SOURCES += src/mathutil.cpp src/dlapplication.cpp
+
+HEADERS += src/tools/movevertex.h   src/tools/moveedge.h   src/tools/color.h   src/tools/split.h
+SOURCES += src/tools/movevertex.cpp src/tools/moveedge.cpp src/tools/color.cpp src/tools/split.cpp
 
 SOURCES += src/main.cpp src/meshitem_polygon.cpp
 

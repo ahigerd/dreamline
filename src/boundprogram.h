@@ -6,7 +6,7 @@
 #include "glbuffer.h"
 class QOpenGLVertexArrayObject;
 class QOpenGLBuffer;
-class GLViewport;
+class GLFunctions;
 
 class BoundProgram
 {
@@ -25,13 +25,13 @@ public:
     program->setUniformValueArray(location, reinterpret_cast<const GLfloat*>(buffer.vector().constData()), buffer.size(), buffer.elementLength());
   }
 
-  GLViewport* gl;
+  GLFunctions* gl;
   QOpenGLShaderProgram* program;
   QOpenGLVertexArrayObject* vao;
 
 private:
-  friend class GLViewport;
-  BoundProgram(GLViewport* gl, QOpenGLShaderProgram* program, QOpenGLVertexArrayObject* vao);
+  friend class GLFunctions;
+  BoundProgram(GLFunctions* gl, QOpenGLShaderProgram* program, QOpenGLVertexArrayObject* vao);
 
   QList<GLBufferBase*> boundBuffers;
 };

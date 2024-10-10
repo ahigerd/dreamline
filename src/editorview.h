@@ -5,26 +5,13 @@
 #include <QGraphicsView>
 #include <QElapsedTimer>
 #include <QPainterPath>
-#include <stdexcept>
 #include "tool.h"
-class DreamProject;
+#include "dreamproject.h"
 class QPinchGesture;
 class GLViewport;
 class GripItem;
 class EdgeItem;
 class MeshItem;
-
-class OpenException : public std::runtime_error
-{
-public:
-  OpenException(const QString& what);
-};
-
-class SaveException : public std::runtime_error
-{
-public:
-  SaveException(const QString& what);
-};
 
 class EditorView : public QGraphicsView
 {
@@ -33,8 +20,6 @@ public:
   EditorView(QWidget* parent = nullptr);
 
   void newProject();
-  void openProject(const QString& path);
-  void saveProject(const QString& path);
 
   QPointF cursorPos() const;
 
@@ -43,34 +28,21 @@ public:
   QList<QGraphicsItem*> itemsInRing() const;
 
   template <typename ItemType>
-  static QList<ItemType*> filterItemsByType(const QList<QGraphicsItem*>& items)
+  inline QList<ItemType*> itemsOfType() const
   {
-    QList<ItemType*> result;
-    for (QGraphicsItem* genericItem : items) {
-      ItemType* item = dynamic_cast<ItemType*>(genericItem);
-      if (item) {
-        result << item;
-      }
-    }
-    return result;
+    return projectScene->itemsOfType<ItemType>();
   }
 
   template <typename ItemType>
-  QList<ItemType*> itemsOfType() const
+  inline QList<ItemType*> selectedItems() const
   {
-    return filterItemsByType<ItemType>(scene()->items());
-  }
-
-  template <typename ItemType>
-  QList<ItemType*> selectedItems() const
-  {
-    return filterItemsByType<ItemType>(scene()->selectedItems());
+    return projectScene->selectedItems<ItemType>();
   }
 
   template <typename ItemType>
   QList<ItemType*> itemsInRing() const
   {
-    return filterItemsByType<ItemType>(itemsInRing());
+    return DreamProject::filterItemsByType<ItemType>(itemsInRing());
   }
 
   GripItem* activeVertex() const;
@@ -84,6 +56,8 @@ public:
   void setVerticesVisible(bool on);
 
   bool isPreview() const;
+
+  DreamProject* project() const;
 
 public slots:
   void setPreview(bool on);
@@ -116,7 +90,7 @@ private:
 
   QElapsedTimer timer;
   GLViewport* glViewport;
-  DreamProject* project;
+  DreamProject* projectScene;
   bool isPanning, isResizingRing, containsMouse, useRing;
   bool m_edgesVisible = true;
   bool m_verticesVisible = true;
