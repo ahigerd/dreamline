@@ -8,13 +8,14 @@
 #include <QTransform>
 #include "boundprogram.h"
 class QOpenGLContext;
+class QOpenGLWidget;
 
 class GLFunctions : public QOpenGLFunctions
 {
 public:
   static GLFunctions* instance(QOpenGLContext* ctx);
 
-  GLFunctions(QSurface* surface);
+  GLFunctions(QObject* surface);
   virtual ~GLFunctions();
 
   BoundProgram useShader(const QString& name, int n = 0);
@@ -25,11 +26,13 @@ public:
   void initialize(QOpenGLContext* ctx);
 
 private:
+  void activateGL();
   void addShader(QOpenGLShaderProgram* program, const QString& name, int n, QOpenGLShader::ShaderType type);
 
   QMap<QString, QOpenGLShaderProgram*> m_shaders;
   QOpenGLVertexArrayObject m_vao;
   QSurface* m_surface;
+  QOpenGLWidget* m_widget;
   QOpenGLContext* m_ctx;
   QTransform m_transform;
 };

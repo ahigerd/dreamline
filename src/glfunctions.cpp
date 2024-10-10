@@ -1,4 +1,5 @@
 #include "glfunctions.h"
+#include <QOpenGLWidget>
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
 #include <QOffscreenSurface>
@@ -17,8 +18,8 @@ GLFunctions* GLFunctions::instance(QOpenGLContext* ctx)
   return ctxMap.value(ctx);
 }
 
-GLFunctions::GLFunctions(QSurface* surface)
-: QOpenGLFunctions(), m_surface(surface), m_ctx(nullptr)
+GLFunctions::GLFunctions(QObject* surface)
+: QOpenGLFunctions(), m_surface(nullptr), m_widget(nullptr), m_ctx(nullptr)
 {
   QSurfaceFormat format;
   format.setRenderableType(QSurfaceFormat::OpenGL);
@@ -26,19 +27,33 @@ GLFunctions::GLFunctions(QSurface* surface)
   format.setVersion(4, 1);
   format.setSamples(16);
 
-  if (QWindow* window = dynamic_cast<QWindow*>(surface)) {
+  if (QOpenGLWidget* widget = dynamic_cast<QOpenGLWidget*>(surface)) {
+    widget->setFormat(format);
+    m_widget = widget;
+  } else if (QWindow* window = dynamic_cast<QWindow*>(surface)) {
     window->setFormat(format);
+    m_surface = window;
   } else if (QOffscreenSurface* offscreen = dynamic_cast<QOffscreenSurface*>(surface)) {
     offscreen->setFormat(format);
+    m_surface = offscreen;
   }
 }
 
 GLFunctions::~GLFunctions()
 {
-  m_ctx->makeCurrent(m_surface);
+  activateGL();
   m_vao.destroy();
   ctxMap.remove(m_ctx);
   qDeleteAll(m_shaders);
+}
+
+void GLFunctions::activateGL()
+{
+  if (m_widget) {
+    m_widget->makeCurrent();
+  } else if (m_surface && m_ctx) {
+    m_ctx->makeCurrent(m_surface);
+  }
 }
 
 void GLFunctions::initialize(QOpenGLContext* ctx)

@@ -10,7 +10,7 @@ GLViewport* GLViewport::instance(QOpenGLContext* ctx)
 }
 
 GLViewport::GLViewport(QWidget* parent)
-: QOpenGLWidget(parent), GLFunctions(windowHandle())
+: QOpenGLWidget(parent), GLFunctions(this)
 {
   // initializers only
 }
