@@ -1,11 +1,11 @@
 #include "boundprogram.h"
-#include "glviewport.h"
+#include "glfunctions.h"
 #include "glbuffer.h"
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 #include <QtDebug>
 
-BoundProgram::BoundProgram(GLViewport* gl, QOpenGLShaderProgram* program, QOpenGLVertexArrayObject* vao)
+BoundProgram::BoundProgram(GLFunctions* gl, QOpenGLShaderProgram* program, QOpenGLVertexArrayObject* vao)
 : gl(gl), program(program), vao(vao)
 {
   program->bind();

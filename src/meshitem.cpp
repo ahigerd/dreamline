@@ -423,7 +423,7 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
 {
   painter->beginNativePainting();
 
-  GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
+  GLFunctions* gl = GLFunctions::instance(QOpenGLContext::currentContext());
   if (!gl) {
     painter->endNativePainting();
     qFatal("no context");
