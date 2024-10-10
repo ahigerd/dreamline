@@ -30,8 +30,8 @@ QPainterPath EdgeItem::shape() const
   capVector.setLength(3.5);
   QPointF cap = capVector.p2() - capVector.p1();
 
-  QPointF p1 = mapFromItem(parentItem(), line().p1() + cap);
-  QPointF p2 = mapFromItem(parentItem(), line().p2() - cap);
+  QPointF p1 = mapFromItem(parentItem(), line().p1());
+  QPointF p2 = mapFromItem(parentItem(), line().p2());
   path.moveTo(p1 - norm);
   path.lineTo(p1 + norm);
   path.lineTo(p2 + norm);
