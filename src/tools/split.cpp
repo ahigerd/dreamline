@@ -18,7 +18,8 @@ void SplitTool::activated(EditorView* editor)
 
 void SplitTool::deactivated(EditorView* editor)
 {
-  m_marker->setVisible(false);
+  delete m_marker;
+  m_marker = nullptr;
 }
 
 bool SplitTool::mousePressEvent(EditorView* editor, QMouseEvent* event)

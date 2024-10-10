@@ -58,6 +58,7 @@ EditorView::EditorView(QWidget* parent)
 
 void EditorView::newProject()
 {
+  currentTool->deactivated(this);
   QGraphicsScene* oldScene = scene();
 
   project = new DreamProject(QSizeF(8.5, 11), this);
@@ -72,6 +73,8 @@ void EditorView::newProject()
   setCursorFromTool();
 
   delete oldScene;
+
+  currentTool->activated(this);
 
   // TODO: remove this when new projects start off blank
   for (MeshItem* mesh : itemsOfType<MeshItem>()) {

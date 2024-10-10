@@ -3,6 +3,7 @@
 
 #include "tool.h"
 #include "markeritem.h"
+#include <QPointer>
 
 class SplitTool : public BaseTool<SplitTool>
 {
@@ -18,7 +19,7 @@ public:
   virtual bool mouseReleaseEvent(EditorView* editor, QMouseEvent* event);
 
 private:
-  MarkerItem* m_marker = nullptr;
+  QPointer<MarkerItem> m_marker = nullptr;
 
   void snapAndColorMarker(EditorView* editor);
 };
