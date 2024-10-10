@@ -1,6 +1,5 @@
 #include "editorview.h"
 #include "glviewport.h"
-#include "dreamproject.h"
 #include "gripitem.h"
 #include "edgeitem.h"
 #include "meshitem.h"
@@ -17,9 +16,6 @@
 #include <QColorDialog>
 #include <QColor>
 #include <QMenu>
-#include <QGraphicsRectItem>
-#include <QJsonDocument>
-#include <QJsonArray>
 #include <cmath>
 #include <limits>
 
@@ -77,58 +73,6 @@ void EditorView::newProject()
   for (MeshItem* mesh : itemsOfType<MeshItem>()) {
     QObject::connect(mesh, SIGNAL(modified(bool)), this, SIGNAL(projectModified(bool)));
   }
-}
-
-void EditorView::openProject(const QString& path)
-{
-  newProject();
-  qDeleteAll(itemsOfType<MeshItem>());
-
-  QFile f(path);
-  if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    throw OpenException(tr("Unable to load %1 (error #%2)").arg(path).arg(int(f.error())));
-  }
-
-  QJsonParseError err;
-  QJsonDocument doc = QJsonDocument::fromJson(f.readAll(), &err);
-  if (doc.isNull()) {
-    throw OpenException(err.errorString());
-  }
-
-  QJsonObject pageSize = doc["page"].toObject();
-  // If page size is not set, use a default
-  projectScene->setPageSize(QSizeF(pageSize["width"].toInt(8.5), pageSize["height"].toInt(11)));
-
-  QJsonArray meshes = doc["meshes"].toArray();
-  for (const QJsonValue& meshV : meshes) {
-    // TODO: return warnings if invalid
-    MeshItem* mesh = new MeshItem(meshV.toObject());
-    QObject::connect(mesh, SIGNAL(modified(bool)), this, SIGNAL(projectModified(bool)));
-    projectScene->addItem(mesh);
-  }
-}
-
-void EditorView::saveProject(const QString& path)
-{
-  QFile f(path);
-  if (!f.open(QIODevice::WriteOnly | QIODevice::Text)) {
-    throw SaveException(tr("Unable to save %1 (error #%2)").arg(path).arg(int(f.error())));
-  }
-
-  QJsonObject o;
-
-  QJsonObject pageSize;
-  pageSize["width"] = projectScene->pageSize().width();
-  pageSize["height"] = projectScene->pageSize().height();
-  o["page"] = pageSize;
-
-  QJsonArray meshes;
-  for (MeshItem* mesh : itemsOfType<MeshItem>()) {
-    meshes.append(mesh->serialize());
-  }
-  o["meshes"] = meshes;
-
-  f.write(QJsonDocument(o).toJson(QJsonDocument::Compact));
 }
 
 bool EditorView::viewportEvent(QEvent* event)

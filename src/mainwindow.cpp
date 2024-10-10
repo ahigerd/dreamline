@@ -1,8 +1,6 @@
 #include "mainwindow.h"
 #include "editorview.h"
 #include "tool.h"
-#include "glfunctions.h"
-#include "meshitem.h"
 #include "dreamproject.h"
 #include <QApplication>
 #include <QFileDialog>
@@ -13,11 +11,9 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QSettings>
-#include <QImage>
 #include <QPainter>
-#include <QOffscreenSurface>
-#include <QOpenGLFramebufferObject>
-#include <QLabel>
+#include <QImageWriter>
+#include <QMimeDatabase>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -137,12 +133,13 @@ void MainWindow::openFile(const QString& path)
   savePath = path;
 
   try {
-    editor->openProject(path);
+    editor->newProject();
+    editor->project()->open(path);
     setWindowModified(false);
     updateTitle();
     addToRecent(path);
   } catch (OpenException& err) {
-    QMessageBox::warning(this, tr("Error loading DreamLine file"), QString::fromUtf8(err.what()));
+    QMessageBox::warning(this, tr("Error loading Dreamline file"), QString::fromUtf8(err.what()));
     fileNew();
   }
 }
@@ -177,7 +174,7 @@ void MainWindow::saveFile(const QString& path)
   savePath = path;
   updateTitle();
   try {
-    editor->saveProject(path);
+    editor->project()->save(path);
     setWindowModified(false);
     addToRecent(path);
   } catch (SaveException& err) {
@@ -187,38 +184,34 @@ void MainWindow::saveFile(const QString& path)
 
 void MainWindow::fileExport()
 {
-  QString path = QFileDialog::getSaveFileName(this, tr("Export Dreamline File"), exportPath, tr("PNG Files (*.png)"));
-  if (path.isEmpty()) {
+  QFileDialog dlg(this, tr("Export Dreamline File"), exportPath);
+  QStringList filters;
+  for (const QByteArray& mime : QImageWriter::supportedMimeTypes()) {
+    filters << QString::fromUtf8(mime);
+  }
+  dlg.setMimeTypeFilters(filters);
+  dlg.selectMimeTypeFilter("image/png");
+  dlg.setDefaultSuffix("png");
+  dlg.setAcceptMode(QFileDialog::AcceptSave);
+
+  // I don't know why QFileDialog doesn't do this by default,
+  // but this is the recommended solution.
+  QObject::connect(&dlg, &QFileDialog::filterSelected, [&dlg]{
+    dlg.setDefaultSuffix(QMimeDatabase().mimeTypeForName(dlg.selectedMimeTypeFilter()).preferredSuffix());
+  });
+
+  if (dlg.exec() == QDialog::Rejected) {
     return;
   }
-  exportFile(path);
+
+  exportFile(dlg.selectedFiles().first());
 }
 
 void MainWindow::exportFile(const QString& path)
 {
   exportPath = path;
 
-  // TODO: Maybe this should be on a different thread
-  QOffscreenSurface surface;
-  QOpenGLContext* ctx = QOpenGLContext::currentContext();
-  surface.create();
-  ctx->makeCurrent(&surface);
-
-  QSizeF size = editor->project()->pageSize() * 100; // TODO: DPI
-  QOpenGLFramebufferObject fbo(size.toSize(), QOpenGLFramebufferObject::CombinedDepthStencil);
-  fbo.bind();
-
-  GLFunctions gl(&surface);
-  gl.initialize(ctx);
-  gl.glViewport(0, 0, size.width(), size.height());
-  gl.setTransform(QTransform(2.0/size.width(), 0, 0, -2.0/size.height(), 0, 0));
-
-  // TODO: make a renderable class maybe?
-  for (MeshItem* mesh : editor->itemsOfType<MeshItem>()) {
-    mesh->renderGL();
-  }
-
-  bool ok = fbo.toImage().save(path);
+  bool ok = editor->project()->exportToFile(path, "PNG", 200);
 
   if (!ok) {
     QMessageBox::warning(this, tr("Error exporting Dreamline file"), tr("%1 could not be saved.").arg(path));
