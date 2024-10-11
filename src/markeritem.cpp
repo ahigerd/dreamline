@@ -1,4 +1,5 @@
 #include "markeritem.h"
+#include "dreamproject.h"
 #include <QStyleOptionGraphicsItem>
 #include <QColor>
 #include <QPen>
@@ -47,6 +48,11 @@ void MarkerItem::setSmooth(bool on)
 
 void MarkerItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*)
 {
+  if (DreamProject* project = dynamic_cast<DreamProject*>(scene())) {
+    if (project->isExporting()) {
+      return;
+    }
+  }
   // Snap coordinates to device pixels to avoid fuzzy edges
   double xFrac = painter->deviceTransform().dx();
   xFrac = xFrac - int(xFrac);

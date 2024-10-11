@@ -14,7 +14,7 @@
 #define DPI 100
 
 DreamProject::DreamProject(const QSizeF& pageSize, QObject* parent)
-: QGraphicsScene(parent), isExporting(false)
+: QGraphicsScene(parent), exporting(false)
 {
   setBackgroundBrush(QColor(139,134,128,255));
 
@@ -36,7 +36,7 @@ void DreamProject::setPageSize(const QSizeF& size)
 
 void DreamProject::drawBackground(QPainter* p, const QRectF& rect)
 {
-  if (isExporting) {
+  if (exporting) {
     return;
   }
   p->fillRect(rect, backgroundBrush());
@@ -71,9 +71,9 @@ QImage DreamProject::render(int dpi)
   QOpenGLPaintDevice pd(size.toSize());
   QPainter p(&pd);
 
-  isExporting = true;
+  exporting = true;
   QGraphicsScene::render(&p, QRectF(QPointF(0, 0), size), pageRect);
-  isExporting = false;
+  exporting = false;
 
   return fbo.toImage();
 }
@@ -82,6 +82,11 @@ bool DreamProject::exportToFile(const QString& path, const QByteArray& format, i
 {
   QImage rendered = render(dpi);
   return rendered.save(path, format.constData());
+}
+
+bool DreamProject::isExporting() const
+{
+  return exporting;
 }
 
 void DreamProject::open(const QString& path)

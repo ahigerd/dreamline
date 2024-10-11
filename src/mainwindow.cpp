@@ -95,7 +95,7 @@ void MainWindow::makeToolMenu()
 
   toolBar->addSeparator();
   colorButton = toolBar->addAction("Color", editor, SLOT(selectColor()));
-  setCurrentColor(editor->lastColor);
+  setCurrentColor(editor->color());
 
   toolBar->addSeparator();
   QAction* aSmooth = toolBar->addAction("Sharp/Smooth", editor, SLOT(toggleSmooth()));
@@ -261,7 +261,7 @@ void MainWindow::addToRecent(const QString& path)
 
 QColor MainWindow::currentColor() const
 {
-  return editor->lastColor;
+  return editor->color();
 }
 
 void MainWindow::setCurrentColor(const QColor& color)
@@ -274,5 +274,5 @@ void MainWindow::setCurrentColor(const QColor& color)
   p.setPen(pen);
   p.drawRect(0, 0, 23, 23);
   colorButton->setIcon(QPixmap::fromImage(img));
-  editor->lastColor = color;
+  editor->setColor(color);
 }

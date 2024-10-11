@@ -271,12 +271,24 @@ void EditorView::contextMenu(const QPoint& pos)
   }
 }
 
+QColor EditorView::color() const
+{
+  return lastColor;
+}
+
+void EditorView::setColor(const QColor& color)
+{
+  if (color != lastColor) {
+    lastColor = color;
+    emit colorSelected(color);
+  }
+}
+
 void EditorView::selectColor()
 {
   QColor color = QColorDialog::getColor(lastColor, this, "Select Color");
   if (color.isValid() && color != lastColor) {
-    lastColor = color;
-    emit colorSelected(color);
+    setColor(color);
   }
 }
 

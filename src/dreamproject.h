@@ -31,6 +31,7 @@ public:
 
   QImage render(int dpi = 100);
   bool exportToFile(const QString& path, const QByteArray& format = QByteArray(), int dpi = 100);
+  bool isExporting() const;
 
   template <typename ItemType>
   static QList<ItemType*> filterItemsByType(const QList<QGraphicsItem*>& items)
@@ -68,7 +69,7 @@ protected:
 
 private:
   QRectF pageRect;
-  bool isExporting;
+  bool exporting;
 };
 
 #endif

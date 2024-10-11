@@ -23,8 +23,6 @@ public:
 
   QPointF cursorPos() const;
 
-  QColor lastColor = Qt::blue;
-
   QList<QGraphicsItem*> itemsInRing() const;
 
   template <typename ItemType>
@@ -59,11 +57,14 @@ public:
 
   DreamProject* project() const;
 
+  QColor color() const;
+
 public slots:
   void setPreview(bool on);
   void setTool(QAction* toolAction);
   void setTool(Tool::Type type);
   void setActiveVertex(GripItem* vertex);
+  void setColor(const QColor& color);
   void selectColor();
   void toggleSmooth();
 
@@ -100,6 +101,7 @@ private:
   QRectF lastMouseRect;
   Tool* currentTool;
   QGraphicsRectItem* underCursor;
+  QColor lastColor = Qt::blue;
 };
 
 #endif
