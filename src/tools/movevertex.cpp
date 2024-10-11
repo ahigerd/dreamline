@@ -10,14 +10,26 @@ MoveVertexTool::MoveVertexTool()
 
 bool MoveVertexTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  for (GripItem* grip : editor->selectedItems<GripItem>()) {
-    grip->setSelected(false);
+  if (!(event->modifiers() & Qt::ControlModifier) && !(event->modifiers() & Qt::ShiftModifier)) {
+    for (GripItem* grip : editor->selectedItems<GripItem>()) {
+      grip->setSelected(false);
+    }
   }
   QList<GripItem*> gripsInRing = editor->itemsInRing<GripItem>();
-  for (GripItem* item : gripsInRing) {
-    item->setSelected(true);
+  if (event->modifiers() & Qt::ControlModifier) {
+    for (GripItem* item : gripsInRing) {
+      item->setSelected(false);
+    }
+  } else {
+    for (GripItem* item : gripsInRing) {
+      item->setSelected(true);
+    }
   }
-  editor->setActiveVertex(nullptr);
+  if (gripsInRing.length() == 1) {
+    editor->setActiveVertex(gripsInRing[0]);
+  } else {
+    editor->setActiveVertex(nullptr);
+  }
   return false;
 }
 
