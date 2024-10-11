@@ -60,11 +60,15 @@ public:
   // Don't let the templated version shadow the normal version
   using QGraphicsScene::selectedItems;
 
+signals:
+  void projectModified(bool dirty);
+
 protected:
   void drawBackground(QPainter* p, const QRectF& rect);
 
 private:
   QRectF pageRect;
+  bool isExporting;
 };
 
 #endif

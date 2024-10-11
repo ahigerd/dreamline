@@ -1,27 +1,24 @@
 #include "dreamproject.h"
 #include "meshitem.h"
 #include "glfunctions.h"
-#include <QGraphicsRectItem>
 #include <QPalette>
 #include <QPainter>
+#include <QOpenGLPaintDevice>
 #include <QOffscreenSurface>
 #include <QOpenGLFramebufferObject>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QFile>
+#include <QApplication>
 
 #define DPI 100
 
 DreamProject::DreamProject(const QSizeF& pageSize, QObject* parent)
-: QGraphicsScene(parent)
+: QGraphicsScene(parent), isExporting(false)
 {
   setBackgroundBrush(QColor(139,134,128,255));
 
   setPageSize(pageSize);
-
-  // TODO: A new project should remain blank, but this is convenient for testing.
-  MeshItem* p = new MeshItem;
-  addItem(p);
 }
 
 QSizeF DreamProject::pageSize() const
@@ -39,6 +36,9 @@ void DreamProject::setPageSize(const QSizeF& size)
 
 void DreamProject::drawBackground(QPainter* p, const QRectF& rect)
 {
+  if (isExporting) {
+    return;
+  }
   p->fillRect(rect, backgroundBrush());
 
   p->setBrush(Qt::white);
@@ -50,8 +50,6 @@ void DreamProject::drawBackground(QPainter* p, const QRectF& rect)
 
 QImage DreamProject::render(int dpi)
 {
-  // TODO: Maybe this should be on a different thread
-
   QOffscreenSurface surface;
   QOpenGLContext ctx;
   ctx.setShareContext(QOpenGLContext::currentContext());
@@ -70,10 +68,12 @@ QImage DreamProject::render(int dpi)
   gl.glViewport(0, 0, size.width(), size.height());
   gl.setTransform(QTransform(2.0 / pageRect.width(), 0, 0, -2.0 / pageRect.height(), 0, 0));
 
-  // TODO: make a renderable class maybe?
-  for (MeshItem* mesh : itemsOfType<MeshItem>()) {
-    mesh->renderGL();
-  }
+  QOpenGLPaintDevice pd(size.toSize());
+  QPainter p(&pd);
+
+  isExporting = true;
+  QGraphicsScene::render(&p, QRectF(QPointF(0, 0), size), pageRect);
+  isExporting = false;
 
   return fbo.toImage();
 }
@@ -86,11 +86,6 @@ bool DreamProject::exportToFile(const QString& path, const QByteArray& format, i
 
 void DreamProject::open(const QString& path)
 {
-  // TODO: remove this when new projects start off blank
-  // TODO: it might be nice to have a command to load the contents of another
-  //       file into this one without deleting anything (e.g. shape library)
-  qDeleteAll(itemsOfType<MeshItem>());
-
   QFile f(path);
   if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
     throw OpenException(tr("Unable to load %1 (error #%2)").arg(path).arg(int(f.error())));
@@ -136,4 +131,6 @@ void DreamProject::save(const QString& path)
   o["meshes"] = meshes;
 
   f.write(QJsonDocument(o).toJson(QJsonDocument::Compact));
+
+  emit projectModified(false);
 }

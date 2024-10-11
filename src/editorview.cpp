@@ -70,12 +70,9 @@ void EditorView::newProject()
 
   delete oldScene;
 
-  currentTool->activated(this);
+  QObject::connect(projectScene, SIGNAL(projectModified(bool)), this, SIGNAL(projectModified(bool)));
 
-  // TODO: remove this when new projects start off blank
-  for (MeshItem* mesh : itemsOfType<MeshItem>()) {
-    QObject::connect(mesh, SIGNAL(modified(bool)), this, SIGNAL(projectModified(bool)));
-  }
+  currentTool->activated(this);
 }
 
 bool EditorView::viewportEvent(QEvent* event)

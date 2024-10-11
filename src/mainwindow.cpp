@@ -133,6 +133,8 @@ void MainWindow::openFile(const QString& path)
   savePath = path;
 
   try {
+    // TODO: it might be nice to have a command to load the contents of another
+    //       file into this one without deleting anything (e.g. shape library)
     editor->newProject();
     editor->project()->open(path);
     setWindowModified(false);
@@ -155,18 +157,13 @@ void MainWindow::fileSave()
 
 void MainWindow::fileSaveAs()
 {
-  QString path = QFileDialog::getSaveFileName(this, tr("Save Dreamline File"), savePath, tr("Dreamline Files (*.dream)"));
-  if (path.isEmpty()) {
+  QFileDialog dlg(this, tr("Export Dreamline File"), exportPath, tr("Dreamline files (*.dream);;All files (*)"));
+  dlg.setDefaultSuffix("dream");
+  dlg.setAcceptMode(QFileDialog::AcceptSave);
+  if (dlg.exec() == QDialog::Rejected) {
     return;
   }
-  // TODO: This is slightly hacky and wouldn't work on mobile or web.
-  // The correct solution is to not use the static convenience function,
-  // and call setDefaultSuffix().
-  QFileInfo info(path);
-  if (!info.exists() && info.suffix().isEmpty()) {
-    path += ".dream";
-  }
-  saveFile(path);
+  saveFile(dlg.selectedFiles().first());
 }
 
 void MainWindow::saveFile(const QString& path)

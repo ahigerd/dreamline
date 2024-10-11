@@ -47,9 +47,6 @@ void MarkerItem::setSmooth(bool on)
 
 void MarkerItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget*)
 {
-  if (!visible) {
-    return;
-  }
   // Snap coordinates to device pixels to avoid fuzzy edges
   double xFrac = painter->deviceTransform().dx();
   xFrac = xFrac - int(xFrac);

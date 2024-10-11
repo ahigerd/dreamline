@@ -50,7 +50,7 @@ macx {
   run.commands = open ./dreamline.app
 }
 else {
-  run.commands = ./dreamline
+  run.commands = ./dreamline ./debugmesh.dream
 }
 run.depends = dreamline
 QMAKE_EXTRA_TARGETS += run

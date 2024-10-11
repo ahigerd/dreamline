@@ -8,7 +8,6 @@ class MarkerItem : public QObject, public QGraphicsRectItem
 {
 Q_OBJECT
 public:
-  bool visible = true;
   MarkerItem(QGraphicsItem* parent = nullptr);
 
   QColor color() const;

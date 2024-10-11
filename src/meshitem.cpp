@@ -96,10 +96,9 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
   for (const QJsonValue& vertexV : source["vertices"].toArray()) {
     // TODO: error handling
     QJsonArray vertex = vertexV.toArray();
-    GripItem* grip = new GripItem(this);
+    GripItem* grip = newGrip();
     grip->setPos(vertex[0].toDouble(), vertex[1].toDouble());
     grip->setColor(QColor(vertex[2].toInt(), vertex[3].toInt(), vertex[4].toInt(), vertex[5].toInt(255)));
-    m_grips.append(grip);
   }
 
   for (const QJsonValue& polygonV : source["polygons"].toArray()) {
@@ -115,6 +114,7 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
       }
       polygon.vertices.append(m_grips[index]);
     }
+    polygon.edges.append(findOrCreateEdge(polygon.vertices.first(), polygon.vertices.last()));
     polygon.rebuildBuffers();
     m_polygons.append(polygon);
   }
