@@ -18,11 +18,6 @@ public:
   void saveFile(const QString& path);
   void exportFile(const QString& path, const QString& format = "image/png");
 
-  QColor currentColor() const;
-
-public slots:
-  void setCurrentColor(const QColor& color);
-
 private slots:
   void fileNew();
   void fileOpen();

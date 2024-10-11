@@ -50,6 +50,10 @@ EditorView::EditorView(QWidget* parent)
   setCursor(Qt::BlankCursor);
   setTool(Tool::VertexTool);
   setRenderHint(QPainter::Antialiasing, true);
+
+  m_colorAction = new QAction("Color", this);
+  setColor(Qt::blue);
+  QObject::connect(m_colorAction, SIGNAL(triggered()), this, SLOT(selectColor()));
 }
 
 void EditorView::newProject()
@@ -280,8 +284,21 @@ void EditorView::setColor(const QColor& color)
 {
   if (color != lastColor) {
     lastColor = color;
+    QImage img(24, 24, QImage::Format_RGB32);
+    img.fill(color.toRgb());
+    QPainter p(&img);
+    QPen pen(Qt::black, 0);
+    pen.setCosmetic(true);
+    p.setPen(pen);
+    p.drawRect(0, 0, 23, 23);
+    m_colorAction->setIcon(QPixmap::fromImage(img));
     emit colorSelected(color);
   }
+}
+
+QAction* EditorView::colorAction() const
+{
+  return m_colorAction;
 }
 
 void EditorView::selectColor()

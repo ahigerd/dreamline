@@ -58,6 +58,7 @@ public:
   DreamProject* project() const;
 
   QColor color() const;
+  QAction* colorAction() const;
 
 public slots:
   void setPreview(bool on);
@@ -101,7 +102,8 @@ private:
   QRectF lastMouseRect;
   Tool* currentTool;
   QGraphicsRectItem* underCursor;
-  QColor lastColor = Qt::blue;
+  QColor lastColor;
+  QAction* m_colorAction;
 };
 
 #endif

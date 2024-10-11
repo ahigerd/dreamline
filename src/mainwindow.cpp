@@ -21,7 +21,6 @@ MainWindow::MainWindow(QWidget *parent)
   editor = new EditorView(this);
   setCentralWidget(editor);
   QObject::connect(editor, SIGNAL(projectModified(bool)), this, SLOT(setWindowModified(bool)));
-  QObject::connect(editor, SIGNAL(colorSelected(QColor)), this, SLOT(setCurrentColor(QColor)));
 
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
@@ -94,8 +93,7 @@ void MainWindow::makeToolMenu()
   toolBar->addAction(aSplit);
 
   toolBar->addSeparator();
-  colorButton = toolBar->addAction("Color", editor, SLOT(selectColor()));
-  setCurrentColor(editor->color());
+  toolBar->addAction(editor->colorAction());
 
   toolBar->addSeparator();
   QAction* aSmooth = toolBar->addAction("Sharp/Smooth", editor, SLOT(toggleSmooth()));
@@ -259,20 +257,3 @@ void MainWindow::addToRecent(const QString& path)
   updateRecentMenu();
 }
 
-QColor MainWindow::currentColor() const
-{
-  return editor->color();
-}
-
-void MainWindow::setCurrentColor(const QColor& color)
-{
-  QImage img(24, 24, QImage::Format_RGB32);
-  img.fill(color.toRgb());
-  QPainter p(&img);
-  QPen pen(Qt::black, 0);
-  pen.setCosmetic(true);
-  p.setPen(pen);
-  p.drawRect(0, 0, 23, 23);
-  colorButton->setIcon(QPixmap::fromImage(img));
-  editor->setColor(color);
-}
