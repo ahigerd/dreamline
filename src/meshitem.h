@@ -34,6 +34,8 @@ public:
   bool splitPolygon(GripItem* v1, GripItem* v2);
   bool splitPolygon(GripItem* vertex, EdgeItem* edge);
 
+  void renderGL();
+
 public slots:
   void moveVertex(GripItem* vertex, const QPointF& pos);
   void changeColor(MarkerItem* vertex, const QColor& color);

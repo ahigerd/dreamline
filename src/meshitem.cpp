@@ -66,6 +66,7 @@ MeshItem::MeshItem(QGraphicsItem* parent)
   }
 
   m_lastVertexFocus = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, this);
+  m_lastVertexFocus->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
   QPen pen(Qt::black, 3.8);
   pen.setCosmetic(true);
   m_lastVertexFocus->setPen(pen);
@@ -419,13 +420,10 @@ void MeshItem::gripDestroyed(QObject* grip)
   }
 }
 
-void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
+void MeshItem::renderGL()
 {
-  painter->beginNativePainting();
-
-  GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
+  GLFunctions* gl = GLFunctions::instance(QOpenGLContext::currentContext());
   if (!gl) {
-    painter->endNativePainting();
     qFatal("no context");
     return;
   }
@@ -464,8 +462,6 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
       for (int i = 0; i < 3; i++) {
         program.bindAttributeBuffer(i + 1, m_control, i * controlSize, controlStride);
       }
-      program.bindAttributeBuffer(4, m_smooth);
-      program.bindAttributeBuffer(5, poly.colors);
       program->setUniformValue("useEllipse", true);
       gl->glDrawArrays(GL_TRIANGLES, 0, m_boundaryTris.count());
 
@@ -478,6 +474,14 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
   }
   gl->glDisable(GL_STENCIL_TEST);
   gl->glEnable(GL_MULTISAMPLE);
+
+}
+
+void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
+{
+  painter->beginNativePainting();
+
+  renderGL();
 
   painter->endNativePainting();
 

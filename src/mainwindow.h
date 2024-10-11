@@ -16,7 +16,7 @@ public:
 
   void openFile(const QString& path);
   void saveFile(const QString& path);
-  void exportFile(const QString& path);
+  void exportFile(const QString& path, const QString& format = "image/png");
 
   QColor currentColor() const;
 

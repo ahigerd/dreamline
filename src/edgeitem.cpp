@@ -5,6 +5,7 @@
 #include <QGraphicsSceneHoverEvent>
 #include <QGraphicsPathItem>
 #include <QPen>
+#include <QPainter>
 
 EdgeItem::EdgeItem(GripItem* left, GripItem* right)
 : QObject(nullptr), QGraphicsLineItem(QLineF(left->pos(), right->pos()), left->parentItem()), left(left), right(right)
@@ -29,8 +30,8 @@ QPainterPath EdgeItem::shape() const
   capVector.setLength(3.5);
   QPointF cap = capVector.p2() - capVector.p1();
 
-  QPointF p1 = mapFromItem(parentItem(), line().p1() + cap);
-  QPointF p2 = mapFromItem(parentItem(), line().p2() - cap);
+  QPointF p1 = mapFromItem(parentItem(), line().p1());
+  QPointF p2 = mapFromItem(parentItem(), line().p2());
   path.moveTo(p1 - norm);
   path.lineTo(p1 + norm);
   path.lineTo(p2 + norm);
@@ -45,7 +46,10 @@ void EdgeItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
   if (mesh && !mesh->edgesVisible()) {
     return;
   }
-  QGraphicsLineItem::paint(painter, option, widget);
+  QPen p = pen();
+  p.setCosmetic(true);
+  painter->setPen(p);
+  painter->drawLine(line());
 }
 
 void EdgeItem::hoverEnter()
@@ -55,14 +59,12 @@ void EdgeItem::hoverEnter()
   setPen(pen);
 }
 
-
 void EdgeItem::hoverLeave()
 {
-  QPen pen(Qt::black, 1);
+  QPen pen(Qt::black, 0);
   pen.setCosmetic(true);
   setPen(pen);
 }
-
 
 void EdgeItem::split(const QPointF& pos)
 {
