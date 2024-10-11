@@ -52,23 +52,19 @@ QImage DreamProject::render(int dpi)
 {
   // TODO: Maybe this should be on a different thread
 
-  // Use a unique_ptr to destroy the context if we had to create it
-  std::unique_ptr<QOpenGLContext> ownedContext = nullptr;
   QOffscreenSurface surface;
-  QOpenGLContext* ctx = QOpenGLContext::currentContext();
-  if (!ctx) {
-    ctx = new QOpenGLContext();
-    ownedContext.reset(ctx);
-  }
+  QOpenGLContext ctx;
+  ctx.setShareContext(QOpenGLContext::currentContext());
+  ctx.create();
   surface.create();
-  ctx->makeCurrent(&surface);
+  ctx.makeCurrent(&surface);
 
   QSizeF size = pageSize() * dpi;
   QOpenGLFramebufferObject fbo(size.toSize(), QOpenGLFramebufferObject::CombinedDepthStencil);
   fbo.bind();
 
   GLFunctions gl(&surface);
-  gl.initialize(ctx);
+  gl.initialize(&ctx);
 
   // Map scene coordinates to output coordinates
   gl.glViewport(0, 0, size.width(), size.height());
