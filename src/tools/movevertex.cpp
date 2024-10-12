@@ -10,22 +10,24 @@ MoveVertexTool::MoveVertexTool()
 
 bool MoveVertexTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  // Only clear selection on left click if Shift or Ctrl are not clicked
-  if (!(event->modifiers() & Qt::ControlModifier) && !(event->modifiers() & Qt::ShiftModifier)) {
+  // Clear entire selection if Ctrl is not held
+  if (!(event->modifiers() & Qt::ControlModifier)) {
     for (GripItem* grip : editor->selectedItems<GripItem>()) {
       grip->setSelected(false);
     }
   }
+  // Select all grips within the tool radius
   QList<GripItem*> gripsInRing = editor->itemsInRing<GripItem>();
-  if (event->modifiers() & Qt::ControlModifier) {
-    // If Ctrl is held unselect grips in ring
+  bool allSelected = true;
+  for (GripItem* item : gripsInRing) {
+    allSelected = allSelected && item->isSelected();
+    item->setSelected(true);
+  }
+  // If ctrl is held and all grips within the ring were selected prior to clicking
+  // queue them to be unselected on mouse release
+  if (allSelected && (event->modifiers() & Qt::ControlModifier)) {
     for (GripItem* item : gripsInRing) {
-      item->setSelected(false);
-    }
-  } else {
-    // Otherwise select grips in ring
-    for (GripItem* item : gripsInRing) {
-      item->setSelected(true);
+      gripsToDeselect.append(item);
     }
   }
   if (gripsInRing.length() == 1) {
@@ -42,10 +44,22 @@ bool MoveVertexTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 
 bool MoveVertexTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 {
+  // If dragging occurse, cancel deselection of grips
+  if (event->buttons() & Qt::LeftButton) {
+    gripsToDeselect.clear();
+  }
   return false;
 }
 
 bool MoveVertexTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
 {
+  // Deselect grips queued to get deselected
+  for (GripItem* item : gripsToDeselect) {
+    if (item != nullptr) {
+      item->setSelected(false);
+    }
+  }
+  // Clear queue
+  gripsToDeselect.clear();
   return false;
 }
