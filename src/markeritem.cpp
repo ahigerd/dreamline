@@ -18,16 +18,30 @@ MarkerItem::MarkerItem(QGraphicsItem* parent)
   setSmooth(m_smooth);
 }
 
+/**
+ * @brief Get the current color of the marker
+ *
+ * @return QColor
+ */
 QColor MarkerItem::color() const
 {
   return brush().color();
 }
 
+/**
+ * @brief Set the fill color of the marker outline
+ */
 void MarkerItem::setHighlight(const QColor& color)
 {
   highlightColor = color;
 }
 
+/**
+ * @brief Color the vertex and marker center
+ *
+ * Sets both the color of the corrisponding vertex in MeshItem
+ * and the center color of the MarkerItem
+ */
 void MarkerItem::setColor(const QColor& color)
 {
   setBrush(color);
