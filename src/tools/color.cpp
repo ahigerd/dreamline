@@ -11,9 +11,8 @@ ColorTool::ColorTool()
 
 bool ColorTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 {
-  isDragging = true;
-  QList<GripItem*> gripsInRing = editor->itemsInRing<GripItem>();
-  for (GripItem* item : gripsInRing)
+  // Set color of all grips within the tool radius
+  for (GripItem* item : editor->itemsInRing<GripItem>())
   {
     item->setColor(editor->color());
   }
@@ -22,9 +21,9 @@ bool ColorTool::mousePressEvent(EditorView* editor, QMouseEvent* event)
 
 bool ColorTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 {
-  if (isDragging) {
-    QList<GripItem*> gripsInRing = editor->itemsInRing<GripItem>();
-    for (GripItem* item : gripsInRing)
+  // Allow drag to color
+  if (event->buttons() & Qt::LeftButton) {
+    for (GripItem* item : editor->itemsInRing<GripItem>())
     {
       item->setColor(editor->color());
     }
@@ -34,6 +33,5 @@ bool ColorTool::mouseMoveEvent(EditorView* editor, QMouseEvent* event)
 
 bool ColorTool::mouseReleaseEvent(EditorView* editor, QMouseEvent* event)
 {
-  isDragging = false;
   return true;
 }
