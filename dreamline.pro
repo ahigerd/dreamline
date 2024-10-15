@@ -22,8 +22,8 @@ SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp  src/tool.
 HEADERS += src/gripitem.h   src/meshitem.h   src/edgeitem.h   src/markeritem.h
 SOURCES += src/gripitem.cpp src/meshitem.cpp src/edgeitem.cpp src/markeritem.cpp
 
-HEADERS += src/mathutil.h   src/dlapplication.h
-SOURCES += src/mathutil.cpp src/dlapplication.cpp
+HEADERS += src/mathutil.h   src/dlapplication.h   src/polylineitem.h
+SOURCES += src/mathutil.cpp src/dlapplication.cpp src/polylineitem.cpp
 
 HEADERS += src/tools/movevertex.h   src/tools/moveedge.h   src/tools/color.h   src/tools/split.h
 SOURCES += src/tools/movevertex.cpp src/tools/moveedge.cpp src/tools/color.cpp src/tools/split.cpp
