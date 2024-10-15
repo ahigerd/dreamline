@@ -3,9 +3,7 @@
 
 #include <QGraphicsPolygonItem>
 #include <QObject>
-class QGraphicsLineItem;
 class GripItem;
-class EdgeItem;
 
 class PolyLineItem : public QObject, public QGraphicsPolygonItem
 {
