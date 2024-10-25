@@ -32,7 +32,7 @@ double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c)
 }
 
 // This function returns an angle between 0 and 2*pi that measures the
-// counterclockwise angle between vector BA and vector CA.
+// counterclockwise angle from vector BA around point B to vector BC.
 double ccwAngle(const QPointF& a, const QPointF& b, const QPointF& c)
 {
   double x1 = a.x() - b.x();

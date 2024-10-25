@@ -1,5 +1,6 @@
 #include "polylineitem.h"
 #include "gripitem.h"
+#include "meshitem.h"
 #include <QPen>
 #include <QPainter>
 
@@ -91,4 +92,18 @@ void PolyLineItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWi
   p.setCapStyle(Qt::FlatCap);
   painter->setPen(p);
   painter->drawLine(lastPoint, firstPoint);
+}
+
+QList<MeshItem*> PolyLineItem::attachedMeshes() const
+{
+  QList<MeshItem*> meshes;
+
+  for (GripItem* vertex : vertices) {
+    MeshItem* mesh = dynamic_cast<MeshItem*>(vertex->parentItem());
+    if (mesh && !meshes.contains(mesh)) {
+      meshes << mesh;
+    }
+  }
+
+  return meshes;
 }

@@ -14,6 +14,7 @@
 #include "markeritem.h"
 class GripItem;
 class EdgeItem;
+class PolyLineItem;
 
 class MeshItem : public QObject, public QGraphicsPolygonItem
 {
@@ -30,7 +31,6 @@ public:
   void setVerticesVisible(bool on);
 
   GripItem* activeVertex() const;
-  GripItem* addVertexToPolygon(const QPointF& pos);
   bool splitPolygon(GripItem* v1, GripItem* v2);
   bool splitPolygon(GripItem* vertex, EdgeItem* edge);
 
@@ -41,6 +41,7 @@ public slots:
   void changeColor(MarkerItem* vertex, const QColor& color);
   void insertVertex(EdgeItem* edge, const QPointF& pos);
   void setActiveVertex(GripItem* vertex);
+  void addPolygon(PolyLineItem* poly);
 
 protected slots:
   void gripDestroyed(QObject* grip);
@@ -86,6 +87,7 @@ private:
   QSet<Polygon*> polygonsContainingVertex(GripItem* vertex);
   Polygon* findSplittablePolygon(GripItem* v1, GripItem* v2);
   EdgeItem* findOrCreateEdge(GripItem* v1, GripItem* v2);
+  void recomputeBoundaries();
 
   QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;

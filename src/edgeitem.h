@@ -16,6 +16,7 @@ public:
 
   inline GripItem* leftGrip() const { return left; }
   inline GripItem* rightGrip() const { return right; }
+  inline GripItem* otherGrip(GripItem* grip) const { return left == grip ? right : left; }
   bool hasGrip(GripItem* grip) const;
   QPointF nearestPointOnLine(const QPointF& point);
 

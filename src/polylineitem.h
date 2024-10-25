@@ -4,6 +4,7 @@
 #include <QGraphicsPolygonItem>
 #include <QObject>
 class GripItem;
+class MeshItem;
 
 class PolyLineItem : public QObject, public QGraphicsPolygonItem
 {
@@ -22,11 +23,12 @@ public:
 
   void paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget* = nullptr);
 
+  QList<MeshItem*> attachedMeshes() const;
+
 private slots:
   void updatePolygon();
 
 private:
-
   QList<GripItem*> vertices;
 };
 

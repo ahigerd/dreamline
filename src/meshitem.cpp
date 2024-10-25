@@ -2,10 +2,13 @@
 #include "glviewport.h"
 #include "gripitem.h"
 #include "edgeitem.h"
+#include "polylineitem.h"
 #include "editorview.h"
+#include "mathutil.h"
 #include <QJsonArray>
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
+#include <limits>
 
 MeshItem::MeshItem(QGraphicsItem* parent)
 : QObject(nullptr), QGraphicsPolygonItem(parent), m_edgesVisible(true), m_verticesVisible(true)
@@ -330,15 +333,6 @@ void MeshItem::setActiveVertex(GripItem* vertex)
   m_lastVertexFocus->setPos(vertex->pos());
 }
 
-GripItem* MeshItem::addVertexToPolygon(const QPointF& pos)
-{
-  if (!m_lastVertex) {
-    // No place to connect the edge to
-    return nullptr;
-  }
-  return nullptr;
-}
-
 bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
 {
   Polygon* oldPoly = findSplittablePolygon(v1, v2);
@@ -411,6 +405,51 @@ MeshItem::Polygon* MeshItem::findSplittablePolygon(GripItem* v1, GripItem* v2)
   // The edge that would be created is not in the interior
   // of any of the polygons that we found.
   return nullptr;
+}
+
+void MeshItem::addPolygon(PolyLineItem* poly)
+{
+  QList<MeshItem*> mergeWith = poly->attachedMeshes();
+  mergeWith.removeAll(this);
+
+  if (!mergeWith.isEmpty()) {
+    // Here, we assume that the other meshes are fully disjoint.
+    // If it were possible that a vertex or edge were shared,
+    // we would need to deduplicate them.
+    for (MeshItem* other : mergeWith) {
+      m_grips += other->m_grips;
+      m_edges += other->m_edges;
+      m_polygons += other->m_polygons;
+    }
+
+    for (GripItem* grip : m_grips) {
+      grip->setParentItem(this);
+    }
+
+    for (EdgeItem* edge : m_edges) {
+      edge->setParentItem(this);
+    }
+
+    qDeleteAll(mergeWith);
+  }
+
+  Polygon newPolygon;
+  int numVertices = poly->pointCount();
+  GripItem* lastGrip = poly->grip(numVertices - 1);
+  QList<GripItem*> splicePoints;
+  for (int i = 0; i < numVertices; i++) {
+    GripItem* grip = poly->grip(i);
+    if (!m_grips.contains(grip)) {
+      m_grips << grip;
+    }
+    newPolygon.vertices << grip;
+    EdgeItem* edge = findOrCreateEdge(lastGrip, grip);
+    newPolygon.edges << edge;
+  }
+  newPolygon.rebuildBuffers();
+  m_polygons << newPolygon;
+
+  recomputeBoundaries();
 }
 
 void MeshItem::gripDestroyed(QObject* grip)
@@ -552,4 +591,85 @@ void MeshItem::updateBoundary()
   m_boundaryTris = tris;
   m_control = control;
   m_smooth = smooth;
+}
+
+void MeshItem::recomputeBoundaries()
+{
+  if (m_grips.length() < 3) {
+    return;
+  }
+
+  // Construct an index mapping vertices to edges
+  // TODO: Consider maintaining this instead of calculating it on demand?
+  QMultiMap<GripItem*, EdgeItem*> edgeIndex;
+  for (EdgeItem* edge : m_edges) {
+    edgeIndex.insert(edge->leftGrip(), edge);
+    edgeIndex.insert(edge->rightGrip(), edge);
+  }
+
+  // Start with the leftmost point on the polygon.
+  // Break ties with the Y coordinate.
+  // This point is guaranteed to be on the boundary.
+  GripItem* start = nullptr;
+  double minX = std::numeric_limits<double>::max();
+  double minY = std::numeric_limits<double>::max();
+  for (GripItem* vertex : m_grips) {
+    QPointF p = vertex->scenePos();
+    if (minX > p.x() || (minX == p.x() && minY > p.y())) {
+      start = vertex;
+      minX = p.x();
+      minY = p.y();
+    }
+  }
+
+  // Pick the connected edge with the lowest Y coordinate.
+  // Break ties with the X coordinate.
+  // Because we're starting from the highest leftmost vertex, this guarantees that
+  // the chosen edge is on the boundary.
+  EdgeItem* lastEdge = nullptr;
+  minX = std::numeric_limits<double>::max();
+  minY = std::numeric_limits<double>::max();
+  for (EdgeItem* edge : edgeIndex.values(start)) {
+    GripItem* other = edge->otherGrip(start);
+    QPointF p = other->scenePos();
+    if (minY > p.y() || (minY == p.y() && minX > p.x())) {
+      lastEdge = edge;
+      minX = p.x();
+      minY = p.y();
+    }
+  }
+  if (!lastEdge) {
+    qFatal("Degenerate geometry in MeshItem");
+  }
+
+  GripItem* lastVertex = lastEdge->otherGrip(start);
+  GripItem* prevVertex = start;
+  m_boundary.clear();
+  m_boundary << start;
+
+  // Walk the edges of the bounding polygon using the "left hand on the wall" method
+  while (!m_boundary.contains(lastVertex)) {
+    m_boundary << lastVertex;
+    EdgeItem* nextEdge = nullptr;
+    double maxAngle = 7; // bigger than 2pi
+    for (EdgeItem* edge : edgeIndex.values(lastVertex)) {
+      if (edge == lastEdge) {
+        continue;
+      }
+      GripItem* nextVertex = edge->otherGrip(lastVertex);
+      double angle = ccwAngle(prevVertex->scenePos(), lastVertex->scenePos(), nextVertex->scenePos());
+      if (angle < maxAngle) {
+        nextEdge = edge;
+        maxAngle = angle;
+      }
+    }
+    if (!nextEdge) {
+      qFatal("Degenerate geometry in MeshItem");
+    }
+    prevVertex = lastVertex;
+    lastVertex = nextEdge->otherGrip(lastVertex);
+    lastEdge = nextEdge;
+  }
+
+  updateBoundary();
 }
