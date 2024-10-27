@@ -1,3 +1,4 @@
+#include "meshpolygon.h"
 #include "meshitem.h"
 #include "gripitem.h"
 #include "edgeitem.h"
@@ -5,13 +6,13 @@
 #include <QTextStream>
 #include <algorithm>
 
-MeshItem::Polygon::Polygon()
+MeshPolygon::MeshPolygon()
 : windingDirection(0)
 {
   // initializers only
 }
 
-bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge)
+bool MeshPolygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge)
 {
   if (!edges.contains(oldEdge)) {
     return false;
@@ -36,17 +37,17 @@ bool MeshItem::Polygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeIt
   return false;
 }
 
-QColor MeshItem::Polygon::color(int index) const
+QColor MeshPolygon::color(int index) const
 {
   return QColor::fromRgbF(colors[index][0], colors[index][1], colors[index][2], colors[index][3]);
 }
 
-void MeshItem::Polygon::setColor(int index, const QColor& color)
+void MeshPolygon::setColor(int index, const QColor& color)
 {
   colors[index] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
 }
 
-void MeshItem::Polygon::updateWindingDirection()
+void MeshPolygon::updateWindingDirection()
 {
   windingDirection = 0.0f;
   int n = vertices.length();
@@ -65,7 +66,7 @@ void MeshItem::Polygon::updateWindingDirection()
   windingDirection = windingDirection > 0 ? 1.0f : -1.0f;
 }
 
-void MeshItem::Polygon::rebuildBuffers()
+void MeshPolygon::rebuildBuffers()
 {
   int numVertices = vertices.length();
   vertexBuffer.resize(numVertices);
@@ -79,7 +80,7 @@ void MeshItem::Polygon::rebuildBuffers()
   updateWindingDirection();
 }
 
-QSet<EdgeItem*> MeshItem::Polygon::edgesContainingVertex(GripItem* vertex) const
+QSet<EdgeItem*> MeshPolygon::edgesContainingVertex(GripItem* vertex) const
 {
   QSet<EdgeItem*> result;
 
@@ -92,7 +93,7 @@ QSet<EdgeItem*> MeshItem::Polygon::edgesContainingVertex(GripItem* vertex) const
   return result;
 }
 
-bool MeshItem::Polygon::testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, EdgeItem* edge2) const
+bool MeshPolygon::testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, EdgeItem* edge2) const
 {
   // Get the vertices on either side of the target vertex.
   GripItem* vertexBefore = edge1->leftGrip() == v1 ? edge1->rightGrip() : edge1->leftGrip();
@@ -124,7 +125,7 @@ bool MeshItem::Polygon::testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, Ed
   return a1 < vertexAngle;
 }
 
-bool MeshItem::Polygon::isEdgeInside(GripItem* v1, GripItem* v2) const
+bool MeshPolygon::isEdgeInside(GripItem* v1, GripItem* v2) const
 {
   if (!windingDirection) {
     // A degenerate polygon can't contain anything
@@ -154,7 +155,7 @@ bool MeshItem::Polygon::isEdgeInside(GripItem* v1, GripItem* v2) const
   return true;
 }
 
-QString MeshItem::Polygon::debug() const
+QString MeshPolygon::debug() const
 {
   QString result;
   QTextStream ts(&result, QIODevice::WriteOnly);

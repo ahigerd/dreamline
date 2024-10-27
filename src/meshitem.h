@@ -10,13 +10,23 @@
 #include <QPointer>
 #include <QSet>
 #include <QJsonObject>
+#include <memory>
 #include "glbuffer.h"
 #include "markeritem.h"
+#include "meshpolygon.h"
+#include "abstractmeshrenderer.h"
 class GripItem;
 class EdgeItem;
 class PolyLineItem;
 
-class MeshItem : public QObject, public QGraphicsPolygonItem
+class MeshRenderData
+{
+public:
+  QList<MeshPolygon> polygons;
+  GLBuffer<QPointF> boundaryTris, controlPoints;
+};
+
+class MeshItem : public QObject, public QGraphicsPolygonItem, private MeshRenderData
 {
 Q_OBJECT
 public:
@@ -34,8 +44,6 @@ public:
   GripItem* activeVertex() const;
   bool splitPolygon(GripItem* v1, GripItem* v2);
   bool splitPolygon(GripItem* vertex, EdgeItem* edge);
-
-  void renderGL();
 
 public slots:
   void moveVertex(GripItem* vertex, const QPointF& pos);
@@ -56,48 +64,20 @@ protected:
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 private:
-  struct Polygon {
-  public:
-    Polygon();
-    QVector<GripItem*> vertices;
-    QVector<EdgeItem*> edges;
-    GLBuffer<QVector2D> vertexBuffer;
-    GLBuffer<QVector4D> colors;
-    GLfloat windingDirection;
-
-    bool insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge);
-
-    inline QPointF vertex(int index) const { return vertexBuffer[index].toPointF(); }
-    inline void setVertex(int index, const QPointF& pos) { vertexBuffer[index] = QVector2D(pos); }
-
-    QColor color(int index) const;
-    void setColor(int index, const QColor& color);
-
-    void updateWindingDirection();
-    void rebuildBuffers();
-
-    QSet<EdgeItem*> edgesContainingVertex(GripItem* vertex) const;
-    bool isEdgeInside(GripItem* v1, GripItem* v2) const;
-
-    QString debug() const;
-
-  private:
-    bool testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, EdgeItem* edge2) const;
-  };
-
-  QSet<Polygon*> polygonsContainingVertex(GripItem* vertex);
-  Polygon* findSplittablePolygon(GripItem* v1, GripItem* v2);
+  QSet<MeshPolygon*> polygonsContainingVertex(GripItem* vertex);
+  MeshPolygon* findSplittablePolygon(GripItem* v1, GripItem* v2);
   EdgeItem* findOrCreateEdge(GripItem* v1, GripItem* v2);
   void recomputeBoundaries();
 
   QVector<GripItem*> m_grips, m_boundary;
   QVector<EdgeItem*> m_edges;
-  QList<Polygon> m_polygons;
-  GLBuffer<QPointF> m_boundaryTris, m_control;
   GLBuffer<GLint> m_smooth;
   QPointer<GripItem> m_lastVertex;
   QGraphicsEllipseItem* m_lastVertexFocus;
   bool m_edgesVisible, m_verticesVisible;
+
+  std::unique_ptr<AbstractMeshRenderer> m_fill;
+  std::unique_ptr<AbstractMeshRenderer> m_stroke;
 };
 
 inline bool operator==(const QVector2D& lhs, const QPointF& rhs)
