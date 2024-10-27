@@ -15,59 +15,8 @@ MeshItem::MeshItem(QGraphicsItem* parent)
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
 
-  QPolygonF poly({
-    QPointF(-100, -100),
-    QPointF(100, -100),
-    QPointF(100, 100),
-    QPointF(-100, 100),
-  });
-  setPolygon(poly);
-
-  Polygon polygonData;
-  polygonData.vertexBuffer = { QVector2D(poly[0]), QVector2D(poly[1]), QVector2D(poly[2]) };
-  polygonData.colors = {
-    { 1.0, 0.0, 0.0, 1.0 },
-    { 0.0, 1.0, 0.0, 1.0 },
-    { 0.0, 0.0, 1.0, 1.0 },
-  };
-
-  Polygon polygonData2;
-  polygonData2.vertexBuffer = { QVector2D(poly[2]), QVector2D(poly[0]), QVector2D(poly[3]) };
-  polygonData2.colors = {
-    { 0.0, 0.0, 1.0, 1.0 },
-    { 1.0, 0.0, 0.0, 1.0 },
-    { 1.0, 1.0, 0.0, 1.0 },
-  };
-
-  m_polygons.append(polygonData);
-  m_polygons.append(polygonData2);
-
-  for (Polygon& p : m_polygons) {
-    int numVertices = p.vertexBuffer.count();
-    for (int i = 0; i < numVertices; i++) {
-      GripItem* grip = nullptr;
-      for (GripItem* checkGrip : m_grips) {
-        if (checkGrip->pos() == p.vertexBuffer[i]) {
-          grip = checkGrip;
-          break;
-        }
-      }
-      if (!grip) {
-        grip = newGrip();
-        m_boundary.append(grip);
-        grip->setPos(p.vertex(i));
-        grip->setBrush(p.color(i));
-      }
-      p.vertices.append(grip);
-    }
-    for (int i = 0; i < numVertices; i++) {
-      GripItem* left = p.vertices[i];
-      GripItem* right = p.vertices[(i + 1) % numVertices];
-      EdgeItem* edge = findOrCreateEdge(left, right);
-      p.edges.append(edge);
-    }
-  }
-
+  // TODO: It might be a better idea to render this in paint() or
+  // DreamProject::drawForeground() instead of using QGraphicsItems.
   m_lastVertexFocus = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, this);
   m_lastVertexFocus->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
   QPen pen(Qt::black, 3.8);
@@ -79,23 +28,17 @@ MeshItem::MeshItem(QGraphicsItem* parent)
   inner->setPen(pen);
   m_lastVertexFocus->setZValue(100);
   m_lastVertexFocus->hide();
+}
 
-  for (Polygon& poly : m_polygons) {
-    poly.rebuildBuffers();
-  }
+MeshItem::MeshItem(PolyLineItem* polyline, QGraphicsItem* parent)
+: MeshItem(parent)
+{
+  addPolygon(polyline);
 }
 
 MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
 : MeshItem(parent)
 {
-  m_boundary.clear();
-  m_polygons.clear();
-  qDeleteAll(m_edges);
-  m_edges.clear();
-  qDeleteAll(m_grips);
-  m_grips.clear();
-  m_lastVertex = nullptr;
-
   for (const QJsonValue& vertexV : source["vertices"].toArray()) {
     // TODO: error handling
     QJsonArray vertex = vertexV.toArray();

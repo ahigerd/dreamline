@@ -21,6 +21,7 @@ class MeshItem : public QObject, public QGraphicsPolygonItem
 Q_OBJECT
 public:
   MeshItem(QGraphicsItem* parent = nullptr);
+  MeshItem(PolyLineItem* polyline, QGraphicsItem* parent = nullptr);
   MeshItem(const QJsonObject& source, QGraphicsItem* parent = nullptr);
 
   QJsonObject serialize() const;
