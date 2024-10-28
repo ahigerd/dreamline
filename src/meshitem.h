@@ -10,6 +10,7 @@
 #include <QPointer>
 #include <QSet>
 #include <QJsonObject>
+#include <QPen>
 #include <memory>
 #include "glbuffer.h"
 #include "markeritem.h"
@@ -41,9 +42,13 @@ public:
   bool verticesVisible() const;
   void setVerticesVisible(bool on);
 
+  int numBoundaryVertices() const;
+  GripItem* boundaryVertex(int index) const;
   GripItem* activeVertex() const;
   bool splitPolygon(GripItem* v1, GripItem* v2);
   bool splitPolygon(GripItem* vertex, EdgeItem* edge);
+
+  QPen strokePen() const;
 
 public slots:
   void moveVertex(GripItem* vertex, const QPointF& pos);
@@ -51,6 +56,8 @@ public slots:
   void insertVertex(EdgeItem* edge, const QPointF& pos);
   void setActiveVertex(GripItem* vertex);
   void addPolygon(PolyLineItem* poly);
+  void setStrokePen(const QPen& pen);
+  void removeStroke();
 
 protected slots:
   void gripDestroyed(QObject* grip);
@@ -74,6 +81,7 @@ private:
   GLBuffer<GLint> m_smooth;
   QPointer<GripItem> m_lastVertex;
   QGraphicsEllipseItem* m_lastVertexFocus;
+  QPen m_strokePen;
   bool m_edgesVisible, m_verticesVisible;
 
   std::unique_ptr<AbstractMeshRenderer> m_fill;

@@ -25,8 +25,8 @@ SOURCES += src/gripitem.cpp src/meshitem.cpp src/edgeitem.cpp src/markeritem.cpp
 HEADERS += src/mathutil.h   src/dlapplication.h   src/polylineitem.h   src/meshpolygon.h
 SOURCES += src/mathutil.cpp src/dlapplication.cpp src/polylineitem.cpp src/meshpolygon.cpp
 
-HEADERS += src/abstractmeshrenderer.h   src/meshgradientrenderer.h
-SOURCES += src/abstractmeshrenderer.cpp src/meshgradientrenderer.cpp
+HEADERS += src/abstractmeshrenderer.h   src/meshgradientrenderer.h   src/penstrokerenderer.h
+SOURCES += src/abstractmeshrenderer.cpp src/meshgradientrenderer.cpp src/penstrokerenderer.cpp
 
 HEADERS += src/tools/movevertex.h   src/tools/moveedge.h   src/tools/color.h   src/tools/split.h
 SOURCES += src/tools/movevertex.cpp src/tools/moveedge.cpp src/tools/color.cpp src/tools/split.cpp

@@ -6,6 +6,7 @@
 #include "editorview.h"
 #include "mathutil.h"
 #include "meshgradientrenderer.h"
+#include "penstrokerenderer.h"
 #include <QJsonArray>
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
@@ -70,19 +71,9 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
     polygons.append(polygon);
   }
 
-  // TODO: autocompute boundary if missing? Or just throw?
-  QPolygonF boundary;
-  for (const QJsonValue& indexV : source["boundary"].toArray()) {
-    int index = indexV.toInt(-1);
-    if (index < 0 || index > m_grips.length()) {
-      // TODO: error handling
-      continue;
-    }
-    m_boundary.append(m_grips[index]);
-    boundary << m_grips[index]->pos();
-  }
-  setPolygon(boundary);
-  updateBoundary();
+  recomputeBoundaries();
+
+  setStrokePen(QPen(Qt::black, 3));
 }
 
 QJsonObject MeshItem::serialize() const
@@ -114,12 +105,6 @@ QJsonObject MeshItem::serialize() const
     polygons.append(polyData);
   }
   o["polygons"] = polygons;
-
-  QJsonArray boundary;
-  for (GripItem* grip : m_boundary) {
-    boundary.append(m_grips.indexOf(grip));
-  }
-  o["boundary"] = boundary;
 
   return o;
 }
@@ -155,6 +140,25 @@ bool MeshItem::verticesVisible() const
 void MeshItem::setVerticesVisible(bool on)
 {
   m_verticesVisible = on;
+  update();
+}
+
+QPen MeshItem::strokePen() const
+{
+  return m_strokePen;
+}
+
+void MeshItem::setStrokePen(const QPen& pen)
+{
+  m_strokePen = pen;
+  if (!dynamic_cast<PenStrokeRenderer*>(m_stroke.get())) {
+    m_stroke.reset(new PenStrokeRenderer());
+  }
+}
+
+void MeshItem::removeStroke()
+{
+  m_stroke.reset();
   update();
 }
 
@@ -268,6 +272,19 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
 
   setActiveVertex(grip);
   emit modified(true);
+}
+
+int MeshItem::numBoundaryVertices() const
+{
+  return m_boundary.count();
+}
+
+GripItem* MeshItem::boundaryVertex(int index) const
+{
+  if (index < 0 || index >= m_boundary.count()) {
+    return nullptr;
+  }
+  return m_boundary[index];
 }
 
 GripItem* MeshItem::activeVertex() const
@@ -451,6 +468,7 @@ void MeshItem::updateBoundary()
   if (m_boundary.length() < 3) {
     return;
   }
+  QPolygonF boundary(m_boundary.length());
   QPolygonF tris(m_boundary.length() * 3);
   QVector<QPointF> control(m_boundary.length() * 9);
   QVector<int> smooth(m_boundary.length() * 3);
@@ -458,10 +476,13 @@ void MeshItem::updateBoundary()
   QPointF lastMidpoint = (prev + m_boundary[m_boundary.length() - 2]->pos()) / 2;
   int i = 0;
   int j = 0;
+  int b = 0;
   bool lastSmooth = m_boundary.last()->isSmooth();
   for (GripItem* grip : m_boundary) {
     QPointF curr = grip->pos();
     QPointF midpoint = (curr + prev) / 2;
+
+    boundary[b++] = curr;
 
     if (lastSmooth) {
       for (int k = 0; k < 3; k++) {
@@ -482,6 +503,7 @@ void MeshItem::updateBoundary()
   boundaryTris = tris;
   controlPoints = control;
   m_smooth = smooth;
+  setPolygon(boundary);
 }
 
 void MeshItem::recomputeBoundaries()
