@@ -88,14 +88,12 @@ void main()
     vec2 e = control[0] - a*s - b*c;
     float d1 = distance(origin, pt);
     float d2 = distance(origin, e);
-    if (d1 > d2 + 1) {
+    if (d1 > d2) {
       FragColor = vec4(0, 0, 0, 0);
-    } else if (d1 > d2) {
-      distAlpha = 1 - (d1 - d2);
+      return;
     }
-  } else {
-    FragColor = getColor(pt);
   }
+  FragColor = getColor(pt);
   // Work around numerical instability by doing some manual multisampling
   if (FragColor.a < 0) {
     FragColor = vec4(0, 0, 0, 1);
