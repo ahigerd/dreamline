@@ -45,6 +45,9 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
     GripItem* grip = newGrip();
     grip->setPos(vertex[0].toDouble(), vertex[1].toDouble());
     grip->setColor(QColor(vertex[2].toInt(), vertex[3].toInt(), vertex[4].toInt(), vertex[5].toInt(255)));
+    if (vertex.count() > 6) {
+      grip->setSmooth(vertex[6].toBool());
+    }
   }
 
   for (const QJsonValue& polygonV : source["polygons"].toArray()) {
@@ -77,6 +80,7 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
     boundary << m_grips[index]->pos();
   }
   setPolygon(boundary);
+  updateBoundary();
 }
 
 QJsonObject MeshItem::serialize() const
@@ -93,6 +97,7 @@ QJsonObject MeshItem::serialize() const
       color.green(),
       color.blue(),
       color.alpha(),
+      grip->isSmooth(),
     });
     vertices.append(vertex);
   }
