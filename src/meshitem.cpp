@@ -66,6 +66,7 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
   }
 
   // TODO: autocompute boundary if missing? Or just throw?
+  QPolygonF boundary;
   for (const QJsonValue& indexV : source["boundary"].toArray()) {
     int index = indexV.toInt(-1);
     if (index < 0 || index > m_grips.length()) {
@@ -73,7 +74,9 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
       continue;
     }
     m_boundary.append(m_grips[index]);
+    boundary << m_grips[index]->pos();
   }
+  setPolygon(boundary);
 }
 
 QJsonObject MeshItem::serialize() const
