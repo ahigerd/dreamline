@@ -20,6 +20,9 @@ public:
   void saveFile(const QString& path);
   void exportFile(const QString& path, const QString& format = "image/png");
 
+protected:
+  void closeEvent(QCloseEvent*);
+
 private slots:
   void fileNew();
   void fileOpen();

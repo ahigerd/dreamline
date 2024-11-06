@@ -3,6 +3,7 @@
 #include "tool.h"
 #include "dreamproject.h"
 #include "propertypanel.h"
+#include "penstrokerenderer.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMenuBar>
@@ -30,13 +31,21 @@ MainWindow::MainWindow(QWidget *parent)
   makeToolMenu();
   updateRecentMenu();
 
+  PenStrokePropertyPanel* placeholder = new PenStrokePropertyPanel;
   setPropertyPanel("fill", nullptr);
-  setPropertyPanel("stroke", nullptr);
+  setPropertyPanel("stroke", placeholder);
+  placeholder->deleteLater();
 
   fileNew();
+
+  QSettings settings;
+  restoreGeometry(settings.value("window/geometry").toByteArray());
+  restoreState(settings.value("window/state").toByteArray());
+  // TODO: cascade window positions if other windows already exist
 }
 
-MainWindow::~MainWindow() {
+MainWindow::~MainWindow()
+{
 }
 
 void MainWindow::makeFileMenu()
@@ -57,6 +66,7 @@ void MainWindow::makeFileMenu()
   fileMenu->addAction(tr("E&xit"), qApp, SLOT(quit()));
 
   QToolBar* fileBar = new QToolBar(tr("&File"), this);
+  fileBar->setObjectName("tb_file");
   addToolBar(Qt::TopToolBarArea, fileBar);
   aNew->setIcon(style()->standardIcon(QStyle::SP_FileIcon));
   fileBar->addAction(aNew);
@@ -80,6 +90,7 @@ void MainWindow::makeToolMenu()
   menuBar()->addMenu(toolMenu);
 
   QToolBar* toolBar = new QToolBar(tr("&Tools"), this);
+  toolBar->setObjectName("tb_tools");
   addToolBar(Qt::LeftToolBarArea, toolBar);
 
   QAction* aVertex = Tool::makeAction(toolGroup, Tool::VertexTool);
@@ -272,6 +283,7 @@ void MainWindow::setPropertyPanel(const QString& tag, PropertyPanel* panel)
   QDockWidget* dock = docksByTag[tag];
   if (!dock) {
     docksByTag[tag] = dock = new QDockWidget(labels[tag], this);
+    dock->setObjectName("dock_" + tag);
     dock->setAllowedAreas(Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
     addDockWidget(Qt::RightDockWidgetArea, dock);
     // XXX: This feels extremely hacky
@@ -284,4 +296,11 @@ void MainWindow::setPropertyPanel(const QString& tag, PropertyPanel* panel)
   if (panel) {
     panel->show();
   }
+}
+
+void MainWindow::closeEvent(QCloseEvent*)
+{
+  QSettings settings;
+  settings.setValue("window/geometry", saveGeometry());
+  settings.setValue("window/state", saveState());
 }
