@@ -2,6 +2,7 @@
 #include "editorview.h"
 #include "tool.h"
 #include "dreamproject.h"
+#include "propertypanel.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMenuBar>
@@ -14,6 +15,7 @@
 #include <QPainter>
 #include <QImageWriter>
 #include <QMimeDatabase>
+#include <QDockWidget>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -21,11 +23,15 @@ MainWindow::MainWindow(QWidget *parent)
   editor = new EditorView(this);
   setCentralWidget(editor);
   QObject::connect(editor, SIGNAL(projectModified(bool)), this, SLOT(setWindowModified(bool)));
+  QObject::connect(editor, SIGNAL(propertyPanelChanged(QString,PropertyPanel*)), this, SLOT(setPropertyPanel(QString,PropertyPanel*)));
 
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
   makeToolMenu();
   updateRecentMenu();
+
+  setPropertyPanel("fill", nullptr);
+  setPropertyPanel("stroke", nullptr);
 
   fileNew();
 }
@@ -257,3 +263,25 @@ void MainWindow::addToRecent(const QString& path)
   updateRecentMenu();
 }
 
+void MainWindow::setPropertyPanel(const QString& tag, PropertyPanel* panel)
+{
+  static QMap<QString, QString> labels{
+    { "fill", tr("Fill Properties") },
+    { "stroke", tr("Stroke Properties") },
+  };
+  QDockWidget* dock = docksByTag[tag];
+  if (!dock) {
+    docksByTag[tag] = dock = new QDockWidget(labels[tag], this);
+    dock->setAllowedAreas(Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
+    // XXX: This feels extremely hacky
+    resizeDocks({ dock }, { height() }, Qt::Vertical);
+  }
+  if (dock->widget()) {
+    dock->widget()->hide();
+  }
+  dock->setWidget(panel);
+  if (panel) {
+    panel->show();
+  }
+}

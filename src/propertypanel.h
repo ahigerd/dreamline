@@ -11,6 +11,7 @@ Q_OBJECT
 protected:
   PropertyPanel(QWidget* parent = nullptr);
 
+public slots:
   virtual void updateAllProperties() = 0;
 
 public:
@@ -27,7 +28,6 @@ Q_OBJECT
 public:
   BlankPropertyPanel(QWidget* parent = nullptr);
 
-protected:
   virtual void updateAllProperties();
 };
 

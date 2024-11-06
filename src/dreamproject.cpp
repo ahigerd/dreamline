@@ -14,7 +14,7 @@
 #define DPI 100
 
 DreamProject::DreamProject(const QSizeF& pageSize, QObject* parent)
-: QGraphicsScene(parent), exporting(false)
+: QGraphicsScene(parent), exporting(false), editor(nullptr)
 {
   setBackgroundBrush(QColor(139,134,128,255));
 
@@ -138,4 +138,14 @@ void DreamProject::save(const QString& path)
   f.write(QJsonDocument(o).toJson(QJsonDocument::Compact));
 
   emit projectModified(false);
+}
+
+EditorView* DreamProject::currentEditor() const
+{
+  return editor;
+}
+
+void DreamProject::setCurrentEditor(EditorView* editor)
+{
+  this->editor = editor;
 }

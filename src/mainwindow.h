@@ -3,8 +3,10 @@
 
 #include <QMainWindow>
 #include <QString>
-class EditorView;
+#include <QMap>
 class QMenu;
+class EditorView;
+class PropertyPanel;
 
 class MainWindow : public QMainWindow
 {
@@ -26,6 +28,8 @@ private slots:
   void fileSaveAs();
   void fileExport();
 
+  void setPropertyPanel(const QString& tag, PropertyPanel* panel);
+
 private:
   void makeFileMenu();
   void makeToolMenu();
@@ -39,6 +43,7 @@ private:
   QMenu* recentMenu;
   QString savePath;
   QString exportPath;
+  QMap<QString, QDockWidget*> docksByTag;
 };
 
 #endif

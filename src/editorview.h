@@ -12,6 +12,7 @@ class GLViewport;
 class GripItem;
 class EdgeItem;
 class MeshItem;
+class PropertyPanel;
 
 class EditorView : public QGraphicsView
 {
@@ -72,6 +73,8 @@ public slots:
 signals:
   void projectModified(bool);
   void colorSelected(const QColor&);
+  void selectionChanged();
+  void propertyPanelChanged(const QString& tag, PropertyPanel* panel);
 
 protected:
   bool viewportEvent(QEvent* event);

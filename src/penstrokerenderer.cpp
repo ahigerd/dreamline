@@ -81,3 +81,17 @@ void PenStrokeRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter* p
   data->strokePath = path;
   painter->drawPath(path);
 }
+
+PenStrokePropertyPanel::PenStrokePropertyPanel()
+: PropertyPanel(nullptr)
+{
+  // initializers only
+  setAutoFillBackground(true);
+}
+
+void PenStrokePropertyPanel::updateAllProperties()
+{
+  QPalette p = palette();
+  p.setBrush(QPalette::Window, currentMesh()->strokePen().color());
+  setPalette(p);
+}

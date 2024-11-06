@@ -13,6 +13,8 @@ class GripItem;
 class EdgeItem;
 class PolyLineItem;
 class MeshItemPrivate;
+class DreamProject;
+class EditorView;
 
 class MeshItem : public QObject, public QGraphicsPolygonItem
 {
@@ -57,6 +59,8 @@ signals:
   void modified(bool);
 
 protected:
+  DreamProject* project() const;
+  EditorView* editor() const;
   GripItem* newGrip();
   void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 

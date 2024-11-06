@@ -29,7 +29,7 @@ class AbstractMeshRenderer : public IMeshRenderer
 public:
   virtual PropertyPanel* propertyPanel(EditorView* _editor) final
   {
-    // In a templated function,
+    // In a templated function, each template parameter gets its own local static variables.
     static QMap<QObject*, QPointer<PropertyPanel>> existingPanels;
     // The only reason for this cast is to avoid needing to #include "editorview.h" here.
     QObject* editor = reinterpret_cast<QObject*>(_editor);
@@ -39,6 +39,7 @@ public:
       if (panel) {
         if (!existingPanels.contains(editor)) {
           QObject::connect(editor, &QObject::destroyed, [](QObject* obj){ existingPanels.remove(obj); });
+          QObject::connect(editor, SIGNAL(selectionChanged()), panel, SLOT(updateAllProperties()));
         }
         existingPanels[editor] = panel;
       }

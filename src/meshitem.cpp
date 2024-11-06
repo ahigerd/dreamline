@@ -20,7 +20,7 @@ class MeshItemPrivate : public MeshRenderData
 {
 public:
   MeshItemPrivate(MeshItem* p)
-  : p(p), edgesVisible(false), verticesVisible(false), fill(new MeshGradientRenderer), stroke(nullptr)
+  : p(p), edgesVisible(true), verticesVisible(true), fill(new MeshGradientRenderer), stroke(nullptr)
   {
     // TODO: It might be a better idea to render this in paint() or
     // DreamProject::drawForeground() instead of using QGraphicsItems.
@@ -200,9 +200,9 @@ void MeshItem::removeStroke()
 PropertyPanel* MeshItem::fillPropertyPanel()
 {
   if (!d->fillPanel && d->fill) {
-    GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
-    if (gl && gl->editor()) {
-      d->fillPanel = d->fill->propertyPanel(gl->editor());
+    EditorView* e = editor();
+    if (e) {
+      d->fillPanel = d->fill->propertyPanel(e);
     }
   }
   return d->fillPanel;
@@ -211,9 +211,9 @@ PropertyPanel* MeshItem::fillPropertyPanel()
 PropertyPanel* MeshItem::strokePropertyPanel()
 {
   if (!d->strokePanel && d->stroke) {
-    GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
-    if (gl && gl->editor()) {
-      d->strokePanel = d->stroke->propertyPanel(gl->editor());
+    EditorView* e = editor();
+    if (e) {
+      d->strokePanel = d->stroke->propertyPanel(e);
     }
   }
   return d->strokePanel;
@@ -642,4 +642,18 @@ void MeshItemPrivate::recomputeBoundaries()
   }
 
   p->updateBoundary();
+}
+
+DreamProject* MeshItem::project() const
+{
+  return dynamic_cast<DreamProject*>(scene());
+}
+
+EditorView* MeshItem::editor() const
+{
+  DreamProject* p = project();
+  if (!p) {
+    return nullptr;
+  }
+  return p->currentEditor();
 }
