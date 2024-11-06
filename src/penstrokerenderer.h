@@ -3,6 +3,9 @@
 
 #include "abstractmeshrenderer.h"
 class PenStrokePropertyPanel;
+class QDoubleSpinBox;
+class QComboBox;
+class QFrame;
 
 class PenStrokeRenderer : public AbstractMeshRenderer<PenStrokePropertyPanel>
 {
@@ -19,6 +22,23 @@ public:
   PenStrokePropertyPanel();
 
   virtual void updateAllProperties();
+
+  bool eventFilter(QObject* obj, QEvent* event);
+
+private slots:
+  void setPenWidth(double width);
+  void setJoinStyle();
+  void setCapStyle();
+  void setDashStyle();
+
+private:
+  void setButtonColor(const QColor& c);
+
+  QFrame* color;
+  QDoubleSpinBox* penWidth;
+  QComboBox* joinStyle;
+  QComboBox* capStyle;
+  QComboBox* dashStyle;
 };
 
 #endif

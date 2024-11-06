@@ -3,9 +3,14 @@
 #include "meshrenderdata.h"
 #include "gripitem.h"
 #include "propertypanel.h"
-#include <QWidget>
 #include <QPainter>
 #include <QPainterPath>
+#include <QFormLayout>
+#include <QDoubleSpinBox>
+#include <QComboBox>
+#include <QFrame>
+#include <QColorDialog>
+#include <QMouseEvent>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -85,13 +90,117 @@ void PenStrokeRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter* p
 PenStrokePropertyPanel::PenStrokePropertyPanel()
 : PropertyPanel(nullptr)
 {
-  // initializers only
-  setAutoFillBackground(true);
+  QFormLayout* layout = new QFormLayout(this);
+
+  color = new QFrame(this);
+  color->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+  color->setAutoFillBackground(true);
+  color->installEventFilter(this);
+  layout->addRow(tr("Color:"), color);
+
+  penWidth = new QDoubleSpinBox(this);
+  penWidth->setRange(0.1, 100.0);
+  penWidth->setSingleStep(1.0);
+  penWidth->setDecimals(1);
+  QObject::connect(penWidth, SIGNAL(valueChanged(double)), this, SLOT(setPenWidth(double)));
+  layout->addRow(tr("Width:"), penWidth);
+
+  joinStyle = new QComboBox(this);
+  joinStyle->addItem(tr("Bevel"), (int)Qt::BevelJoin);
+  joinStyle->addItem(tr("Miter"), (int)Qt::MiterJoin);
+  joinStyle->addItem(tr("Round"), (int)Qt::RoundJoin);
+  QObject::connect(joinStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setJoinStyle()));
+  layout->addRow(tr("Join Style:"), joinStyle);
+
+  capStyle = new QComboBox(this);
+  capStyle->addItem(tr("Square"), (int)Qt::SquareCap);
+  capStyle->addItem(tr("Flat"), (int)Qt::FlatCap);
+  capStyle->addItem(tr("Round"), (int)Qt::RoundCap);
+  QObject::connect(capStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setCapStyle()));
+  layout->addRow(tr("Cap Style:"), capStyle);
+
+  dashStyle = new QComboBox(this);
+  dashStyle->addItem(tr("Solid"), (int)Qt::SolidLine);
+  dashStyle->addItem(tr("Dash"), (int)Qt::DashLine);
+  dashStyle->addItem(tr("Dotted"), (int)Qt::DotLine);
+  dashStyle->addItem(tr("Dash Dot"), (int)Qt::DashDotLine);
+  dashStyle->addItem(tr("Dash Dot Dot"), (int)Qt::DashDotDotLine);
+  QObject::connect(dashStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setDashStyle()));
+  layout->addRow(tr("Dash Style:"), dashStyle);
 }
 
 void PenStrokePropertyPanel::updateAllProperties()
 {
-  QPalette p = palette();
-  p.setBrush(QPalette::Window, currentMesh()->strokePen().color());
-  setPalette(p);
+  if (!currentMesh()) {
+    return;
+  }
+  QPen pen = currentMesh()->strokePen();
+  setButtonColor(pen.color());
+  penWidth->setValue(pen.widthF());
+}
+
+bool PenStrokePropertyPanel::eventFilter(QObject* obj, QEvent* event)
+{
+  if (currentMesh() && obj == color && event->type() == QEvent::MouseButtonPress) {
+    QPen pen = currentMesh()->strokePen();
+    QColor newColor = QColorDialog::getColor(pen.color(), this, "Select Color");
+    if (newColor.isValid()) {
+      pen.setColor(newColor);
+      currentMesh()->setStrokePen(pen);
+      setButtonColor(newColor);
+    }
+    return true;
+  }
+  return PropertyPanel::eventFilter(obj, event);
+}
+
+void PenStrokePropertyPanel::setButtonColor(const QColor& c)
+{
+  QPalette p = color->palette();
+  p.setBrush(QPalette::Window, c);
+  color->setPalette(p);
+}
+
+void PenStrokePropertyPanel::setPenWidth(double width)
+{
+  if (!currentMesh()) {
+    return;
+  }
+  QPen pen = currentMesh()->strokePen();
+  pen.setWidthF(width);
+  currentMesh()->setStrokePen(pen);
+  currentMesh()->update();
+}
+
+void PenStrokePropertyPanel::setJoinStyle()
+{
+  if (!currentMesh()) {
+    return;
+  }
+  QPen pen = currentMesh()->strokePen();
+  pen.setJoinStyle(joinStyle->currentData().value<Qt::PenJoinStyle>());
+  currentMesh()->setStrokePen(pen);
+  currentMesh()->update();
+}
+
+void PenStrokePropertyPanel::setCapStyle()
+{
+  if (!currentMesh()) {
+    return;
+  }
+  QPen pen = currentMesh()->strokePen();
+  pen.setCapStyle(capStyle->currentData().value<Qt::PenCapStyle>());
+  currentMesh()->setStrokePen(pen);
+  currentMesh()->update();
+}
+
+void PenStrokePropertyPanel::setDashStyle()
+{
+  if (!currentMesh()) {
+    return;
+  }
+  QPen pen = currentMesh()->strokePen();
+  pen.setStyle(dashStyle->currentData().value<Qt::PenStyle>());
+  currentMesh()->setStrokePen(pen);
+  currentMesh()->update();
 }
