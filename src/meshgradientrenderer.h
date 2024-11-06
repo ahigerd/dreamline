@@ -3,7 +3,7 @@
 
 #include "abstractmeshrenderer.h"
 
-class MeshGradientRenderer : public AbstractMeshRenderer
+class MeshGradientRenderer : public AbstractMeshRenderer<BlankPropertyPanel>
 {
 public:
   MeshGradientRenderer();

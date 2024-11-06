@@ -1,5 +1,6 @@
 #include "meshgradientrenderer.h"
 #include "meshitem.h"
+#include "meshrenderdata.h"
 #include "meshpolygon.h"
 #include "glfunctions.h"
 #include <QPainter>

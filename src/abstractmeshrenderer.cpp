@@ -1,11 +1,11 @@
 #include "abstractmeshrenderer.h"
 
-AbstractMeshRenderer::AbstractMeshRenderer()
+IMeshRenderer::IMeshRenderer()
 {
   // initializers only
 }
 
-AbstractMeshRenderer::~AbstractMeshRenderer()
+IMeshRenderer::~IMeshRenderer()
 {
   // empty virtual destructor
 }

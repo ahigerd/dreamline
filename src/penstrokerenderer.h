@@ -3,7 +3,7 @@
 
 #include "abstractmeshrenderer.h"
 
-class PenStrokeRenderer : public AbstractMeshRenderer
+class PenStrokeRenderer : public AbstractMeshRenderer<BlankPropertyPanel>
 {
 public:
   PenStrokeRenderer();

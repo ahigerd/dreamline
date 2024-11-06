@@ -28,9 +28,13 @@ SOURCES += src/mathutil.cpp src/dlapplication.cpp src/polylineitem.cpp src/meshp
 HEADERS += src/abstractmeshrenderer.h   src/meshgradientrenderer.h   src/penstrokerenderer.h
 SOURCES += src/abstractmeshrenderer.cpp src/meshgradientrenderer.cpp src/penstrokerenderer.cpp
 
+HEADERS += src/propertypanel.h
+SOURCES += src/propertypanel.cpp
+
 HEADERS += src/tools/movevertex.h   src/tools/moveedge.h   src/tools/color.h   src/tools/split.h
 SOURCES += src/tools/movevertex.cpp src/tools/moveedge.cpp src/tools/color.cpp src/tools/split.cpp
 
+HEADERS += src/meshrenderdata.h
 SOURCES += src/main.cpp
 
 RESOURCES += res/shaders.qrc

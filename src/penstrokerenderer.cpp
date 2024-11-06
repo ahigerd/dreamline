@@ -1,6 +1,9 @@
 #include "penstrokerenderer.h"
 #include "meshitem.h"
+#include "meshrenderdata.h"
 #include "gripitem.h"
+#include "propertypanel.h"
+#include <QWidget>
 #include <QPainter>
 #include <QPainterPath>
 
@@ -26,7 +29,7 @@ PenStrokeRenderer::PenStrokeRenderer()
   // initializers only
 }
 
-void PenStrokeRenderer::render(MeshItem* mesh, MeshRenderData*, QPainter* painter, GLFunctions*)
+void PenStrokeRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter* painter, GLFunctions*)
 {
   int numVertices = mesh->numBoundaryVertices();
   if (numVertices < 2) {
@@ -38,6 +41,14 @@ void PenStrokeRenderer::render(MeshItem* mesh, MeshRenderData*, QPainter* painte
   double dx = transform.m11();
   double dy = transform.m22();
   double pixelSize = std::sqrt(dx * dx + dy * dy);
+
+  if (data->strokeOwner == this && data->lastStrokeScale == pixelSize) {
+    painter->drawPath(data->strokePath);
+    return;
+  }
+
+  data->strokeOwner = this;
+  data->lastStrokeScale = pixelSize;
 
   QPainterPath path;
   GripItem* grip = mesh->boundaryVertex(numVertices - 1);
@@ -67,5 +78,6 @@ void PenStrokeRenderer::render(MeshItem* mesh, MeshRenderData*, QPainter* painte
     }
     lastPos = pos;
   }
+  data->strokePath = path;
   painter->drawPath(path);
 }

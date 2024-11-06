@@ -1,23 +1,53 @@
-#ifndef DL_ABSTRACTFILL_H
-#define DL_ABSTRACTFILL_H
+#ifndef DL_ABSTRACTMESHRENDERER_H
+#define DL_ABSTRACTMESHRENDERER_H
 
+#include <QMap>
+#include <QPointer>
+#include "propertypanel.h"
 class MeshItem;
 class MeshRenderData;
 class QPainter;
 class GLFunctions;
-class QWidget;
+class EditorView;
 
-class AbstractMeshRenderer
+class IMeshRenderer
 {
 public:
-  virtual ~AbstractMeshRenderer();
+  virtual ~IMeshRenderer();
 
   virtual void render(MeshItem* mesh, MeshRenderData* data, QPainter* painter, GLFunctions* gl) = 0;
 
-  // TODO: virtual QWidget* propertyPanel() = 0;
+  virtual PropertyPanel* propertyPanel(EditorView* editor) = 0;
 
 protected:
-  AbstractMeshRenderer();
+  IMeshRenderer();
+};
+
+template <typename PanelType>
+class AbstractMeshRenderer : public IMeshRenderer
+{
+public:
+  virtual PropertyPanel* propertyPanel(EditorView* _editor) final
+  {
+    // In a templated function,
+    static QMap<QObject*, QPointer<PropertyPanel>> existingPanels;
+    // The only reason for this cast is to avoid needing to #include "editorview.h" here.
+    QObject* editor = reinterpret_cast<QObject*>(_editor);
+    PropertyPanel* panel = existingPanels.value(editor, nullptr);
+    if (!panel) {
+      panel = new PanelType();
+      if (panel) {
+        if (!existingPanels.contains(editor)) {
+          QObject::connect(editor, &QObject::destroyed, [](QObject* obj){ existingPanels.remove(obj); });
+        }
+        existingPanels[editor] = panel;
+      }
+    }
+    return panel;
+  }
+
+protected:
+  AbstractMeshRenderer() : IMeshRenderer() {}
 };
 
 #endif
