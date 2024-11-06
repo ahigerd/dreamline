@@ -87,6 +87,34 @@ void PenStrokeRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter* p
   painter->drawPath(path);
 }
 
+QJsonObject PenStrokeRenderer::serialize(const MeshItem* mesh, const MeshRenderData*) const
+{
+  QJsonObject json;
+  QPen pen = mesh->strokePen();
+
+  json["type"] = "pen";
+  json["color"] = pen.color().name();
+  json["width"] = pen.widthF();
+  json["join"] = (int)pen.joinStyle();
+  json["cap"] = (int)pen.capStyle();
+  json["dash"] = (int)pen.style();
+
+  return json;
+}
+
+void PenStrokeRenderer::deserialize(const QJsonObject& json, MeshItem* mesh, MeshRenderData*) const
+{
+  QPen pen;
+  QColor color;
+  color.setNamedColor(json["color"].toString());
+  pen.setColor(color);
+  pen.setWidthF(json["width"].toDouble());
+  pen.setJoinStyle(Qt::PenJoinStyle(json["join"].toInt()));
+  pen.setCapStyle(Qt::PenCapStyle(json["cap"].toInt()));
+  pen.setStyle(Qt::PenStyle(json["dash"].toInt()));
+  mesh->setStrokePen(pen);
+}
+
 PenStrokePropertyPanel::PenStrokePropertyPanel()
 : PropertyPanel(nullptr)
 {

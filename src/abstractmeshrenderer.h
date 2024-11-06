@@ -3,6 +3,7 @@
 
 #include <QMap>
 #include <QPointer>
+#include <QJsonObject>
 #include "propertypanel.h"
 class MeshItem;
 class MeshRenderData;
@@ -18,6 +19,9 @@ public:
   virtual void render(MeshItem* mesh, MeshRenderData* data, QPainter* painter, GLFunctions* gl) = 0;
 
   virtual PropertyPanel* propertyPanel(EditorView* editor) = 0;
+
+  virtual QJsonObject serialize(const MeshItem* mesh, const MeshRenderData* data) const = 0;
+  virtual void deserialize(const QJsonObject& json, MeshItem* mesh, MeshRenderData* data) const = 0;
 
 protected:
   IMeshRenderer();

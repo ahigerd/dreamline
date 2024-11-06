@@ -414,10 +414,16 @@ void EditorView::setActiveVertex(GripItem* vertex)
     }
   }
   if (targetMesh) {
-    emit propertyPanelChanged("fill", targetMesh->fillPropertyPanel());
-    emit propertyPanelChanged("stroke", targetMesh->strokePropertyPanel());
-    targetMesh->fillPropertyPanel()->setCurrentMesh(targetMesh);
-    targetMesh->strokePropertyPanel()->setCurrentMesh(targetMesh);
+    PropertyPanel* fill = targetMesh->fillPropertyPanel();
+    PropertyPanel* stroke = targetMesh->strokePropertyPanel();
+    emit propertyPanelChanged("fill", fill);
+    emit propertyPanelChanged("stroke", stroke);
+    if (fill) {
+      fill->setCurrentMesh(targetMesh);
+    }
+    if (stroke) {
+      stroke->setCurrentMesh(targetMesh);
+    }
   } else {
     emit propertyPanelChanged("fill", nullptr);
     emit propertyPanelChanged("stroke", nullptr);

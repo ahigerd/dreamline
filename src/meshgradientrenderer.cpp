@@ -59,3 +59,13 @@ void MeshGradientRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter
   gl->glDisable(GL_STENCIL_TEST);
   gl->glEnable(GL_MULTISAMPLE);
 }
+
+QJsonObject MeshGradientRenderer::serialize(const MeshItem*, const MeshRenderData*) const
+{
+  return QJsonObject();
+}
+
+void MeshGradientRenderer::deserialize(const QJsonObject& json, MeshItem* mesh, MeshRenderData* data) const
+{
+  // no-op
+}

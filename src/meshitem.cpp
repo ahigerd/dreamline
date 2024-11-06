@@ -103,6 +103,22 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
     d->polygons.append(polygon);
   }
 
+  if (source.contains("fill")) {
+    QJsonObject fill = source["fill"].toObject();
+    // TODO: handle types once we have more than one
+    d->fill->deserialize(fill, this, d);
+  }
+
+  d->stroke.reset(nullptr);
+  if (source.contains("stroke")) {
+    QJsonObject stroke = source["stroke"].toObject();
+    QString type = stroke["type"].toString();
+    if (type == "pen") {
+      d->stroke.reset(new PenStrokeRenderer());
+      d->stroke->deserialize(stroke, this, d);
+    }
+  }
+
   d->recomputeBoundaries();
 }
 
@@ -140,6 +156,14 @@ QJsonObject MeshItem::serialize() const
     polygons.append(polyData);
   }
   o["polygons"] = polygons;
+
+  if (d->stroke) {
+    o["stroke"] = d->stroke->serialize(this, d);
+  }
+
+  if (d->fill) {
+    o["fill"] = d->fill->serialize(this, d);
+  }
 
   return o;
 }

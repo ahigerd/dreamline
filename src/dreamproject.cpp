@@ -104,7 +104,7 @@ void DreamProject::open(const QString& path)
 
   QJsonObject pageSize = doc["page"].toObject();
   // If page size is not set, use a default
-  setPageSize(QSizeF(pageSize["width"].toInt(8.5), pageSize["height"].toInt(11)));
+  setPageSize(QSizeF(pageSize["width"].toDouble(8.5), pageSize["height"].toDouble(11)));
 
   QJsonArray meshes = doc["meshes"].toArray();
   for (const QJsonValue& meshV : meshes) {
