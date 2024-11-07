@@ -13,31 +13,34 @@ OBJECTS_DIR = .build
 RCC_DIR = .build
 MOC_DIR = .build
 
-HEADERS += src/mainwindow.h   src/editorview.h   src/glfunctions.h   src/glviewport.h
-SOURCES += src/mainwindow.cpp src/editorview.cpp src/glfunctions.cpp src/glviewport.cpp
+HEADERS += src/dlapplication.h   src/mainwindow.h   src/editorview.h
+SOURCES += src/dlapplication.cpp src/mainwindow.cpp src/editorview.cpp
 
-HEADERS += src/glbuffer.h   src/boundprogram.h   src/dreamproject.h    src/tool.h
-SOURCES += src/glbuffer.cpp src/boundprogram.cpp src/dreamproject.cpp  src/tool.cpp
+HEADERS += src/glfunctions.h   src/glviewport.h   src/glbuffer.h
+SOURCES += src/glfunctions.cpp src/glviewport.cpp src/glbuffer.cpp
 
-HEADERS += src/gripitem.h   src/meshitem.h   src/edgeitem.h   src/markeritem.h
-SOURCES += src/gripitem.cpp src/meshitem.cpp src/edgeitem.cpp src/markeritem.cpp
+HEADERS += src/boundprogram.h   src/mathutil.h   src/dreamproject.h
+SOURCES += src/boundprogram.cpp src/mathutil.cpp src/dreamproject.cpp
 
-HEADERS += src/mathutil.h   src/dlapplication.h   src/polylineitem.h   src/meshpolygon.h
-SOURCES += src/mathutil.cpp src/dlapplication.cpp src/polylineitem.cpp src/meshpolygon.cpp
-
-HEADERS += src/abstractmeshrenderer.h   src/meshgradientrenderer.h   src/penstrokerenderer.h
-SOURCES += src/abstractmeshrenderer.cpp src/meshgradientrenderer.cpp src/penstrokerenderer.cpp
-
-HEADERS += src/propertypanel.h
-SOURCES += src/propertypanel.cpp
-
-HEADERS += src/tools/movevertex.h   src/tools/moveedge.h   src/tools/color.h   src/tools/split.h
-SOURCES += src/tools/movevertex.cpp src/tools/moveedge.cpp src/tools/color.cpp src/tools/split.cpp
-
-HEADERS += src/meshrenderdata.h
 SOURCES += src/main.cpp
 
 RESOURCES += res/shaders.qrc
+
+for (inc, $$list($$files(*.pri,true))) {
+  include($$inc)
+}
+
+for (GRP, SRC_GROUPS) {
+  for (BASE, $${GRP}_BASE) {
+    INCLUDEPATH += $${BASE}
+    for (f, $${GRP}_HEADERS) {
+      HEADERS += $${BASE}/$$f
+    }
+    for (f, $${GRP}_SOURCES) {
+      SOURCES += $${BASE}/$$f
+    }
+  }
+}
 
 VERSION = 0.0.1
 # If git commands can be run without errors, grab the commit hash
@@ -51,10 +54,10 @@ else {
 DEFINES += DREAMLINE_VERSION=$${VERSION}$${BUILD_HASH}
 
 win32 {
-  run.commands = dreamline.exe
+  run.commands = dreamline.exe debugmesh.dream
 }
 macx {
-  run.commands = open ./dreamline.app
+  run.commands = open -a ./dreamline.app ./debugmesh.dream
 }
 else {
   run.commands = ./dreamline ./debugmesh.dream
