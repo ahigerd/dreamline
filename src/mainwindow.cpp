@@ -108,6 +108,7 @@ void MainWindow::fileNew()
 {
   savePath.clear();
   editor->newProject();
+  editor->centerOn(editor->project()->sceneRect().center());
   setWindowModified(false);
   updateTitle();
 }
@@ -135,6 +136,7 @@ void MainWindow::openFile(const QString& path)
     //       file into this one without deleting anything (e.g. shape library)
     editor->newProject();
     editor->project()->open(path);
+    editor->centerOn(editor->project()->sceneRect().center());
     setWindowModified(false);
     updateTitle();
     addToRecent(path);

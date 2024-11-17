@@ -16,6 +16,7 @@
 #include <QColorDialog>
 #include <QColor>
 #include <QMenu>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -45,7 +46,7 @@ EditorView::EditorView(QWidget* parent)
   glViewport->setMouseTracking(true);
 
   setViewport(glViewport);
-  setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+  setTransformationAnchor(QGraphicsView::NoAnchor);
   setDragMode(NoDrag);
   setCursor(Qt::BlankCursor);
   setTool(Tool::VertexTool);
@@ -217,8 +218,25 @@ void EditorView::leaveEvent(QEvent*)
 void EditorView::wheelEvent(QWheelEvent* event)
 {
   if (event->modifiers() & Qt::ControlModifier) {
+    double zoom = transform().m11();
+    QPoint mousePos = event->position().toPoint();
+    QPointF oldPos = mapToScene(mousePos);
+
+    GripItem* snap = snapGrip();
+    if (snap && QLineF(snap->scenePos(), oldPos).length() * zoom < 5.0) {
+      oldPos = snap->scenePos();
+    }
+
     double factor = 1.0 + (event->angleDelta().y() / 1200.0);
+    if (zoom * factor < 0.25) {
+      factor = 0.25 / zoom;
+    } else if (zoom * factor > 100.0) {
+      factor = 100.0 / zoom;
+    }
     scale(factor, factor);
+    QPointF newPos = mapToScene(mousePos);
+    QPointF delta = newPos - oldPos;
+    translate(delta.x(), delta.y());
     return;
   }
   QGraphicsView::wheelEvent(event);
