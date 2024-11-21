@@ -1,33 +1,68 @@
 #include "meshitem.h"
+#include "meshrenderdata.h"
 #include "glviewport.h"
 #include "gripitem.h"
 #include "edgeitem.h"
 #include "polylineitem.h"
 #include "editorview.h"
 #include "mathutil.h"
+#include "meshgradientrenderer.h"
+#include "penstrokerenderer.h"
+#include "propertypanel.h"
 #include <QJsonArray>
 #include <QOpenGLVertexArrayObject>
 #include <QPainter>
+#include <QPointer>
+#include <QVector>
 #include <limits>
 
+class MeshItemPrivate : public MeshRenderData
+{
+public:
+  MeshItemPrivate(MeshItem* p)
+  : p(p), edgesVisible(true), verticesVisible(true), fill(new MeshGradientRenderer), stroke(nullptr)
+  {
+    // TODO: It might be a better idea to render this in paint() or
+    // DreamProject::drawForeground() instead of using QGraphicsItems.
+    lastVertexFocus = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, p);
+    lastVertexFocus->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
+    QPen pen(Qt::black, 3.8);
+    pen.setCosmetic(true);
+    lastVertexFocus->setPen(pen);
+    QGraphicsEllipseItem* inner = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, lastVertexFocus);
+    pen.setColor(Qt::white);
+    pen.setWidthF(1.4);
+    inner->setPen(pen);
+    lastVertexFocus->setZValue(100);
+    lastVertexFocus->hide();
+  }
+
+  MeshItem* p;
+  QVector<GripItem*> grips, boundary;
+  QVector<EdgeItem*> edges;
+  GLBuffer<GLint> smooth;
+  QPointer<GripItem> lastVertex;
+  QGraphicsEllipseItem* lastVertexFocus;
+  QPen strokePen;
+  bool edgesVisible, verticesVisible;
+
+  std::unique_ptr<IMeshRenderer> fill;
+  std::unique_ptr<IMeshRenderer> stroke;
+  QPointer<PropertyPanel> fillPanel;
+  QPointer<PropertyPanel> strokePanel;
+
+  QSet<MeshPolygon*> polygonsContainingVertex(GripItem* vertex);
+  MeshPolygon* findSplittablePolygon(GripItem* v1, GripItem* v2);
+  EdgeItem* findOrCreateEdge(GripItem* v1, GripItem* v2);
+  void recomputeBoundaries();
+};
+
 MeshItem::MeshItem(QGraphicsItem* parent)
-: QObject(nullptr), QGraphicsPolygonItem(parent), m_edgesVisible(true), m_verticesVisible(true)
+: QObject(nullptr), QGraphicsPolygonItem(parent), d(new MeshItemPrivate(this))
 {
   setFlag(QGraphicsItem::ItemIsMovable, true);
 
-  // TODO: It might be a better idea to render this in paint() or
-  // DreamProject::drawForeground() instead of using QGraphicsItems.
-  m_lastVertexFocus = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, this);
-  m_lastVertexFocus->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
-  QPen pen(Qt::black, 3.8);
-  pen.setCosmetic(true);
-  m_lastVertexFocus->setPen(pen);
-  QGraphicsEllipseItem* inner = new QGraphicsEllipseItem(-8.5, -8.5, 17, 17, m_lastVertexFocus);
-  pen.setColor(Qt::white);
-  pen.setWidthF(1.4);
-  inner->setPen(pen);
-  m_lastVertexFocus->setZValue(100);
-  m_lastVertexFocus->hide();
+  setStrokePen(QPen(Qt::black, 3));
 }
 
 MeshItem::MeshItem(PolyLineItem* polyline, QGraphicsItem* parent)
@@ -51,36 +86,45 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
   }
 
   for (const QJsonValue& polygonV : source["polygons"].toArray()) {
-    Polygon polygon;
+    MeshPolygon polygon;
     for (const QJsonValue& indexV : polygonV.toArray()) {
       int index = indexV.toInt(-1);
-      if (index < 0 || index > m_grips.length()) {
+      if (index < 0 || index > d->grips.length()) {
         // TODO: error handling
         continue;
       }
       if (!polygon.vertices.isEmpty()) {
-        polygon.edges.append(findOrCreateEdge(polygon.vertices.last(), m_grips[index]));
+        polygon.edges.append(d->findOrCreateEdge(polygon.vertices.last(), d->grips[index]));
       }
-      polygon.vertices.append(m_grips[index]);
+      polygon.vertices.append(d->grips[index]);
     }
-    polygon.edges.append(findOrCreateEdge(polygon.vertices.first(), polygon.vertices.last()));
+    polygon.edges.append(d->findOrCreateEdge(polygon.vertices.first(), polygon.vertices.last()));
     polygon.rebuildBuffers();
-    m_polygons.append(polygon);
+    d->polygons.append(polygon);
   }
 
-  // TODO: autocompute boundary if missing? Or just throw?
-  QPolygonF boundary;
-  for (const QJsonValue& indexV : source["boundary"].toArray()) {
-    int index = indexV.toInt(-1);
-    if (index < 0 || index > m_grips.length()) {
-      // TODO: error handling
-      continue;
-    }
-    m_boundary.append(m_grips[index]);
-    boundary << m_grips[index]->pos();
+  if (source.contains("fill")) {
+    QJsonObject fill = source["fill"].toObject();
+    // TODO: handle types once we have more than one
+    d->fill->deserialize(fill, this, d);
   }
-  setPolygon(boundary);
-  updateBoundary();
+
+  d->stroke.reset(nullptr);
+  if (source.contains("stroke")) {
+    QJsonObject stroke = source["stroke"].toObject();
+    QString type = stroke["type"].toString();
+    if (type == "pen") {
+      d->stroke.reset(new PenStrokeRenderer());
+      d->stroke->deserialize(stroke, this, d);
+    }
+  }
+
+  d->recomputeBoundaries();
+}
+
+MeshItem::~MeshItem()
+{
+  delete d;
 }
 
 QJsonObject MeshItem::serialize() const
@@ -88,7 +132,7 @@ QJsonObject MeshItem::serialize() const
   QJsonObject o;
 
   QJsonArray vertices;
-  for (const GripItem* grip : m_grips) {
+  for (const GripItem* grip : d->grips) {
     QColor color = grip->color();
     QJsonArray vertex({
       grip->pos().x(),
@@ -104,27 +148,29 @@ QJsonObject MeshItem::serialize() const
   o["vertices"] = vertices;
 
   QJsonArray polygons;
-  for (const Polygon& polygon : m_polygons) {
+  for (const MeshPolygon& polygon : d->polygons) {
     QJsonArray polyData;
     for (GripItem* grip : polygon.vertices) {
-      polyData.append(m_grips.indexOf(grip));
+      polyData.append(d->grips.indexOf(grip));
     }
     polygons.append(polyData);
   }
   o["polygons"] = polygons;
 
-  QJsonArray boundary;
-  for (GripItem* grip : m_boundary) {
-    boundary.append(m_grips.indexOf(grip));
+  if (d->stroke) {
+    o["stroke"] = d->stroke->serialize(this, d);
   }
-  o["boundary"] = boundary;
+
+  if (d->fill) {
+    o["fill"] = d->fill->serialize(this, d);
+  }
 
   return o;
 }
 
 bool MeshItem::edgesVisible() const
 {
-  if (m_edgesVisible) {
+  if (d->edgesVisible) {
     GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
     if (gl && gl->editor()->edgesVisible()) {
       return true;
@@ -135,13 +181,13 @@ bool MeshItem::edgesVisible() const
 
 void MeshItem::setEdgesVisible(bool on)
 {
-  m_edgesVisible = on;
+  d->edgesVisible = on;
   update();
 }
 
 bool MeshItem::verticesVisible() const
 {
-  if (m_verticesVisible) {
+  if (d->verticesVisible) {
     GLViewport* gl = GLViewport::instance(QOpenGLContext::currentContext());
     if (gl && gl->editor()->verticesVisible()) {
       return true;
@@ -152,14 +198,55 @@ bool MeshItem::verticesVisible() const
 
 void MeshItem::setVerticesVisible(bool on)
 {
-  m_verticesVisible = on;
+  d->verticesVisible = on;
   update();
+}
+
+QPen MeshItem::strokePen() const
+{
+  return d->strokePen;
+}
+
+void MeshItem::setStrokePen(const QPen& pen)
+{
+  d->strokePen = pen;
+  if (!dynamic_cast<PenStrokeRenderer*>(d->stroke.get())) {
+    d->stroke.reset(new PenStrokeRenderer());
+  }
+}
+
+void MeshItem::removeStroke()
+{
+  d->stroke.reset();
+  update();
+}
+
+PropertyPanel* MeshItem::fillPropertyPanel()
+{
+  if (!d->fillPanel && d->fill) {
+    EditorView* e = editor();
+    if (e) {
+      d->fillPanel = d->fill->propertyPanel(e);
+    }
+  }
+  return d->fillPanel;
+}
+
+PropertyPanel* MeshItem::strokePropertyPanel()
+{
+  if (!d->strokePanel && d->stroke) {
+    EditorView* e = editor();
+    if (e) {
+      d->strokePanel = d->stroke->propertyPanel(e);
+    }
+  }
+  return d->strokePanel;
 }
 
 GripItem* MeshItem::newGrip()
 {
   GripItem* grip = new GripItem(this);
-  m_grips.append(grip);
+  d->grips.append(grip);
   QObject::connect(grip, SIGNAL(moved(GripItem*, QPointF)), this, SLOT(moveVertex(GripItem*, QPointF)));
   QObject::connect(grip, SIGNAL(colorChanged(MarkerItem*, QColor)), this, SLOT(changeColor(MarkerItem*, QColor)));
   QObject::connect(grip, SIGNAL(smoothChanged(MarkerItem*, bool)), this, SLOT(updateBoundary()));
@@ -167,11 +254,11 @@ GripItem* MeshItem::newGrip()
   return grip;
 }
 
-QSet<MeshItem::Polygon*> MeshItem::polygonsContainingVertex(GripItem* vertex)
+QSet<MeshPolygon*> MeshItemPrivate::polygonsContainingVertex(GripItem* vertex)
 {
-  QSet<Polygon*> result;
+  QSet<MeshPolygon*> result;
 
-  for (Polygon& poly : m_polygons) {
+  for (MeshPolygon& poly : polygons) {
     if (poly.vertices.contains(vertex)) {
       result += &poly;
     }
@@ -182,7 +269,7 @@ QSet<MeshItem::Polygon*> MeshItem::polygonsContainingVertex(GripItem* vertex)
 
 void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
 {
-  int boundaryIndex = m_boundary.indexOf(vertex);
+  int boundaryIndex = d->boundary.indexOf(vertex);
   if (boundaryIndex >= 0) {
     QPolygonF p = polygon();
     p[boundaryIndex] = pos;
@@ -190,7 +277,7 @@ void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
     updateBoundary();
   }
 
-  for (Polygon& poly : m_polygons) {
+  for (MeshPolygon& poly : d->polygons) {
     int index = poly.vertices.indexOf(vertex);
     if (index >= 0) {
       poly.setVertex(index, pos);
@@ -198,15 +285,15 @@ void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
     }
   }
 
-  if (vertex == m_lastVertex) {
-    m_lastVertexFocus->setPos(pos);
+  if (vertex == d->lastVertex) {
+    d->lastVertexFocus->setPos(pos);
   }
   emit modified(true);
 }
 
 void MeshItem::changeColor(MarkerItem* vertex, const QColor& color)
 {
-  for (Polygon& poly : m_polygons) {
+  for (MeshPolygon& poly : d->polygons) {
     int index = poly.vertices.indexOf(static_cast<GripItem*>(vertex));
     if (index >= 0) {
       poly.colors[index] = QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
@@ -217,7 +304,7 @@ void MeshItem::changeColor(MarkerItem* vertex, const QColor& color)
 
 void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
 {
-  int oldIndex = m_edges.indexOf(edge);
+  int oldIndex = d->edges.indexOf(edge);
   if (oldIndex < 0) {
     qDebug() << "XXX: unknown edge";
     return;
@@ -233,10 +320,10 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
 
   EdgeItem* newEdge = edge->split(grip);
   QObject::connect(newEdge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
-  m_edges.append(newEdge);
+  d->edges.append(newEdge);
 
   int numRefs = 0;
-  for (Polygon& poly : m_polygons) {
+  for (MeshPolygon& poly : d->polygons) {
     bool ref = poly.insertVertex(grip, edge, newEdge);
     if (ref) {
       numRefs++;
@@ -249,11 +336,11 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
     int len = p.length();
     bool found = false;
     for (int i = 0; i < len; i++) {
-      GripItem* pp1 = m_boundary[i];
-      GripItem* pp2 = m_boundary[(i + 1) % len];
+      GripItem* pp1 = d->boundary[i];
+      GripItem* pp2 = d->boundary[(i + 1) % len];
       if ((pp1 == p1 && pp2 == p2) || (pp1 == p2 && pp2 == p1)) {
         p.insert(i + 1, pos);
-        m_boundary.insert(i + 1, grip);
+        d->boundary.insert(i + 1, grip);
         found = true;
         break;
       }
@@ -268,25 +355,38 @@ void MeshItem::insertVertex(EdgeItem* edge, const QPointF& pos)
   emit modified(true);
 }
 
+int MeshItem::numBoundaryVertices() const
+{
+  return d->boundary.count();
+}
+
+GripItem* MeshItem::boundaryVertex(int index) const
+{
+  if (index < 0 || index >= d->boundary.count()) {
+    return nullptr;
+  }
+  return d->boundary[index];
+}
+
 GripItem* MeshItem::activeVertex() const
 {
-  return m_lastVertex.data();
+  return d->lastVertex.data();
 }
 
 void MeshItem::setActiveVertex(GripItem* vertex)
 {
-  m_lastVertex = vertex;
+  d->lastVertex = vertex;
   if (!vertex) {
-    m_lastVertexFocus->hide();
+    d->lastVertexFocus->hide();
     return;
   }
-  m_lastVertexFocus->show();
-  m_lastVertexFocus->setPos(vertex->pos());
+  d->lastVertexFocus->show();
+  d->lastVertexFocus->setPos(vertex->pos());
 }
 
 bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
 {
-  Polygon* oldPoly = findSplittablePolygon(v1, v2);
+  MeshPolygon* oldPoly = d->findSplittablePolygon(v1, v2);
   if (!oldPoly) {
     return false;
   }
@@ -294,8 +394,8 @@ bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
   // We do this first because we might swap the vertices later.
   setActiveVertex(v2);
 
-  m_polygons.append(Polygon());
-  Polygon* newPoly = &m_polygons.back();
+  d->polygons.append(MeshPolygon());
+  MeshPolygon* newPoly = &d->polygons.back();
 
   // Get the bounds of the vertices that need to move.
   int oldPos1 = oldPoly->vertices.indexOf(v1);
@@ -328,7 +428,7 @@ bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
   }
 
   // Create the new edge.
-  EdgeItem* edge = findOrCreateEdge(v1, v2);
+  EdgeItem* edge = d->findOrCreateEdge(v1, v2);
   oldPoly->edges.append(edge);
   newPoly->edges.append(edge);
 
@@ -340,15 +440,15 @@ bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
   return true;
 }
 
-MeshItem::Polygon* MeshItem::findSplittablePolygon(GripItem* v1, GripItem* v2)
+MeshPolygon* MeshItemPrivate::findSplittablePolygon(GripItem* v1, GripItem* v2)
 {
-  QSet<Polygon*> polys = polygonsContainingVertex(v1);
+  QSet<MeshPolygon*> polys = polygonsContainingVertex(v1);
   polys.intersect(polygonsContainingVertex(v2));
   if (!polys.size()) {
     // The two vertices are in different polygons.
     return nullptr;
   }
-  for (Polygon* poly : polys) {
+  for (MeshPolygon* poly : polys) {
     if (poly->isEdgeInside(v1, v2)) {
       return poly;
     }
@@ -368,50 +468,52 @@ void MeshItem::addPolygon(PolyLineItem* poly)
     // If it were possible that a vertex or edge were shared,
     // we would need to deduplicate them.
     for (MeshItem* other : mergeWith) {
-      m_grips += other->m_grips;
-      m_edges += other->m_edges;
-      m_polygons += other->m_polygons;
+      d->grips += other->d->grips;
+      d->edges += other->d->edges;
+      d->polygons += other->d->polygons;
     }
 
-    for (GripItem* grip : m_grips) {
+    for (GripItem* grip : d->grips) {
       grip->setParentItem(this);
     }
 
-    for (EdgeItem* edge : m_edges) {
+    for (EdgeItem* edge : d->edges) {
       edge->setParentItem(this);
     }
 
     qDeleteAll(mergeWith);
   }
 
-  Polygon newPolygon;
+  MeshPolygon newPolygon;
   int numVertices = poly->pointCount();
   GripItem* lastGrip = poly->grip(numVertices - 1);
   QList<GripItem*> splicePoints;
   for (int i = 0; i < numVertices; i++) {
     GripItem* grip = poly->grip(i);
-    if (!m_grips.contains(grip)) {
-      m_grips << grip;
+    if (!d->grips.contains(grip)) {
+      d->grips << grip;
     }
     newPolygon.vertices << grip;
-    EdgeItem* edge = findOrCreateEdge(lastGrip, grip);
+    EdgeItem* edge = d->findOrCreateEdge(lastGrip, grip);
     newPolygon.edges << edge;
   }
   newPolygon.rebuildBuffers();
-  m_polygons << newPolygon;
+  d->polygons << newPolygon;
 
-  recomputeBoundaries();
+  d->recomputeBoundaries();
 }
 
 void MeshItem::gripDestroyed(QObject* grip)
 {
-  if (grip == m_lastVertex) {
-    m_lastVertexFocus->hide();
+  if (grip == d->lastVertex) {
+    d->lastVertexFocus->hide();
   }
 }
 
-void MeshItem::renderGL()
+void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
 {
+  painter->beginNativePainting();
+
   GLFunctions* gl = GLFunctions::instance(QOpenGLContext::currentContext());
   if (!gl) {
     qFatal("no context");
@@ -419,109 +521,49 @@ void MeshItem::renderGL()
   }
 
   gl->glEnable(GL_BLEND);
-  gl->glDisable(GL_MULTISAMPLE);
-  gl->glEnable(GL_DITHER);
-  if (m_boundaryTris.count()) {
-    gl->glEnable(GL_STENCIL_TEST);
-    gl->glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+  if (d->fill) {
+    d->fill->render(this, d, painter, gl);
   }
-  for (Polygon& poly : m_polygons) {
-    auto& vbo = poly.vertexBuffer;
-    BoundProgram program = gl->useShader("polyramp", vbo.count());
-
-    program->setUniformValueArray("verts", vbo.vector().constData(), vbo.vector().size());
-    program->setUniformValueArray("colors", poly.colors.vector().constData(), poly.colors.vector().size());
-
-    QTransform transform = gl->transform();
-    program->setUniformValue("translate", transform.dx() + x() * transform.m11(), transform.dy() + y() * transform.m22());
-    program->setUniformValue("scale", transform.m11(), transform.m22());
-
-    if (!poly.windingDirection) {
-      poly.updateWindingDirection();
-    }
-    program->setUniformValue("windingDirection", poly.windingDirection);
-
-    gl->glClear(GL_STENCIL_BUFFER_BIT);
-
-    if (m_boundaryTris.count()) {
-      gl->glStencilFunc(GL_ALWAYS, 1, 0xFF);
-      gl->glStencilMask(0xFF);
-      program.bindAttributeBuffer(0, m_boundaryTris);
-      int controlSize = m_control.elementSize();
-      int controlStride = controlSize * 3;
-      for (int i = 0; i < 3; i++) {
-        program.bindAttributeBuffer(i + 1, m_control, i * controlSize, controlStride);
-      }
-      program->setUniformValue("useEllipse", true);
-      gl->glDrawArrays(GL_TRIANGLES, 0, m_boundaryTris.count());
-
-      gl->glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-      gl->glStencilMask(0x00);
-    }
-    program.bindAttributeBuffer(0, vbo);
-    program->setUniformValue("useEllipse", false);
-    gl->glDrawArrays(GL_TRIANGLE_FAN, 0, vbo.count());
+  if (d->stroke) {
+    d->stroke->render(this, d, painter, gl);
   }
-  gl->glDisable(GL_STENCIL_TEST);
-  gl->glEnable(GL_MULTISAMPLE);
-
-}
-
-void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget*)
-{
-  painter->beginNativePainting();
-
-  renderGL();
 
   painter->endNativePainting();
-
-  /*
-  QPen stroke(QColor(0, 0, 0, 128), 0);
-  stroke.setCosmetic(true);
-  painter->setPen(stroke);
-  QPointF prev = m_boundary.last()->pos();
-  QPointF lastMidpoint = (prev + m_boundary[m_boundary.length() - 2]->pos()) / 2;
-  for (GripItem* grip : m_boundary) {
-    QPointF curr = grip->pos();
-    QPointF midpoint = (curr + prev) / 2;
-
-    painter->drawLine(midpoint, lastMidpoint);
-
-    prev = curr;
-    lastMidpoint = midpoint;
-  }
-  */
 }
 
-EdgeItem* MeshItem::findOrCreateEdge(GripItem* v1, GripItem* v2)
+EdgeItem* MeshItemPrivate::findOrCreateEdge(GripItem* v1, GripItem* v2)
 {
-  for (EdgeItem* edge : m_edges) {
+  for (EdgeItem* edge : edges) {
     if (edge->hasGrip(v1) && edge->hasGrip(v2)) {
       return edge;
     }
   }
   EdgeItem* edge = new EdgeItem(v1, v2);
-  QObject::connect(edge, SIGNAL(insertVertex(EdgeItem*,QPointF)), this, SLOT(insertVertex(EdgeItem*,QPointF)));
-  m_edges.append(edge);
+  QObject::connect(edge, SIGNAL(insertVertex(EdgeItem*,QPointF)), p, SLOT(insertVertex(EdgeItem*,QPointF)));
+  edges.append(edge);
   return edge;
 }
 
 void MeshItem::updateBoundary()
 {
-  if (m_boundary.length() < 3) {
+  if (d->boundary.length() < 3) {
     return;
   }
-  QPolygonF tris(m_boundary.length() * 3);
-  QVector<QPointF> control(m_boundary.length() * 9);
-  QVector<int> smooth(m_boundary.length() * 3);
-  QPointF prev = m_boundary.last()->pos();
-  QPointF lastMidpoint = (prev + m_boundary[m_boundary.length() - 2]->pos()) / 2;
+  QPolygonF boundary(d->boundary.length());
+  QPolygonF tris(d->boundary.length() * 3);
+  QVector<QPointF> control(d->boundary.length() * 9);
+  QVector<int> smooth(d->boundary.length() * 3);
+  QPointF prev = d->boundary.last()->pos();
+  QPointF lastMidpoint = (prev + d->boundary[d->boundary.length() - 2]->pos()) / 2;
   int i = 0;
   int j = 0;
-  bool lastSmooth = m_boundary.last()->isSmooth();
-  for (GripItem* grip : m_boundary) {
+  int b = 0;
+  bool lastSmooth = d->boundary.last()->isSmooth();
+  for (GripItem* grip : d->boundary) {
     QPointF curr = grip->pos();
     QPointF midpoint = (curr + prev) / 2;
+
+    boundary[b++] = curr;
 
     if (lastSmooth) {
       for (int k = 0; k < 3; k++) {
@@ -539,21 +581,22 @@ void MeshItem::updateBoundary()
     lastMidpoint = midpoint;
     lastSmooth = grip->isSmooth();
   }
-  m_boundaryTris = tris;
-  m_control = control;
-  m_smooth = smooth;
+  d->boundaryTris = tris;
+  d->controlPoints = control;
+  d->smooth = smooth;
+  setPolygon(boundary);
 }
 
-void MeshItem::recomputeBoundaries()
+void MeshItemPrivate::recomputeBoundaries()
 {
-  if (m_grips.length() < 3) {
+  if (grips.length() < 3) {
     return;
   }
 
   // Construct an index mapping vertices to edges
   // TODO: Consider maintaining this instead of calculating it on demand?
   QMultiMap<GripItem*, EdgeItem*> edgeIndex;
-  for (EdgeItem* edge : m_edges) {
+  for (EdgeItem* edge : edges) {
     edgeIndex.insert(edge->leftGrip(), edge);
     edgeIndex.insert(edge->rightGrip(), edge);
   }
@@ -564,7 +607,7 @@ void MeshItem::recomputeBoundaries()
   GripItem* start = nullptr;
   double minX = std::numeric_limits<double>::max();
   double minY = std::numeric_limits<double>::max();
-  for (GripItem* vertex : m_grips) {
+  for (GripItem* vertex : grips) {
     QPointF p = vertex->scenePos();
     if (minX > p.x() || (minX == p.x() && minY > p.y())) {
       start = vertex;
@@ -595,12 +638,12 @@ void MeshItem::recomputeBoundaries()
 
   GripItem* lastVertex = lastEdge->otherGrip(start);
   GripItem* prevVertex = start;
-  m_boundary.clear();
-  m_boundary << start;
+  boundary.clear();
+  boundary << start;
 
   // Walk the edges of the bounding polygon using the "left hand on the wall" method
-  while (!m_boundary.contains(lastVertex)) {
-    m_boundary << lastVertex;
+  while (!boundary.contains(lastVertex)) {
+    boundary << lastVertex;
     EdgeItem* nextEdge = nullptr;
     double maxAngle = 7; // bigger than 2pi
     for (EdgeItem* edge : edgeIndex.values(lastVertex)) {
@@ -622,5 +665,19 @@ void MeshItem::recomputeBoundaries()
     lastEdge = nextEdge;
   }
 
-  updateBoundary();
+  p->updateBoundary();
+}
+
+DreamProject* MeshItem::project() const
+{
+  return dynamic_cast<DreamProject*>(scene());
+}
+
+EditorView* MeshItem::editor() const
+{
+  DreamProject* p = project();
+  if (!p) {
+    return nullptr;
+  }
+  return p->currentEditor();
 }

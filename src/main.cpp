@@ -29,5 +29,12 @@ int main(int argc, char** argv)
     v.openFile(app.positionalArguments().first());
   }
 
-  return app.exec();
+  exitCode = app.exec();
+
+  // Dispatch closeEvents so windows can save their state
+  for (QWidget* w : qApp->topLevelWidgets()) {
+    w->close();
+  }
+
+  return exitCode;
 }

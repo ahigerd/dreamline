@@ -2,6 +2,8 @@
 #include "editorview.h"
 #include "tool.h"
 #include "dreamproject.h"
+#include "propertypanel.h"
+#include "penstrokerenderer.h"
 #include <QApplication>
 #include <QFileDialog>
 #include <QMenuBar>
@@ -14,6 +16,7 @@
 #include <QPainter>
 #include <QImageWriter>
 #include <QMimeDatabase>
+#include <QDockWidget>
 
 MainWindow::MainWindow(QWidget *parent)
 : QMainWindow(parent)
@@ -21,16 +24,28 @@ MainWindow::MainWindow(QWidget *parent)
   editor = new EditorView(this);
   setCentralWidget(editor);
   QObject::connect(editor, SIGNAL(projectModified(bool)), this, SLOT(setWindowModified(bool)));
+  QObject::connect(editor, SIGNAL(propertyPanelChanged(QString,PropertyPanel*)), this, SLOT(setPropertyPanel(QString,PropertyPanel*)));
 
   setMenuBar(new QMenuBar(this));
   makeFileMenu();
   makeToolMenu();
   updateRecentMenu();
 
+  PenStrokePropertyPanel* placeholder = new PenStrokePropertyPanel;
+  setPropertyPanel("fill", nullptr);
+  setPropertyPanel("stroke", placeholder);
+  placeholder->deleteLater();
+
   fileNew();
+
+  QSettings settings;
+  restoreGeometry(settings.value("window/geometry").toByteArray());
+  restoreState(settings.value("window/state").toByteArray());
+  // TODO: cascade window positions if other windows already exist
 }
 
-MainWindow::~MainWindow() {
+MainWindow::~MainWindow()
+{
 }
 
 void MainWindow::makeFileMenu()
@@ -51,6 +66,7 @@ void MainWindow::makeFileMenu()
   fileMenu->addAction(tr("E&xit"), qApp, SLOT(quit()));
 
   QToolBar* fileBar = new QToolBar(tr("&File"), this);
+  fileBar->setObjectName("tb_file");
   addToolBar(Qt::TopToolBarArea, fileBar);
   aNew->setIcon(style()->standardIcon(QStyle::SP_FileIcon));
   fileBar->addAction(aNew);
@@ -74,6 +90,7 @@ void MainWindow::makeToolMenu()
   menuBar()->addMenu(toolMenu);
 
   QToolBar* toolBar = new QToolBar(tr("&Tools"), this);
+  toolBar->setObjectName("tb_tools");
   addToolBar(Qt::LeftToolBarArea, toolBar);
 
   QAction* aVertex = Tool::makeAction(toolGroup, Tool::VertexTool);
@@ -259,3 +276,33 @@ void MainWindow::addToRecent(const QString& path)
   updateRecentMenu();
 }
 
+void MainWindow::setPropertyPanel(const QString& tag, PropertyPanel* panel)
+{
+  static QMap<QString, QString> labels{
+    { "fill", tr("Fill Properties") },
+    { "stroke", tr("Stroke Properties") },
+  };
+  QDockWidget* dock = docksByTag[tag];
+  if (!dock) {
+    docksByTag[tag] = dock = new QDockWidget(labels[tag], this);
+    dock->setObjectName("dock_" + tag);
+    dock->setAllowedAreas(Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
+    addDockWidget(Qt::RightDockWidgetArea, dock);
+    // XXX: This feels extremely hacky
+    resizeDocks({ dock }, { height() }, Qt::Vertical);
+  }
+  if (dock->widget()) {
+    dock->widget()->hide();
+  }
+  dock->setWidget(panel);
+  if (panel) {
+    panel->show();
+  }
+}
+
+void MainWindow::closeEvent(QCloseEvent*)
+{
+  QSettings settings;
+  settings.setValue("window/geometry", saveGeometry());
+  settings.setValue("window/state", saveState());
+}

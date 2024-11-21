@@ -4,6 +4,7 @@
 #include "edgeitem.h"
 #include "meshitem.h"
 #include "tool.h"
+#include "propertypanel.h"
 #include <QAction>
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
@@ -63,6 +64,7 @@ void EditorView::newProject()
   QGraphicsScene* oldScene = scene();
 
   projectScene = new DreamProject(QSizeF(8.5, 11), this);
+  projectScene->setCurrentEditor(this);
   setScene(projectScene);
 
   underCursor = new QGraphicsRectItem(-3, -3, 6, 6);
@@ -409,7 +411,7 @@ GripItem* EditorView::activeVertex() const
 
 void EditorView::setActiveVertex(GripItem* vertex)
 {
-  QGraphicsItem* targetMesh = vertex ? vertex->parentItem() : nullptr;
+  MeshItem* targetMesh = vertex ? dynamic_cast<MeshItem*>(vertex->parentItem()) : nullptr;
   for (QGraphicsItem* item : items()) {
     MeshItem* mesh = dynamic_cast<MeshItem*>(item);
     if (!mesh) {
@@ -421,6 +423,30 @@ void EditorView::setActiveVertex(GripItem* vertex)
       mesh->setActiveVertex(nullptr);
     }
   }
+  if (!targetMesh) {
+    for (GripItem* item : projectScene->selectedItems<GripItem>()) {
+      targetMesh = dynamic_cast<MeshItem*>(item->parentItem());
+      if (targetMesh) {
+        break;
+      }
+    }
+  }
+  if (targetMesh) {
+    PropertyPanel* fill = targetMesh->fillPropertyPanel();
+    PropertyPanel* stroke = targetMesh->strokePropertyPanel();
+    emit propertyPanelChanged("fill", fill);
+    emit propertyPanelChanged("stroke", stroke);
+    if (fill) {
+      fill->setCurrentMesh(targetMesh);
+    }
+    if (stroke) {
+      stroke->setCurrentMesh(targetMesh);
+    }
+  } else {
+    emit propertyPanelChanged("fill", nullptr);
+    emit propertyPanelChanged("stroke", nullptr);
+  }
+  emit selectionChanged();
 }
 
 QPair<EdgeItem*, QPointF> EditorView::snapEdge() const
