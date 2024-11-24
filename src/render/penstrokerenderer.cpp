@@ -3,6 +3,7 @@
 #include "meshrenderdata.h"
 #include "gripitem.h"
 #include "propertypanel.h"
+#include "mathutil.h"
 #include <QPainter>
 #include <QPainterPath>
 #include <QFormLayout>
@@ -14,19 +15,6 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
-
-/**
- * @param a The vector from the control point to the start of the arc
- * @param b The vector from the control point to the end of the arc
- * @param i The control point (outside of the arc)
- * @param t The angle, between 0 and pi/2
- */
-static QPointF ellipseInterpolate(const QPointF& a, const QPointF& b, const QPointF& i, double t)
-{
-  double s = 1.0 - std::sin(t);
-  double c = 1.0 - std::cos(t);
-  return i + a * s + b * c;
-}
 
 PenStrokeRenderer::PenStrokeRenderer()
 : AbstractMeshRenderer()
@@ -75,7 +63,7 @@ void PenStrokeRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter* p
       QPointF v1 = midpoint1 - pos;
       QPointF v2 = midpoint2 - pos;
       for (double t = radiansPerPixel; t < M_PI_2; t += radiansPerPixel) {
-        path.lineTo(ellipseInterpolate(v1, v2, pos, t));
+        path.lineTo(ellipsePos(v1, v2, pos, t));
       }
       path.lineTo(midpoint2);
     } else {

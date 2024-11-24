@@ -40,7 +40,6 @@ public:
   MeshItem* p;
   QVector<GripItem*> grips, boundary;
   QVector<EdgeItem*> edges;
-  GLBuffer<GLint> smooth;
   QPointer<GripItem> lastVertex;
   QGraphicsEllipseItem* lastVertexFocus;
   QPen strokePen;
@@ -86,7 +85,7 @@ MeshItem::MeshItem(const QJsonObject& source, QGraphicsItem* parent)
   }
 
   for (const QJsonValue& polygonV : source["polygons"].toArray()) {
-    MeshPolygon polygon;
+    MeshPolygon polygon(this);
     for (const QJsonValue& indexV : polygonV.toArray()) {
       int index = indexV.toInt(-1);
       if (index < 0 || index > d->grips.length()) {
@@ -166,6 +165,11 @@ QJsonObject MeshItem::serialize() const
   }
 
   return o;
+}
+
+const MeshRenderData* MeshItem::renderData() const
+{
+  return d;
 }
 
 bool MeshItem::edgesVisible() const
@@ -271,9 +275,6 @@ void MeshItem::moveVertex(GripItem* vertex, const QPointF& pos)
 {
   int boundaryIndex = d->boundary.indexOf(vertex);
   if (boundaryIndex >= 0) {
-    QPolygonF p = polygon();
-    p[boundaryIndex] = pos;
-    setPolygon(p);
     updateBoundary();
   }
 
@@ -394,7 +395,7 @@ bool MeshItem::splitPolygon(GripItem* v1, GripItem* v2)
   // We do this first because we might swap the vertices later.
   setActiveVertex(v2);
 
-  d->polygons.append(MeshPolygon());
+  d->polygons.append(MeshPolygon(this));
   MeshPolygon* newPoly = &d->polygons.back();
 
   // Get the bounds of the vertices that need to move.
@@ -484,7 +485,7 @@ void MeshItem::addPolygon(PolyLineItem* poly)
     qDeleteAll(mergeWith);
   }
 
-  MeshPolygon newPolygon;
+  MeshPolygon newPolygon(this);
   int numVertices = poly->pointCount();
   GripItem* lastGrip = poly->grip(numVertices - 1);
   QList<GripItem*> splicePoints;
@@ -527,6 +528,26 @@ void MeshItem::paint(QPainter* painter, const QStyleOptionGraphicsItem*, QWidget
   if (d->stroke) {
     d->stroke->render(this, d, painter, gl);
   }
+  painter->setPen(QPen(Qt::black, 0));
+  /*
+  QPolygonF bounds;
+  for (GripItem* grip : d->boundary) {
+    bounds << grip->pos();
+  }
+  QPolygonF drawBounds = expandPolygon(bounds, strokePen().widthF() / 2.0);
+  painter->drawPolygon(drawBounds);
+  */
+  /*
+  for (int i = 0; i < d->boundaryTris.count(); i += 3) {
+    QPolygonF tri;
+    tri << d->boundaryTris[i] << d->boundaryTris[i + 1] << d->boundaryTris[i + 2];
+    painter->drawPolygon(tri);
+  }
+  for (int i = 0; i < d->boundaryTris.count(); i += 3) {
+    painter->drawLine(QLineF(d->boundaryTris[i + 2], (d->boundaryTris[i + 1] + d->boundaryTris[i]) / 2));
+  }
+  */
+  //painter->drawPolygon(polygon());
 
   painter->endNativePainting();
 }
@@ -546,45 +567,65 @@ EdgeItem* MeshItemPrivate::findOrCreateEdge(GripItem* v1, GripItem* v2)
 
 void MeshItem::updateBoundary()
 {
+  d->strokeOwner = nullptr;
   if (d->boundary.length() < 3) {
     return;
   }
-  QPolygonF boundary(d->boundary.length());
-  QPolygonF tris(d->boundary.length() * 3);
-  QVector<QPointF> control(d->boundary.length() * 9);
-  QVector<int> smooth(d->boundary.length() * 3);
+  int boundaryLength = d->boundary.length();
+  d->rawBoundary = QPolygonF(boundaryLength);
+  QPolygonF tris;
+  tris.reserve(boundaryLength * 3);
+  QVector<QPointF> control;
+  control.reserve(boundaryLength * 9);
+  QVector<int> exterior;
+  exterior.reserve(boundaryLength);
   QPointF prev = d->boundary.last()->pos();
-  QPointF lastMidpoint = (prev + d->boundary[d->boundary.length() - 2]->pos()) / 2;
-  int i = 0;
-  int j = 0;
-  int b = 0;
+  QPointF lastMidpoint = (prev + d->boundary[boundaryLength - 2]->pos()) / 2;
   bool lastSmooth = d->boundary.last()->isSmooth();
+
+  int b = 0;
+  for (GripItem* grip : d->boundary) {
+    d->rawBoundary[b++] = grip->pos();
+  }
+  QPolygonF boundary = d->rawBoundary;
+  b = 0;
   for (GripItem* grip : d->boundary) {
     QPointF curr = grip->pos();
     QPointF midpoint = (curr + prev) / 2;
 
-    boundary[b++] = curr;
-
     if (lastSmooth) {
-      for (int k = 0; k < 3; k++) {
-        smooth[i + k] = lastSmooth ? 1 : 0;
-        control[j++] = prev;
-        control[j++] = lastMidpoint;
-        control[j++] = midpoint;
+      QPointF barycenter = (prev + midpoint + lastMidpoint) / 3.0;
+      bool isExterior = !d->rawBoundary.containsPoint(barycenter, Qt::WindingFill);
+      if (isExterior) {
+        int n = (b + boundaryLength - 1) % boundaryLength;
+        boundary[n] = midpoint;
+        boundary.insert(n, lastMidpoint);
       }
-      tris[i++] = prev;
-      tris[i++] = midpoint;
-      tris[i++] = lastMidpoint;
+      for (int k = 0; k < 3; k++) {
+        exterior << (isExterior ? 1 : 0);
+        control << prev;
+        control << lastMidpoint;
+        control << midpoint;
+      }
+      tris << midpoint;
+      tris << lastMidpoint;
+      tris << prev;
     }
 
     prev = curr;
     lastMidpoint = midpoint;
     lastSmooth = grip->isSmooth();
+    ++b;
   }
+
   d->boundaryTris = tris;
+  d->exterior = exterior;
   d->controlPoints = control;
-  d->smooth = smooth;
   setPolygon(boundary);
+
+  for (MeshPolygon& poly : d->polygons) {
+    poly.rebuildBuffers();
+  }
 }
 
 void MeshItemPrivate::recomputeBoundaries()

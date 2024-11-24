@@ -13,6 +13,7 @@ class GripItem;
 class EdgeItem;
 class PolyLineItem;
 class MeshItemPrivate;
+class MeshRenderData;
 class DreamProject;
 class EditorView;
 
@@ -26,6 +27,8 @@ public:
   ~MeshItem();
 
   QJsonObject serialize() const;
+
+  const MeshRenderData* renderData() const;
 
   bool edgesVisible() const;
   void setEdgesVisible(bool on);

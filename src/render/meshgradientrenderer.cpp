@@ -11,7 +11,7 @@ MeshGradientRenderer::MeshGradientRenderer()
   // initializers only
 }
 
-void MeshGradientRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter*, GLFunctions* gl)
+void MeshGradientRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter* painter, GLFunctions* gl)
 {
   gl->glDisable(GL_MULTISAMPLE);
   gl->glEnable(GL_DITHER);
@@ -23,7 +23,7 @@ void MeshGradientRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter
     auto& vbo = poly.vertexBuffer;
     BoundProgram program = gl->useShader("polyramp", vbo.count());
 
-    program->setUniformValueArray("verts", vbo.vector().constData(), vbo.vector().size());
+    program->setUniformValueArray("verts", poly.colorPoints.vector().constData(), vbo.vector().size());
     program->setUniformValueArray("colors", poly.colors.vector().constData(), poly.colors.vector().size());
 
     QTransform transform = gl->transform();
@@ -47,6 +47,7 @@ void MeshGradientRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter
         program.bindAttributeBuffer(i + 1, data->controlPoints, i * controlSize, controlStride);
       }
       program->setUniformValue("useEllipse", true);
+      program.bindAttributeBuffer(4, data->exterior);
       gl->glDrawArrays(GL_TRIANGLES, 0, data->boundaryTris.count());
 
       gl->glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
@@ -58,6 +59,14 @@ void MeshGradientRenderer::render(MeshItem* mesh, MeshRenderData* data, QPainter
   }
   gl->glDisable(GL_STENCIL_TEST);
   gl->glEnable(GL_MULTISAMPLE);
+  for (MeshPolygon& poly : data->polygons) {
+    painter->setBrush(Qt::transparent);
+    QPolygonF cp;
+    for (int i = 0; i < poly.colorPoints.count(); i++) {
+      cp << poly.colorPoints[i].toPointF();
+    }
+    painter->drawPolygon(cp);
+  }
 }
 
 QJsonObject MeshGradientRenderer::serialize(const MeshItem*, const MeshRenderData*) const

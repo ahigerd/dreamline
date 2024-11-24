@@ -9,20 +9,21 @@
 #include "glbuffer.h"
 class GripItem;
 class EdgeItem;
+class MeshItem;
 
 class MeshPolygon {
 public:
-  MeshPolygon();
+  MeshPolygon(MeshItem* owner);
   QVector<GripItem*> vertices;
   QVector<EdgeItem*> edges;
-  GLBuffer<QVector2D> vertexBuffer;
+  GLBuffer<QVector2D> vertexBuffer, colorPoints;
   GLBuffer<QVector4D> colors;
   GLfloat windingDirection;
 
   bool insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* newEdge);
 
   inline QPointF vertex(int index) const { return vertexBuffer[index].toPointF(); }
-  inline void setVertex(int index, const QPointF& pos) { vertexBuffer[index] = QVector2D(pos); }
+  void setVertex(int index, const QPointF& pos);
 
   QColor color(int index) const;
   void setColor(int index, const QColor& color);
@@ -37,6 +38,7 @@ public:
 
 private:
   bool testEdge(GripItem* v1, GripItem* v2, EdgeItem* edge1, EdgeItem* edge2) const;
+  MeshItem* owner;
 };
 
 #endif

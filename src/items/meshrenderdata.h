@@ -17,7 +17,9 @@ class MeshRenderData
 {
 public:
   QList<MeshPolygon> polygons;
+  QPolygonF rawBoundary;
   GLBuffer<QPointF> boundaryTris, controlPoints;
+  GLBuffer<GLint> exterior;
   QPainterPath strokePath;
   double lastStrokeScale;
   void* strokeOwner = nullptr;

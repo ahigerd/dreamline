@@ -11,7 +11,11 @@ QColor lerp(const QColor& a, const QColor& b, double t);
 
 double signedAngle(const QPointF& a, const QPointF& b, const QPointF& c);
 double ccwAngle(const QPointF& a, const QPointF& b, const QPointF& c);
+double smallAngle(const QPointF& a, const QPointF& b, const QPointF& c);
 
-QPainterPath expandPolygon(const QPolygonF& source, double distance);
+QPolygonF expandPolygon(const QPolygonF& source, double distance);
+QPainterPath expandPolygonRounded(const QPolygonF& source, double distance);
+
+QPointF ellipsePos(const QPointF& a, const QPointF& b, const QPointF& i, double t);
 
 #endif

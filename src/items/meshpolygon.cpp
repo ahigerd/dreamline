@@ -1,13 +1,17 @@
 #include "meshpolygon.h"
 #include "meshitem.h"
+#include "meshrenderdata.h"
 #include "gripitem.h"
 #include "edgeitem.h"
 #include "mathutil.h"
 #include <QTextStream>
 #include <algorithm>
 
-MeshPolygon::MeshPolygon()
-: windingDirection(0)
+#define _USE_MATH_DEFINES
+#include <cmath>
+
+MeshPolygon::MeshPolygon(MeshItem* owner)
+: windingDirection(0), owner(owner)
 {
   // initializers only
 }
@@ -35,6 +39,56 @@ bool MeshPolygon::insertVertex(GripItem* vertex, EdgeItem* oldEdge, EdgeItem* ne
 
   qWarning("XXX: inconsistent polygon");
   return false;
+}
+
+void MeshPolygon::setVertex(int index, const QPointF& pos)
+{
+  QVector2D v(pos);
+  vertexBuffer[index] = v;
+  if (vertices[index]->isSmooth()) {
+    int numVertices = vertices.count();
+    QPolygonF poly = owner->renderData()->rawBoundary;
+    int boundIndex = poly.indexOf(pos);
+    if (boundIndex >= 0) {
+      // The point is one of the boundary control points
+      int numBound = poly.count();
+      QPointF left = vertices[(index + numVertices - 1) % numVertices]->pos();
+      QPointF lastPos = poly[(boundIndex + numBound - (int)windingDirection) % numBound];
+      QPointF midpoint1 = (pos + left) / 2.0;
+      double leftAngle = smallAngle(left, pos, lastPos);
+      QPointF right = vertices[(index + 1) % numVertices]->pos();
+      QPointF nextPos = poly[(boundIndex + numBound + (int)windingDirection) % numBound];
+      QPointF midpoint2 = (pos + right) / 2.0;
+      double rightAngle = smallAngle(right, pos, nextPos);
+      qDebug() << pos << leftAngle << rightAngle << midpoint1 << midpoint2;
+      QPointF v1 = midpoint1 - pos;
+      QPointF v2 = midpoint2 - pos;
+      if ((rightAngle < 0.1) == (leftAngle >= 0.1)) {
+        QPointF p1 = midpoint1;
+        QPointF p2 = midpoint2;
+        double a1 = 0;
+        double a2 = M_PI_2;
+        QLineF edge(pos, left);
+        QPointF p;
+        while ((a2 - a1) > 0.001) {
+          double t = (a1 + a2) / 2;
+          p = ellipsePos(v1, v2, pos, t);
+          if (QLineF(p1, p).intersects(edge, nullptr) == QLineF::BoundedIntersection) {
+            p2 = p;
+            a2 = t;
+          } else {
+            p1 = p;
+            a1 = t;
+          }
+        }
+        v = QVector2D((p1 + p2) / 2);
+      } else {
+        v = QVector2D(ellipsePos(v1, v2, pos, M_PI_4));
+      }
+      qDebug() << "adj" << pos << index << v;
+    }
+  }
+  colorPoints[index] = v;
 }
 
 QColor MeshPolygon::color(int index) const
@@ -70,6 +124,7 @@ void MeshPolygon::rebuildBuffers()
 {
   int numVertices = vertices.length();
   vertexBuffer.resize(numVertices);
+  colorPoints.resize(numVertices);
   colors.resize(numVertices);
   for (int i = 0; i < numVertices; i++) {
     GripItem* grip = vertices[i];
@@ -77,6 +132,7 @@ void MeshPolygon::rebuildBuffers()
     setVertex(i, grip->pos());
     setColor(i, color);
   }
+  qDebug() << colorPoints.vector();
   updateWindingDirection();
 }
 

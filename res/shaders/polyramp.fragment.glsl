@@ -9,6 +9,7 @@ uniform float windingDirection;
 uniform bool useEllipse;
 in vec2 pt;
 flat in vec2[3] control;
+flat in int invertFill;
 
 out vec4 FragColor;
 
@@ -34,7 +35,7 @@ vec4 getColor(vec2 point)
 
   for (int i = 0; i < N; i++) {
     normPt = normalize(curr - point);
-    w = windingDirection * (
+    w = invertFill * windingDirection * (
       coord(prev - point, normPt) +
       coord(normPt, next - point)
     ) / distance(curr, point);
@@ -88,7 +89,7 @@ void main()
     vec2 e = control[0] - a*s - b*c;
     float d1 = distance(origin, pt);
     float d2 = distance(origin, e);
-    if (d1 > d2) {
+    if ((d1 > d2) == (invertFill > 0) ) {
       FragColor = vec4(0, 0, 0, 0);
       return;
     }
